@@ -11,6 +11,7 @@ import {
   ArrowRight,
   CheckCircle2,
   XCircle,
+  Repeat,
 } from "lucide-react";
 import type { Signal } from "@/lib/api";
 
@@ -19,6 +20,7 @@ const AGENTS = [
   { id: "trend", name: "Trend", icon: TrendingUp, color: "text-amber-400", bg: "bg-amber-400/10" },
   { id: "volatility", name: "Volatility", icon: Activity, color: "text-violet-400", bg: "bg-violet-400/10" },
   { id: "spread_cost", name: "Spread/Cost", icon: DollarSign, color: "text-emerald-400", bg: "bg-emerald-400/10" },
+  { id: "mean_reversion", name: "Mean-Rev", icon: Repeat, color: "text-sky-400", bg: "bg-sky-400/10" },
   { id: "analyst", name: "LLM Analyst", icon: Brain, color: "text-rose-400", bg: "bg-rose-400/10" },
   { id: "governor", name: "Risk Governor", icon: Shield, color: "text-amber-400", bg: "bg-amber-400/10" },
 ];

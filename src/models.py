@@ -55,6 +55,7 @@ class Features(BaseModel):
     bb_position: float
     volume_ratio: float
     regime: Regime
+    spread_bps: float | None = None
     returns_1bar: float = 0.0
     returns_5bar: float = 0.0
     returns_20bar: float = 0.0

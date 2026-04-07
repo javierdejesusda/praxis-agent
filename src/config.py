@@ -20,7 +20,7 @@ class RiskParams:
     max_consecutive_losses: int = 3
     min_spread_bps: float = 20.0
     real_cost_bps: float = 55.0
-    required_edge_multiplier: float = 1.5
+    required_edge_multiplier: float = 1.1
     min_signal_score_erc: int = 85
     min_signal_score_paper: int = 70
     execution_mode: str = "paper"
@@ -35,7 +35,7 @@ class StrategyParams:
     pairs: list[str] = field(default_factory=lambda: ["BTCUSD", "ETHUSD"])
     primary_timeframe: str = "4h"
     execution_timeframe: str = "1h"
-    stale_data_seconds: int = 300
+    stale_data_seconds: int = 7200
 
 
 @dataclass(frozen=True)
@@ -53,7 +53,7 @@ STRATEGY = StrategyParams()
 CONTRACTS = ContractAddresses()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.2")
 SEPOLIA_RPC_URL = os.getenv("SEPOLIA_RPC_URL", "")
 SEPOLIA_PRIVATE_KEY = os.getenv("SEPOLIA_PRIVATE_KEY", "")
 PRISM_API_KEY = os.getenv("PRISM_API_KEY", "")

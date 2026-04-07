@@ -6,7 +6,7 @@ The LLM can NEVER override this module. All kill criteria are hard-coded.
 import uuid
 from datetime import datetime, timezone
 
-from src.config import RISK
+from src.config import RISK, STRATEGY
 from src.models import (
     AnalystReport,
     Direction,
@@ -26,7 +26,7 @@ def _check_kill_criteria(
     """Check all 7 kill criteria. Returns list of violation codes."""
     violations = []
 
-    if snapshot_age_seconds > 300:
+    if snapshot_age_seconds > STRATEGY.stale_data_seconds:
         violations.append("STALE_DATA")
 
     if portfolio.daily_pnl / portfolio.equity < -RISK.max_daily_loss_pct:
@@ -43,7 +43,41 @@ def _check_kill_criteria(
     if portfolio.consecutive_losses >= RISK.max_consecutive_losses:
         violations.append("CONSECUTIVE_LOSSES")
 
+    if features.spread_bps is not None and features.spread_bps > RISK.min_spread_bps:
+        violations.append("SPREAD_TOO_WIDE")
+
     return violations
+
+
+def _compute_kelly(portfolio: Portfolio, signal_confidence: float) -> float:
+    """Compute half-Kelly position fraction from trade history and signal quality.
+
+    Uses signal confidence as a proxy for win probability when trade history
+    is insufficient (< 10 trades). With enough history, blends historical
+    win rate with signal confidence.
+
+    Args:
+        portfolio: Current portfolio with trade count and PnL.
+        signal_confidence: Average aligned signal confidence (0-100).
+
+    Returns:
+        Half-Kelly fraction (capped at 3% for safety).
+    """
+    win_prob = signal_confidence / 100.0
+
+    if portfolio.trade_count >= 10 and portfolio.equity > 0:
+        historical_win_rate = max(0.3, min(0.8,
+            1.0 - (portfolio.consecutive_losses / max(1, portfolio.trade_count))
+        ))
+        win_prob = 0.5 * win_prob + 0.5 * historical_win_rate
+
+    avg_win_loss_ratio = 1.5
+
+    kelly = win_prob - (1 - win_prob) / avg_win_loss_ratio
+    kelly = max(0.0, kelly)
+
+    half_kelly = kelly / 2.0
+    return min(half_kelly, 0.03)
 
 
 def evaluate_risk(
@@ -120,9 +154,9 @@ def evaluate_risk(
             )
             return decision, None
     else:
-        if long_count >= 3:
+        if long_count >= 2 and long_count > short_count:
             consensus_direction = Direction.LONG
-        elif short_count >= 3:
+        elif short_count >= 2 and short_count > long_count:
             consensus_direction = Direction.SHORT
         else:
             decision = RiskDecision(
@@ -133,7 +167,18 @@ def evaluate_risk(
             )
             return decision, None
 
-    avg_confidence = sum(s.confidence for s in signals) / len(signals)
+    aligned_signals = [
+        s for s in signals
+        if s.direction == consensus_direction
+    ]
+    if not aligned_signals:
+        aligned_signals = [s for s in signals if s.direction != Direction.HOLD]
+
+    avg_confidence = (
+        sum(s.confidence for s in aligned_signals) / len(aligned_signals)
+        if aligned_signals
+        else 0.0
+    )
 
     erc_eligible = avg_confidence >= RISK.min_signal_score_erc
     paper_eligible = avg_confidence >= RISK.min_signal_score_paper
@@ -147,7 +192,9 @@ def evaluate_risk(
         )
         return decision, None
 
-    risk_amount = portfolio.equity * RISK.risk_per_trade_pct
+    kelly_fraction = _compute_kelly(portfolio, avg_confidence)
+    risk_pct = max(RISK.risk_per_trade_pct, kelly_fraction)
+    risk_amount = portfolio.equity * risk_pct
     max_size = portfolio.equity * RISK.max_position_pct
     size_usd = min(risk_amount / (features.atr_20 / features.ema_21)
                    if features.ema_21 > 0 and features.atr_20 > 0
@@ -168,6 +215,16 @@ def evaluate_risk(
     current_exposure = sum(
         abs(v.get("size_usd", 0)) for v in portfolio.positions.values()
     )
+    max_exposure = portfolio.equity * RISK.max_position_pct
+    if current_exposure + intent.size_usd > max_exposure:
+        decision = RiskDecision(
+            approved=False,
+            reason_codes=["MAX_EXPOSURE"],
+            exposure_before=current_exposure,
+            daily_pnl=portfolio.daily_pnl,
+            drawdown_pct=drawdown,
+        )
+        return decision, None
 
     decision = RiskDecision(
         approved=True,

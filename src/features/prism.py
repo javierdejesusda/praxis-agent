@@ -9,7 +9,7 @@ from src.config import PRISM_API_KEY
 
 logger = logging.getLogger(__name__)
 
-BASE_URL = "https://api.prismapi.ai/v1"
+BASE_URL = "https://api.prismapi.ai"
 _client: Optional[httpx.AsyncClient] = None
 
 

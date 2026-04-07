@@ -72,6 +72,7 @@ async def llm_analyze(
     features: Features,
     signals: list[SignalReport],
     timeout: float = 15.0,
+    prism_data: dict | None = None,
 ) -> AnalystReport:
     """Call OpenAI for market analysis.
 
@@ -79,6 +80,7 @@ async def llm_analyze(
         features: Current computed features.
         signals: Deterministic signal reports.
         timeout: API call timeout in seconds.
+        prism_data: Optional PRISM API enrichment data.
 
     Returns:
         Typed AnalystReport.
@@ -89,14 +91,24 @@ async def llm_analyze(
     if _client is None:
         raise RuntimeError("OpenAI client not configured")
 
+    user_prompt = _build_user_prompt(features, signals)
+    if prism_data and prism_data.get("signals"):
+        prism_summary = {
+            "source": "PRISM API",
+            "signals": prism_data["signals"],
+            "risk": prism_data.get("risk"),
+        }
+        user_prompt += "\n\nExternal intelligence (PRISM API):\n"
+        user_prompt += json.dumps(prism_summary, indent=2, default=str)
+
     response = await _client.chat.completions.create(
         model=OPENAI_MODEL,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": _build_user_prompt(features, signals)},
+            {"role": "user", "content": user_prompt},
         ],
         temperature=0.1,
-        max_tokens=300,
+        max_completion_tokens=300,
         timeout=timeout,
     )
 

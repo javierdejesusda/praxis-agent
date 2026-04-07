@@ -81,7 +81,7 @@ def test_stale_data_blocks_trade():
     portfolio = Portfolio()
 
     decision, intent = evaluate_risk(
-        signals, analyst, features, portfolio, snapshot_age_seconds=600
+        signals, analyst, features, portfolio, snapshot_age_seconds=8000
     )
     assert not decision.approved
     assert "STALE_DATA" in decision.reason_codes
