@@ -494,11 +494,14 @@ async def run_protective_check(
 
             if side == "long":
                 peak = max(peak, current_price)
-                trail = peak - (peak - entry_price) * 0.4 if peak > entry_price else atr_stop
+                atr = abs(entry_price - atr_stop) / 2.0 if atr_stop else (entry_price * 0.02)
+                trail = peak - atr * 1.5
+                if peak > entry_price * 1.005:
+                    trail = max(trail, entry_price)
                 if atr_stop and current_price <= atr_stop:
                     logger.warning("ATR stop hit for %s LONG @ %.2f (stop=%.2f)", pair, current_price, atr_stop)
                     closed_pairs.append(pair)
-                elif trail and current_price <= trail and peak > entry_price * 1.01:
+                elif current_price <= trail and peak > entry_price * 1.005:
                     logger.info("Trailing stop hit for %s LONG @ %.2f (trail=%.2f)", pair, current_price, trail)
                     closed_pairs.append(pair)
                 elif atr_target and current_price >= atr_target:
@@ -506,11 +509,14 @@ async def run_protective_check(
                     closed_pairs.append(pair)
             else:
                 peak = min(peak, current_price)
-                trail = peak + (entry_price - peak) * 0.4 if peak < entry_price else atr_stop
+                atr = abs(atr_stop - entry_price) / 2.0 if atr_stop else (entry_price * 0.02)
+                trail = peak + atr * 1.5
+                if peak < entry_price * 0.995:
+                    trail = min(trail, entry_price)
                 if atr_stop and current_price >= atr_stop:
                     logger.warning("ATR stop hit for %s SHORT @ %.2f (stop=%.2f)", pair, current_price, atr_stop)
                     closed_pairs.append(pair)
-                elif trail and current_price >= trail and peak < entry_price * 0.99:
+                elif current_price >= trail and peak < entry_price * 0.995:
                     logger.info("Trailing stop hit for %s SHORT @ %.2f (trail=%.2f)", pair, current_price, trail)
                     closed_pairs.append(pair)
                 elif atr_target and current_price <= atr_target:
