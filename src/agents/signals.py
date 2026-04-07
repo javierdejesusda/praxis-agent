@@ -72,6 +72,12 @@ def trend_signal(features: Features) -> SignalReport:
         confidence += 8
         evidence["macd_divergence_bear"] = True
 
+    if direction == Direction.LONG and features.macd_slope > 0:
+        confidence += 10
+        evidence["macd_accelerating_bull"] = True
+    elif direction == Direction.SHORT and features.macd_slope < 0:
+        confidence += 10
+        evidence["macd_accelerating_bear"] = True
     if direction == Direction.LONG and features.rsi_14 > 75:
         confidence *= 0.5
         evidence["trend_exhaustion_bull"] = True
@@ -363,6 +369,13 @@ def momentum_signal(features: Features) -> SignalReport:
     elif direction == Direction.SHORT and features.rsi_divergence == -1:
         confidence += 10
         evidence["divergence_confirms_bear"] = True
+
+    if direction == Direction.LONG and features.macd_slope > 0:
+        confidence += 8
+        evidence["momentum_accelerating"] = True
+    elif direction == Direction.SHORT and features.macd_slope < 0:
+        confidence += 8
+        evidence["momentum_accelerating"] = True
 
     if direction != Direction.HOLD:
         if features.adx_14 > 25:

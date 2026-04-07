@@ -133,6 +133,15 @@ def compute_features(df: pd.DataFrame, pair: str) -> Features:
     returns_5 = float(close.pct_change(5).iloc[latest])
     returns_20 = float(close.pct_change(20).iloc[latest])
 
+    hist_now = float(macd_df[hist_col].iloc[latest])
+    hist_prev = float(macd_df[hist_col].iloc[latest - 1]) if latest > 0 else hist_now
+    macd_slope_val = hist_now - hist_prev
+
+    ema9_val = float(ema_9.iloc[latest])
+    ema21_val = float(ema_21.iloc[latest])
+    ema55_val = float(ema_55.iloc[latest])
+    ema_spread_val = abs(ema9_val - ema55_val) / ema21_val if ema21_val > 0 else 0.0
+
     return Features(
         pair=pair,
         timestamp=df.index[latest],
@@ -159,4 +168,6 @@ def compute_features(df: pd.DataFrame, pair: str) -> Features:
         returns_20bar=returns_20,
         rsi_divergence=rsi_div,
         macd_divergence=macd_div,
+        macd_slope=macd_slope_val,
+        ema_spread=ema_spread_val,
     )
