@@ -278,3 +278,78 @@ def mean_reversion_signal(features: Features) -> SignalReport:
         confidence=confidence,
         evidence=evidence,
     )
+
+
+def momentum_signal(features: Features) -> SignalReport:
+    """Momentum signal agent using multi-timeframe returns and MACD.
+
+    Active in both trending and ranging regimes. Provides directional
+    confirmation based on price momentum across multiple timeframes.
+
+    Args:
+        features: Computed technical features for a single bar.
+
+    Returns:
+        SignalReport with direction and confidence.
+    """
+    confidence = 0.0
+    evidence = {}
+    direction = Direction.HOLD
+
+    r1 = features.returns_1bar
+    r5 = features.returns_5bar
+    r20 = features.returns_20bar
+    evidence["r1"] = round(r1 * 100, 3)
+    evidence["r5"] = round(r5 * 100, 3)
+    evidence["r20"] = round(r20 * 100, 3)
+
+    bull_momentum = r5 > 0.005 and r20 > 0
+    bear_momentum = r5 < -0.005 and r20 < 0
+    evidence["bull_momentum"] = bull_momentum
+    evidence["bear_momentum"] = bear_momentum
+
+    if bull_momentum:
+        direction = Direction.LONG
+        confidence += 25
+        if r1 > 0:
+            confidence += 10
+            evidence["r1_confirms"] = True
+    elif bear_momentum:
+        direction = Direction.SHORT
+        confidence += 25
+        if r1 < 0:
+            confidence += 10
+            evidence["r1_confirms"] = True
+
+    if direction == Direction.LONG and features.macd_histogram > 0:
+        confidence += 15
+        evidence["macd_confirms_bull"] = True
+    elif direction == Direction.SHORT and features.macd_histogram < 0:
+        confidence += 15
+        evidence["macd_confirms_bear"] = True
+
+    if direction != Direction.HOLD:
+        if features.adx_14 > 25:
+            confidence += 15
+            evidence["strong_adx"] = True
+        elif features.adx_14 < 15:
+            confidence *= 0.6
+            evidence["weak_adx"] = True
+
+        if features.volume_ratio > 1.3:
+            confidence += 10
+            evidence["volume_supports"] = True
+
+    confidence = max(0.0, min(100.0, confidence))
+
+    if confidence < 20:
+        direction = Direction.HOLD
+
+    return SignalReport(
+        agent_name="momentum",
+        pair=features.pair,
+        timestamp=features.timestamp,
+        direction=direction,
+        confidence=confidence,
+        evidence=evidence,
+    )

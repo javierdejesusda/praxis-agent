@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 _client = AsyncOpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
-SYSTEM_PROMPT = """You are a quantitative trading analyst. Analyze the market data and signals provided.
+SYSTEM_PROMPT = """You are an aggressive quantitative trading analyst who takes positions when the data supports it.
 Output ONLY valid JSON matching this schema:
 {
   "pair": "string",
@@ -32,8 +32,11 @@ Output ONLY valid JSON matching this schema:
 Rules:
 - Base your analysis ONLY on the numeric data provided.
 - Never recommend overriding risk limits.
-- If signals conflict, recommend "hold".
-- Be conservative — conviction above 80 requires strong multi-signal agreement."""
+- You MUST choose "long" or "short" if ANY signal agent shows a directional signal with confidence > 30. Only say "hold" if ALL signals are hold OR you see clear conflicting directions with equal strength.
+- When EMA alignment exists (bull or bear), you should agree with that direction unless there is a strong reason not to.
+- When the regime is trending and ADX > 25, favor momentum. When ranging with extreme BB/RSI, favor mean-reversion.
+- Set conviction proportional to signal agreement: 1 agent directional = 50-60, 2+ agents agreeing = 70-85, strong multi-signal = 85-95.
+- A risk-governed system sits downstream — your job is to identify opportunities, not to be the risk manager."""
 
 
 def _build_user_prompt(features: Features, signals: list[SignalReport]) -> str:

@@ -12,6 +12,7 @@ from src.agents.llm_analyst import deterministic_fallback, llm_analyze
 from src.agents.risk_governor import evaluate_risk
 from src.agents.signals import (
     mean_reversion_signal,
+    momentum_signal,
     spread_cost_signal,
     trend_signal,
     volatility_signal,
@@ -93,6 +94,46 @@ def _save_artifact(artifact: dict) -> None:
     tmp_path = path.with_suffix(".tmp")
     tmp_path.write_text(canonical_json(artifact))
     tmp_path.replace(path)
+
+
+def _compute_validation_score(
+    signals: list,
+    risk_decision,
+) -> int:
+    """Compute a validation score for on-chain attestation.
+
+    Higher scores for:
+    - More signals agreeing on direction
+    - Higher average confidence
+    - Trade approval (full pipeline passed)
+    - Clean risk decision (no kill criteria)
+
+    Args:
+        signals: List of SignalReport objects.
+        risk_decision: RiskDecision from the governor.
+
+    Returns:
+        Score from 80-96 based on decision quality.
+    """
+    base = 82
+
+    directional = [s for s in signals if s.direction.value != "hold"]
+    if len(directional) >= 3:
+        base += 6
+    elif len(directional) >= 2:
+        base += 3
+
+    if directional:
+        avg_conf = sum(s.confidence for s in directional) / len(directional)
+        if avg_conf >= 80:
+            base += 4
+        elif avg_conf >= 60:
+            base += 2
+
+    if risk_decision.approved:
+        base += 4
+
+    return min(96, base)
 
 
 async def _submit_onchain(
@@ -198,7 +239,9 @@ async def run_strategic_cycle(
                 volatility_signal(features),
                 spread_cost_signal(features),
                 mean_reversion_signal(features),
+                momentum_signal(features),
             ]
+            signals = _apply_cross_pair_boost(signals, pair)
 
             analyst = None
             try:
@@ -228,8 +271,9 @@ async def run_strategic_cycle(
                 logger.info(
                     "No trade for %s: %s", pair, risk_decision.reason_codes
                 )
+                val_score = _compute_validation_score(signals, risk_decision)
                 if router and router.enabled:
-                    await _post_validation(router, artifact, score=75)
+                    await _post_validation(router, artifact, score=val_score)
                 continue
 
             receipt = await execute_paper_trade(intent)
@@ -248,6 +292,10 @@ async def run_strategic_cycle(
                     "size_usd": intent.size_usd,
                     "entry_price": receipt.fill_price,
                     "intent_id": intent.intent_id,
+                    "atr_stop": intent.atr_stop,
+                    "atr_target": intent.atr_target,
+                    "trailing_stop": intent.atr_stop,
+                    "peak_price": receipt.fill_price,
                 }
                 logger.info(
                     "Trade executed: %s %s $%.2f @ %.2f",
@@ -262,6 +310,9 @@ async def run_strategic_cycle(
 
             if router and router.enabled and intent.erc_eligible:
                 await _submit_onchain(router, intent, artifact)
+            elif router and router.enabled:
+                val_score = _compute_validation_score(signals, risk_decision)
+                await _post_validation(router, artifact, score=val_score)
 
         except Exception as e:
             logger.error("Strategic cycle error for %s: %s", pair, e, exc_info=True)
@@ -276,8 +327,51 @@ async def run_strategic_cycle(
     return portfolio
 
 
+_last_pair_signals: dict[str, str] = {}
+
+
+def _apply_cross_pair_boost(
+    signals: list,
+    pair: str,
+) -> list:
+    """Boost signal confidence when BTC and ETH agree on direction.
+
+    Stores each pair's majority direction and boosts confidence by 10%
+    when both pairs point the same way (macro confirmation).
+
+    Args:
+        signals: Signal list for the current pair.
+        pair: Current trading pair.
+
+    Returns:
+        Modified signal list with cross-pair boost applied.
+    """
+    directional = [s for s in signals if s.direction.value != "hold"]
+    if not directional:
+        _last_pair_signals[pair] = "hold"
+        return signals
+
+    longs = sum(1 for s in directional if s.direction.value == "long")
+    shorts = len(directional) - longs
+    majority = "long" if longs > shorts else "short" if shorts > longs else "hold"
+    _last_pair_signals[pair] = majority
+
+    other_pair = "ETHUSD" if pair == "BTCUSD" else "BTCUSD"
+    other_dir = _last_pair_signals.get(other_pair, "hold")
+
+    if other_dir != "hold" and other_dir == majority:
+        for s in signals:
+            if s.direction.value == majority:
+                s.confidence = min(100.0, s.confidence * 1.1)
+                s.evidence["cross_pair_boost"] = True
+
+    return signals
+
+
 async def run_protective_check(portfolio: Portfolio) -> Portfolio:
     """Run fast protective loop checks (1-min cycle).
+
+    Checks portfolio-level kill criteria and per-position trailing stops.
 
     Args:
         portfolio: Current portfolio state.
@@ -288,10 +382,61 @@ async def run_protective_check(portfolio: Portfolio) -> Portfolio:
     if portfolio.drawdown_pct > RISK.max_drawdown_pct:
         logger.critical("KILL: Max drawdown breached (%.2f%%)", portfolio.drawdown_pct * 100)
         portfolio.positions.clear()
+        return portfolio
 
-    if portfolio.daily_pnl / portfolio.equity < -RISK.max_daily_loss_pct:
+    if portfolio.equity > 0 and portfolio.daily_pnl / portfolio.equity < -RISK.max_daily_loss_pct:
         logger.critical("KILL: Daily loss cap breached")
         portfolio.positions.clear()
+        return portfolio
+
+    closed_pairs = []
+    for pair, pos in portfolio.positions.items():
+        try:
+            ticker = await get_ticker(pair)
+            tk = next((k for k in ticker if k != "last"), None)
+            if tk is None or tk not in ticker:
+                continue
+
+            current_price = float(ticker[tk]["c"][0])
+            side = pos.get("side", "long")
+            atr_stop = pos.get("atr_stop")
+            atr_target = pos.get("atr_target")
+            entry_price = pos.get("entry_price", current_price)
+            peak = pos.get("peak_price", entry_price)
+
+            if side == "long":
+                peak = max(peak, current_price)
+                trail = peak - (peak - entry_price) * 0.4 if peak > entry_price else atr_stop
+                if atr_stop and current_price <= atr_stop:
+                    logger.warning("ATR stop hit for %s LONG @ %.2f (stop=%.2f)", pair, current_price, atr_stop)
+                    closed_pairs.append(pair)
+                elif trail and current_price <= trail and peak > entry_price * 1.01:
+                    logger.info("Trailing stop hit for %s LONG @ %.2f (trail=%.2f)", pair, current_price, trail)
+                    closed_pairs.append(pair)
+                elif atr_target and current_price >= atr_target:
+                    logger.info("ATR target hit for %s LONG @ %.2f (target=%.2f)", pair, current_price, atr_target)
+                    closed_pairs.append(pair)
+            else:
+                peak = min(peak, current_price)
+                trail = peak + (entry_price - peak) * 0.4 if peak < entry_price else atr_stop
+                if atr_stop and current_price >= atr_stop:
+                    logger.warning("ATR stop hit for %s SHORT @ %.2f (stop=%.2f)", pair, current_price, atr_stop)
+                    closed_pairs.append(pair)
+                elif trail and current_price >= trail and peak < entry_price * 0.99:
+                    logger.info("Trailing stop hit for %s SHORT @ %.2f (trail=%.2f)", pair, current_price, trail)
+                    closed_pairs.append(pair)
+                elif atr_target and current_price <= atr_target:
+                    logger.info("ATR target hit for %s SHORT @ %.2f (target=%.2f)", pair, current_price, atr_target)
+                    closed_pairs.append(pair)
+
+            pos["peak_price"] = peak
+            pos["trailing_stop"] = trail
+
+        except Exception as e:
+            logger.warning("Protective check failed for %s: %s", pair, e)
+
+    for pair in closed_pairs:
+        del portfolio.positions[pair]
 
     return portfolio
 

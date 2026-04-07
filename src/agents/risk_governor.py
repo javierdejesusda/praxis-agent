@@ -202,14 +202,25 @@ def evaluate_risk(
                    max_size)
     size_usd = max(10.0, size_usd)
 
+    atr = features.atr_20
+    entry_price = features.ema_9
+    if consensus_direction == Direction.LONG:
+        atr_stop = entry_price - (atr * 2.0)
+        atr_target = entry_price + (atr * 3.0)
+    else:
+        atr_stop = entry_price + (atr * 2.0)
+        atr_target = entry_price - (atr * 3.0)
+
     intent = TradeIntent(
         intent_id=str(uuid.uuid4())[:8],
         pair=features.pair,
         side=consensus_direction,
         size_usd=round(size_usd, 2),
-        limit_price=features.ema_9,
+        limit_price=entry_price,
         signal_score=avg_confidence,
         erc_eligible=erc_eligible,
+        atr_stop=round(atr_stop, 2),
+        atr_target=round(atr_target, 2),
     )
 
     current_exposure = sum(

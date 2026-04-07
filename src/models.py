@@ -108,6 +108,8 @@ class TradeIntent(BaseModel):
     limit_price: Optional[float] = None
     signal_score: float = 0.0
     erc_eligible: bool = False
+    atr_stop: Optional[float] = None
+    atr_target: Optional[float] = None
 
 
 class ExecutionReceipt(BaseModel):
