@@ -1,0 +1,30 @@
+[project]
+name = "aegis-agent"
+version = "0.1.0"
+description = "Regime-adaptive AI trading agent with ERC-8004 validation"
+requires-python = ">=3.11"
+dependencies = [
+    "pandas>=2.2.0",
+    "numpy>=1.26.0",
+    "pandas-ta>=0.3.14b1",
+    "openai>=1.60.0",
+    "pydantic>=2.10.0",
+    "web3>=7.6.0",
+    "python-dotenv>=1.0.0",
+    "httpx>=0.28.0",
+    "streamlit>=1.54.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+]
+
+[build-system]
+requires = ["setuptools>=69.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

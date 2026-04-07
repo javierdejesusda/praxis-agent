@@ -1,0 +1,253 @@
+"""Main trading orchestrator — async pipeline with two-loop control."""
+
+import asyncio
+import json
+import logging
+from datetime import datetime, timezone
+from pathlib import Path
+
+import pandas as pd
+
+from src.agents.llm_analyst import deterministic_fallback, llm_analyze
+from src.agents.risk_governor import evaluate_risk
+from src.agents.signals import spread_cost_signal, trend_signal, volatility_signal
+from src.artifacts.hasher import build_artifact, canonical_json
+from src.config import ARTIFACTS_DIR, RISK, STATE_DIR, STRATEGY
+from src.execution.kraken_adapter import (
+    execute_paper_trade,
+    get_ohlc,
+    get_ticker,
+    init_paper,
+    paper_status,
+)
+from src.features.engine import compute_features
+from src.models import Direction, Portfolio
+
+logger = logging.getLogger(__name__)
+
+
+def _parse_ohlc_to_dataframe(raw: dict, pair: str) -> pd.DataFrame:
+    """Convert Kraken OHLC JSON to a pandas DataFrame.
+
+    Args:
+        raw: Raw JSON from Kraken CLI ohlc command.
+        pair: Pair key to look up in response.
+
+    Returns:
+        DataFrame with OHLCV columns and DatetimeIndex.
+    """
+    pair_key = None
+    for key in raw:
+        if key != "last":
+            pair_key = key
+            break
+
+    if pair_key is None:
+        raise RuntimeError(f"No OHLC data found for {pair}")
+
+    rows = raw[pair_key]
+    df = pd.DataFrame(
+        rows,
+        columns=["timestamp", "open", "high", "low", "close", "vwap", "volume", "count"],
+    )
+    df["timestamp"] = pd.to_datetime(df["timestamp"].astype(float), unit="s", utc=True)
+    df = df.set_index("timestamp")
+    for col in ["open", "high", "low", "close", "volume"]:
+        df[col] = df[col].astype(float)
+    df = df.sort_index()
+    return df[["open", "high", "low", "close", "volume"]]
+
+
+def _save_state(portfolio: Portfolio) -> None:
+    """Persist portfolio state to JSON."""
+    STATE_DIR.mkdir(exist_ok=True)
+    state_path = STATE_DIR / "portfolio.json"
+    state_path.write_text(canonical_json(portfolio.model_dump()))
+
+
+def _load_state() -> Portfolio:
+    """Load portfolio state from JSON, or return default."""
+    state_path = STATE_DIR / "portfolio.json"
+    if state_path.exists():
+        data = json.loads(state_path.read_text())
+        return Portfolio(**data)
+    return Portfolio()
+
+
+def _save_artifact(artifact: dict) -> None:
+    """Save artifact to local JSON file."""
+    ARTIFACTS_DIR.mkdir(exist_ok=True)
+    ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    atype = artifact.get("type", "unknown")
+    path = ARTIFACTS_DIR / f"{atype}_{ts}.json"
+    path.write_text(canonical_json(artifact))
+
+
+async def run_strategic_cycle(portfolio: Portfolio) -> Portfolio:
+    """Execute one strategic trading cycle.
+
+    Args:
+        portfolio: Current portfolio state.
+
+    Returns:
+        Updated portfolio state.
+    """
+    for pair in STRATEGY.pairs:
+        try:
+            logger.info("Strategic cycle for %s", pair)
+
+            raw_ohlc = await get_ohlc(pair, interval=60)
+            df = _parse_ohlc_to_dataframe(raw_ohlc, pair)
+
+            if len(df) < 200:
+                logger.warning("Insufficient data for %s: %d bars", pair, len(df))
+                continue
+
+            snapshot_time = df.index[-1]
+            now = datetime.now(timezone.utc)
+            age_seconds = (now - snapshot_time).total_seconds()
+
+            features = compute_features(df, pair)
+
+            signals = [
+                trend_signal(features),
+                volatility_signal(features),
+                spread_cost_signal(features),
+            ]
+
+            try:
+                analyst = await llm_analyze(features, signals)
+            except Exception as e:
+                logger.warning("LLM fallback for %s: %s", pair, e)
+                analyst = deterministic_fallback(signals, features)
+
+            risk_decision, intent = evaluate_risk(
+                signals=signals,
+                analyst=analyst,
+                features=features,
+                portfolio=portfolio,
+                snapshot_age_seconds=age_seconds,
+            )
+
+            artifact_data = {
+                "pair": pair,
+                "signals": [s.model_dump() for s in signals],
+                "analyst": analyst.model_dump(),
+                "risk_decision": risk_decision.model_dump(),
+            }
+
+            if not risk_decision.approved:
+                artifact = build_artifact("no-trade", artifact_data)
+                _save_artifact(artifact)
+                logger.info(
+                    "No trade for %s: %s", pair, risk_decision.reason_codes
+                )
+                continue
+
+            receipt = await execute_paper_trade(intent)
+
+            artifact_data["intent"] = intent.model_dump()
+            artifact_data["receipt"] = receipt.model_dump()
+
+            if receipt.status == "filled":
+                portfolio.trade_count += 1
+                portfolio.daily_trade_count += 1
+                fees = receipt.fees_usd
+                portfolio.cash -= fees
+                portfolio.equity -= fees
+                portfolio.positions[pair] = {
+                    "side": intent.side.value,
+                    "size_usd": intent.size_usd,
+                    "entry_price": receipt.fill_price,
+                    "intent_id": intent.intent_id,
+                }
+                logger.info(
+                    "Trade executed: %s %s $%.2f @ %.2f",
+                    intent.side.value,
+                    pair,
+                    intent.size_usd,
+                    receipt.fill_price,
+                )
+
+            artifact = build_artifact("trade-execution", artifact_data)
+            _save_artifact(artifact)
+
+        except Exception as e:
+            logger.error("Strategic cycle error for %s: %s", pair, e, exc_info=True)
+
+    portfolio.peak_equity = max(portfolio.peak_equity, portfolio.equity)
+    portfolio.drawdown_pct = (
+        (portfolio.peak_equity - portfolio.equity) / portfolio.peak_equity
+        if portfolio.peak_equity > 0
+        else 0.0
+    )
+    _save_state(portfolio)
+    return portfolio
+
+
+async def run_protective_check(portfolio: Portfolio) -> Portfolio:
+    """Run fast protective loop checks (1-min cycle).
+
+    Args:
+        portfolio: Current portfolio state.
+
+    Returns:
+        Updated portfolio state (may trigger position closure).
+    """
+    if portfolio.drawdown_pct > RISK.max_drawdown_pct:
+        logger.critical("KILL: Max drawdown breached (%.2f%%)", portfolio.drawdown_pct * 100)
+        portfolio.positions.clear()
+
+    if portfolio.daily_pnl / portfolio.equity < -RISK.max_daily_loss_pct:
+        logger.critical("KILL: Daily loss cap breached")
+        portfolio.positions.clear()
+
+    return portfolio
+
+
+async def main_loop() -> None:
+    """Main entry point — runs strategic + protective loops."""
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    )
+
+    logger.info("Aegis Agent starting...")
+
+    try:
+        await init_paper(balance=10000.0)
+        logger.info("Paper trading initialized")
+    except Exception as e:
+        logger.warning("Paper init skipped (may already exist): %s", e)
+
+    portfolio = _load_state()
+    logger.info("Portfolio loaded: equity=%.2f", portfolio.equity)
+
+    strategic_interval = 3600
+    protective_interval = 60
+    last_strategic = 0.0
+
+    while True:
+        try:
+            now = asyncio.get_event_loop().time()
+
+            portfolio = await run_protective_check(portfolio)
+
+            if now - last_strategic >= strategic_interval:
+                portfolio = await run_strategic_cycle(portfolio)
+                last_strategic = now
+
+            _save_state(portfolio)
+            await asyncio.sleep(protective_interval)
+
+        except KeyboardInterrupt:
+            logger.info("Shutting down...")
+            _save_state(portfolio)
+            break
+        except Exception as e:
+            logger.error("Main loop error: %s", e, exc_info=True)
+            await asyncio.sleep(30)
+
+
+if __name__ == "__main__":
+    asyncio.run(main_loop())
