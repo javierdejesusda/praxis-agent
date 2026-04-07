@@ -452,13 +452,17 @@ def _apply_cross_pair_boost(
     return signals
 
 
-async def run_protective_check(portfolio: Portfolio) -> Portfolio:
+async def run_protective_check(
+    portfolio: Portfolio,
+    router: RiskRouterAdapter | None = None,
+) -> Portfolio:
     """Run fast protective loop checks (1-min cycle).
 
     Checks portfolio-level kill criteria and per-position trailing stops.
 
     Args:
         portfolio: Current portfolio state.
+        router: Optional Risk Router adapter for on-chain reporting.
 
     Returns:
         Updated portfolio state (may trigger position closure).
@@ -520,7 +524,42 @@ async def run_protective_check(portfolio: Portfolio) -> Portfolio:
             logger.warning("Protective check failed for %s: %s", pair, e)
 
     for pair in closed_pairs:
-        del portfolio.positions[pair]
+        pos = portfolio.positions.get(pair)
+        if pos and router and router.enabled:
+            entry = pos.get("entry_price", 0)
+            side = pos.get("side", "long")
+            try:
+                ticker = await get_ticker(pair)
+                tk = next((k for k in ticker if k != "last"), None)
+                exit_price = float(ticker[tk]["c"][0]) if tk and tk in ticker else entry
+            except Exception:
+                exit_price = entry
+
+            if side == "long":
+                pnl_pct = (exit_price - entry) / entry if entry > 0 else 0
+            else:
+                pnl_pct = (entry - exit_price) / entry if entry > 0 else 0
+
+            close_data = {
+                "pair": pair,
+                "side": side,
+                "entry_price": entry,
+                "exit_price": exit_price,
+                "pnl_pct": round(pnl_pct, 6),
+                "close_reason": "protective_stop",
+            }
+            artifact = build_artifact("position-close", close_data)
+            _save_artifact(artifact)
+
+            val_score = 93 if pnl_pct > 0 else 90
+            await _post_validation(router, artifact, score=val_score)
+
+            rep_score = min(95, 82 + int(max(0, pnl_pct) * 500))
+            comment = f"close:{pair}:pnl={pnl_pct:.4f}"
+            await _post_reputation(router, artifact, rep_score, feedback_type=2, comment=comment)
+
+        if pair in portfolio.positions:
+            del portfolio.positions[pair]
 
     return portfolio
 
@@ -571,7 +610,7 @@ async def main_loop() -> None:
         try:
             now = asyncio.get_event_loop().time()
 
-            portfolio = await run_protective_check(portfolio)
+            portfolio = await run_protective_check(portfolio, router)
 
             if now - last_strategic >= strategic_interval:
                 portfolio = await run_strategic_cycle(portfolio, router)
