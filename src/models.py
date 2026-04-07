@@ -59,6 +59,8 @@ class Features(BaseModel):
     returns_1bar: float = 0.0
     returns_5bar: float = 0.0
     returns_20bar: float = 0.0
+    rsi_divergence: int = 0   # -1 = bearish, 0 = none, 1 = bullish
+    macd_divergence: int = 0  # -1 = bearish, 0 = none, 1 = bullish
 
 
 class SignalReport(BaseModel):

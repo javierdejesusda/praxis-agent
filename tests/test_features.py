@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from src.features.engine import compute_features
-from src.models import Regime
+from src.models import Features, Regime
 
 
 def _make_ohlcv(n: int = 250, base_price: float = 68000.0) -> pd.DataFrame:
@@ -47,3 +47,31 @@ def test_ema_ordering():
     features = compute_features(df, "BTCUSD")
     assert features.ema_9 != 0
     assert features.ema_200 != 0
+
+
+def test_features_divergence_fields():
+    """Features model should accept divergence fields with defaults."""
+    features = Features(
+        pair="BTCUSD",
+        timestamp=pd.Timestamp.now(tz="UTC"),
+        ema_9=68000.0, ema_21=67500.0, ema_55=67000.0, ema_200=65000.0,
+        rsi_14=55.0, macd=100.0, macd_signal=80.0, macd_histogram=20.0,
+        atr_20=500.0, adx_14=30.0,
+        bb_upper=69000.0, bb_middle=68000.0, bb_lower=67000.0, bb_position=0.5,
+        volume_ratio=1.2, regime=Regime.TRENDING,
+    )
+    assert features.rsi_divergence == 0
+    assert features.macd_divergence == 0
+
+    bullish = Features(
+        pair="BTCUSD",
+        timestamp=pd.Timestamp.now(tz="UTC"),
+        ema_9=68000.0, ema_21=67500.0, ema_55=67000.0, ema_200=65000.0,
+        rsi_14=55.0, macd=100.0, macd_signal=80.0, macd_histogram=20.0,
+        atr_20=500.0, adx_14=30.0,
+        bb_upper=69000.0, bb_middle=68000.0, bb_lower=67000.0, bb_position=0.5,
+        volume_ratio=1.2, regime=Regime.TRENDING,
+        rsi_divergence=1, macd_divergence=1,
+    )
+    assert bullish.rsi_divergence == 1
+    assert bullish.macd_divergence == 1
