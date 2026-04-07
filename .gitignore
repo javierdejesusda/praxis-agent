@@ -1,0 +1,34 @@
+# Secrets
+.env
+.env.*
+secrets.toml
+*.pem
+*.key
+
+# AI tools
+.claude/
+*.sqlite
+*.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Research files (not for repo)
+lablab-ai-trading-agents.md
+sota-red-team-research.md
+sota-sources-comprehensive.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
