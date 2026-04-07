@@ -27,6 +27,7 @@ from src.execution.kraken_adapter import (
 )
 from src.execution.risk_router import RiskRouterAdapter
 from src.features.engine import compute_features
+from src.features.prism import enrich_features
 from src.models import Direction, Portfolio, TradeIntent
 
 logger = logging.getLogger(__name__)
@@ -184,6 +185,14 @@ async def run_strategic_cycle(
             except Exception as e:
                 logger.warning("Spread fetch failed for %s: %s", pair, e)
 
+            prism_data = None
+            try:
+                prism_data = await enrich_features(pair)
+                if prism_data.get("signals"):
+                    logger.info("PRISM enrichment loaded for %s", pair)
+            except Exception as e:
+                logger.warning("PRISM enrichment failed for %s: %s", pair, e)
+
             signals = [
                 trend_signal(features),
                 volatility_signal(features),
@@ -193,7 +202,7 @@ async def run_strategic_cycle(
 
             analyst = None
             try:
-                analyst = await llm_analyze(features, signals)
+                analyst = await llm_analyze(features, signals, prism_data=prism_data)
             except Exception as e:
                 logger.warning("LLM unavailable for %s, using deterministic consensus: %s", pair, e)
 
@@ -208,8 +217,9 @@ async def run_strategic_cycle(
             artifact_data = {
                 "pair": pair,
                 "signals": [s.model_dump() for s in signals],
-                "analyst": analyst.model_dump(),
+                "analyst": analyst.model_dump() if analyst else None,
                 "risk_decision": risk_decision.model_dump(),
+                "prism": prism_data if prism_data and prism_data.get("signals") else None,
             }
 
             if not risk_decision.approved:

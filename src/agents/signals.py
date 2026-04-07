@@ -29,10 +29,10 @@ def trend_signal(features: Features) -> SignalReport:
     evidence["ema_aligned_bear"] = ema_aligned_bear
 
     if ema_aligned_bull:
-        confidence += 25
+        confidence += 30
         direction = Direction.LONG
     elif ema_aligned_bear:
-        confidence += 25
+        confidence += 30
         direction = Direction.SHORT
 
     if features.macd_histogram > 0 and direction == Direction.LONG:
@@ -51,6 +51,13 @@ def trend_signal(features: Features) -> SignalReport:
     if features.volume_ratio > 1.5:
         confidence += 10
         evidence["volume_confirmed"] = True
+
+    if direction == Direction.LONG and features.ema_9 > features.ema_200:
+        confidence += 10
+        evidence["above_ema200"] = True
+    elif direction == Direction.SHORT and features.ema_9 < features.ema_200:
+        confidence += 10
+        evidence["below_ema200"] = True
 
     if features.regime == Regime.TRENDING:
         confidence *= 1.2
@@ -114,11 +121,11 @@ def volatility_signal(features: Features) -> SignalReport:
             ema_bear = features.ema_9 < features.ema_21 < features.ema_55
             if ema_bull:
                 direction = Direction.LONG
-                confidence += 15
+                confidence += 20
                 evidence["trend_confirmed_bull"] = True
             elif ema_bear:
                 direction = Direction.SHORT
-                confidence += 15
+                confidence += 20
                 evidence["trend_confirmed_bear"] = True
             else:
                 confidence += 5
