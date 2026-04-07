@@ -148,6 +148,42 @@ def _compute_validation_score(
     return min(98, score)
 
 
+def _compute_reputation_score(
+    approved: bool,
+    portfolio: Portfolio,
+    win_rate: float = 0.5,
+) -> int:
+    """Compute reputation score for on-chain feedback.
+
+    Args:
+        approved: Whether the trade was approved.
+        portfolio: Current portfolio state.
+        win_rate: Current win rate (0-1).
+
+    Returns:
+        Score from 70-95 based on agent performance.
+    """
+    score = 78
+
+    if approved:
+        score += 5
+
+    if portfolio.drawdown_pct < 0.02:
+        score += 6
+    elif portfolio.drawdown_pct < 0.05:
+        score += 3
+
+    if win_rate >= 0.6:
+        score += 4
+    elif win_rate >= 0.5:
+        score += 2
+
+    if portfolio.equity >= 10000:
+        score += 2
+
+    return min(95, score)
+
+
 async def _submit_onchain(
     router: RiskRouterAdapter,
     intent: TradeIntent,
@@ -194,6 +230,32 @@ async def _post_validation(
             logger.info("Validation attestation posted: tx=%s", tx)
     except Exception as e:
         logger.error("Validation post failed: %s", e)
+
+
+async def _post_reputation(
+    router: RiskRouterAdapter,
+    artifact: dict,
+    score: int,
+    feedback_type: int = 0,
+    comment: str = "",
+) -> None:
+    """Post reputation feedback for a decision.
+
+    Args:
+        router: Initialized Risk Router adapter.
+        artifact: Artifact dict for outcome reference.
+        score: Reputation score (0-100).
+        feedback_type: 0=TRADE_EXECUTION, 1=RISK_MANAGEMENT, 2=STRATEGY_QUALITY.
+        comment: Feedback comment.
+    """
+    try:
+        art_hash = artifact.get("hash", "")
+        outcome_ref = bytes.fromhex(art_hash[:64]) if len(art_hash) >= 64 else b"\x00" * 32
+        tx = router.post_reputation(score, outcome_ref, comment, feedback_type)
+        if tx:
+            logger.info("Reputation posted: score=%d type=%d tx=%s", score, feedback_type, tx)
+    except Exception as e:
+        logger.error("Reputation post failed: %s", e)
 
 
 async def run_strategic_cycle(
@@ -286,6 +348,10 @@ async def run_strategic_cycle(
                 val_score = _compute_validation_score(signals, risk_decision)
                 if router and router.enabled:
                     await _post_validation(router, artifact, score=val_score)
+                    win_rate = (portfolio.trade_count - portfolio.consecutive_losses) / max(1, portfolio.trade_count)
+                    rep_score = _compute_reputation_score(False, portfolio, win_rate)
+                    reason = ",".join(risk_decision.reason_codes)
+                    await _post_reputation(router, artifact, rep_score, feedback_type=1, comment=f"risk:{reason}")
                 continue
 
             receipt = await execute_paper_trade(intent)
@@ -322,9 +388,15 @@ async def run_strategic_cycle(
 
             if router and router.enabled and intent.erc_eligible:
                 await _submit_onchain(router, intent, artifact)
+                win_rate = (portfolio.trade_count - portfolio.consecutive_losses) / max(1, portfolio.trade_count)
+                rep_score = _compute_reputation_score(True, portfolio, win_rate)
+                await _post_reputation(router, artifact, rep_score, feedback_type=0, comment="trade_executed")
             elif router and router.enabled:
                 val_score = _compute_validation_score(signals, risk_decision)
                 await _post_validation(router, artifact, score=val_score)
+                win_rate = (portfolio.trade_count - portfolio.consecutive_losses) / max(1, portfolio.trade_count)
+                rep_score = _compute_reputation_score(True, portfolio, win_rate)
+                await _post_reputation(router, artifact, rep_score, feedback_type=0, comment="paper_trade")
 
         except Exception as e:
             logger.error("Strategic cycle error for %s: %s", pair, e, exc_info=True)

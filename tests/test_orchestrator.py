@@ -3,7 +3,7 @@
 from datetime import datetime, timezone
 
 from src.models import Direction, Portfolio, Regime, RiskDecision, SignalReport
-from src.orchestrator import _compute_validation_score
+from src.orchestrator import _compute_reputation_score, _compute_validation_score
 
 
 def _make_signal(name: str, direction: Direction, confidence: float) -> SignalReport:
@@ -82,3 +82,30 @@ def test_validation_score_max_cap():
     decision = _make_risk_decision(True, drawdown_pct=0.001)
     score = _compute_validation_score(signals, decision)
     assert score <= 98
+
+
+def test_reputation_score_approved_trade():
+    """Approved trade with good metrics should score 85+."""
+    portfolio = Portfolio(equity=10200, peak_equity=10200, drawdown_pct=0.0)
+    score = _compute_reputation_score(
+        approved=True, portfolio=portfolio, win_rate=0.6
+    )
+    assert score >= 85
+
+
+def test_reputation_score_risk_rejection():
+    """Risk rejection should score 80+ (governance working)."""
+    portfolio = Portfolio(equity=9800, peak_equity=10000, drawdown_pct=0.02)
+    score = _compute_reputation_score(
+        approved=False, portfolio=portfolio, win_rate=0.55
+    )
+    assert score >= 80
+
+
+def test_reputation_score_under_drawdown():
+    """Larger drawdown should reduce score but stay reasonable."""
+    portfolio = Portfolio(equity=9300, peak_equity=10000, drawdown_pct=0.07)
+    score = _compute_reputation_score(
+        approved=False, portfolio=portfolio, win_rate=0.45
+    )
+    assert 70 <= score <= 85
