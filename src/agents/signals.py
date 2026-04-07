@@ -59,6 +59,19 @@ def trend_signal(features: Features) -> SignalReport:
         confidence += 10
         evidence["below_ema200"] = True
 
+    if direction == Direction.LONG and features.rsi_divergence == 1:
+        confidence += 12
+        evidence["rsi_divergence_bull"] = True
+    elif direction == Direction.SHORT and features.rsi_divergence == -1:
+        confidence += 12
+        evidence["rsi_divergence_bear"] = True
+    if direction == Direction.LONG and features.macd_divergence == 1:
+        confidence += 8
+        evidence["macd_divergence_bull"] = True
+    elif direction == Direction.SHORT and features.macd_divergence == -1:
+        confidence += 8
+        evidence["macd_divergence_bear"] = True
+
     if direction == Direction.LONG and features.rsi_14 > 75:
         confidence *= 0.5
         evidence["trend_exhaustion_bull"] = True
@@ -219,7 +232,8 @@ def mean_reversion_signal(features: Features) -> SignalReport:
     evidence["bb_position"] = round(features.bb_position, 4)
     evidence["rsi_14"] = round(features.rsi_14, 2)
 
-    if features.regime != Regime.RANGING:
+    transition_mode = False
+    if features.regime == Regime.TRENDING:
         evidence["inactive"] = True
         return SignalReport(
             agent_name="mean_reversion",
@@ -229,6 +243,9 @@ def mean_reversion_signal(features: Features) -> SignalReport:
             confidence=0.0,
             evidence=evidence,
         )
+    elif features.regime == Regime.TRANSITION:
+        transition_mode = True
+        evidence["transition_mode"] = True
 
     bb_dist_lower = features.bb_position
     bb_dist_upper = 1.0 - features.bb_position
@@ -272,6 +289,10 @@ def mean_reversion_signal(features: Features) -> SignalReport:
                 confidence += 5
                 evidence["tight_bands"] = True
 
+    if transition_mode and direction != Direction.HOLD:
+        confidence *= 0.7
+        evidence["transition_discount"] = True
+
     confidence = max(0.0, min(100.0, confidence))
 
     if confidence < 25:
@@ -310,8 +331,12 @@ def momentum_signal(features: Features) -> SignalReport:
     evidence["r5"] = round(r5 * 100, 3)
     evidence["r20"] = round(r20 * 100, 3)
 
-    bull_momentum = r5 > 0.003 and r20 > -0.01
-    bear_momentum = r5 < -0.003 and r20 < 0.01
+    atr_pct = (features.atr_20 / features.ema_21) if features.ema_21 > 0 else 0.01
+    mom_threshold = max(0.0015, atr_pct * 0.15)
+    evidence["adaptive_threshold"] = round(mom_threshold * 100, 4)
+
+    bull_momentum = r5 > mom_threshold and r20 > -0.01
+    bear_momentum = r5 < -mom_threshold and r20 < 0.01
     evidence["bull_momentum"] = bull_momentum
     evidence["bear_momentum"] = bear_momentum
 
@@ -334,6 +359,13 @@ def momentum_signal(features: Features) -> SignalReport:
     elif direction == Direction.SHORT and features.macd_histogram < 0:
         confidence += 15
         evidence["macd_confirms_bear"] = True
+
+    if direction == Direction.LONG and features.rsi_divergence == 1:
+        confidence += 10
+        evidence["divergence_confirms_bull"] = True
+    elif direction == Direction.SHORT and features.rsi_divergence == -1:
+        confidence += 10
+        evidence["divergence_confirms_bear"] = True
 
     if direction != Direction.HOLD:
         if features.adx_14 > 25:
