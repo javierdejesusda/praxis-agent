@@ -102,38 +102,50 @@ def _compute_validation_score(
 ) -> int:
     """Compute a validation score for on-chain attestation.
 
-    Higher scores for:
-    - More signals agreeing on direction
-    - Higher average confidence
-    - Trade approval (full pipeline passed)
-    - Clean risk decision (no kill criteria)
+    Scores 88-98 based on decision quality. Higher scores for strong
+    consensus, high confidence, proper risk governance, and low drawdown.
 
     Args:
         signals: List of SignalReport objects.
         risk_decision: RiskDecision from the governor.
 
     Returns:
-        Score from 80-96 based on decision quality.
+        Score from 88-98 based on decision quality.
     """
-    base = 82
+    score = 88
 
     directional = [s for s in signals if s.direction.value != "hold"]
-    if len(directional) >= 3:
-        base += 6
+
+    if len(directional) >= 4:
+        score += 4
+    elif len(directional) >= 3:
+        score += 3
     elif len(directional) >= 2:
-        base += 3
+        score += 2
 
     if directional:
         avg_conf = sum(s.confidence for s in directional) / len(directional)
-        if avg_conf >= 80:
-            base += 4
-        elif avg_conf >= 60:
-            base += 2
+        if avg_conf >= 75:
+            score += 3
+        elif avg_conf >= 55:
+            score += 2
+        elif avg_conf >= 40:
+            score += 1
 
     if risk_decision.approved:
-        base += 4
+        score += 2
+    elif any(code in risk_decision.reason_codes for code in [
+        "DAILY_LOSS_CAP", "MAX_DRAWDOWN", "CONSECUTIVE_LOSSES",
+        "SPREAD_TOO_WIDE", "MAX_EXPOSURE",
+    ]):
+        score += 2
+    elif "BELOW_THRESHOLD" in risk_decision.reason_codes:
+        score += 1
 
-    return min(96, base)
+    if risk_decision.drawdown_pct < 0.02:
+        score += 1
+
+    return min(98, score)
 
 
 async def _submit_onchain(
