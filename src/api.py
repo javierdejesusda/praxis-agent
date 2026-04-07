@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 
 from src.artifacts.hasher import canonical_json
 from src.config import ARTIFACTS_DIR, STATE_DIR
+from src.features.prism import get_signals as prism_signals, get_risk_metrics as prism_risk
 
 app = FastAPI(title="Aegis Agent API", version="0.1.0")
 
@@ -152,6 +153,18 @@ async def onchain_status():
         "enabled": True,
         "total_onchain_trades": len(onchain_trades),
         "trades": onchain_trades[:20],
+    }
+
+
+@app.get("/api/prism/{symbol}")
+async def prism_data(symbol: str):
+    """Live PRISM market intelligence for a symbol."""
+    signals = await prism_signals(symbol.upper())
+    risk = await prism_risk(symbol.upper())
+    return {
+        "symbol": symbol.upper(),
+        "signals": signals,
+        "risk": risk,
     }
 
 

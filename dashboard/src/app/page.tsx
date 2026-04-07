@@ -15,6 +15,7 @@ import { KillCriteriaPanel } from "@/components/KillCriteriaPanel";
 import { ArtifactLog } from "@/components/ArtifactLog";
 import { EquityChart } from "@/components/EquityChart";
 import { TradeHistory } from "@/components/TradeHistory";
+import { PrismPanel } from "@/components/PrismPanel";
 import {
   usePortfolio,
   useStats,
@@ -23,6 +24,7 @@ import {
   useLatestSignals,
   useRegime,
   useTrades,
+  usePrism,
 } from "@/lib/hooks";
 
 export default function Dashboard() {
@@ -33,6 +35,8 @@ export default function Dashboard() {
   const { data: signalData } = useLatestSignals();
   const { data: regimeData } = useRegime();
   const { data: tradeList } = useTrades();
+  const { data: prismBtc } = usePrism("BTC");
+  const { data: prismEth } = usePrism("ETH");
 
   if (!portfolio || !stats || !killCriteria) return null;
 
@@ -152,8 +156,9 @@ export default function Dashboard() {
         <div className="lg:col-span-2">
           <EquityChart equity={portfolio.equity} pnl={portfolio.total_pnl} />
         </div>
-        <div>
+        <div className="space-y-6">
           <KillCriteriaPanel criteria={killCriteria} />
+          <PrismPanel btc={prismBtc} eth={prismEth} />
         </div>
       </div>
 

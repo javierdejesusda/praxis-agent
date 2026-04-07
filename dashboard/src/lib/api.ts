@@ -70,6 +70,29 @@ export interface RegimeData {
   timestamp: string | null;
 }
 
+export interface PrismData {
+  symbol: string;
+  signals: {
+    data?: Array<{
+      overall_signal: string;
+      direction: string;
+      strength: string;
+      bullish_score: number;
+      bearish_score: number;
+      current_price: number;
+      indicators?: Record<string, number>;
+    }>;
+  } | null;
+  risk: {
+    daily_volatility?: number;
+    annual_volatility?: number;
+    sharpe_ratio?: number;
+    max_drawdown?: number;
+    current_drawdown?: number;
+    positive_days_pct?: number;
+  } | null;
+}
+
 export const api = {
   health: () => fetchApi<{ status: string; timestamp: string }>("/api/health"),
   portfolio: () => fetchApi<Portfolio>("/api/portfolio"),
@@ -83,4 +106,5 @@ export const api = {
   killCriteria: () => fetchApi<KillCriteria>("/api/kill-criteria"),
   stats: () => fetchApi<Stats>("/api/stats"),
   regime: () => fetchApi<RegimeData>("/api/regime"),
+  prism: (symbol: string) => fetchApi<PrismData>(`/api/prism/${symbol}`),
 };

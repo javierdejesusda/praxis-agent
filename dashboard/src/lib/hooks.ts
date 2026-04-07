@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import type { Portfolio, Stats, KillCriteria, Artifact, Signal, RegimeData } from "./api";
+import type { Portfolio, Stats, KillCriteria, Artifact, Signal, RegimeData, PrismData } from "./api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -74,6 +74,13 @@ export function useTrades() {
   return useSWR<Artifact[]>(`${API_BASE}/api/trades`, fetcher, {
     refreshInterval: 8000,
     fallbackData: [],
+  });
+}
+
+export function usePrism(symbol: string) {
+  return useSWR<PrismData>(`${API_BASE}/api/prism/${symbol}`, fetcher, {
+    refreshInterval: 30000,
+    fallbackData: { symbol, signals: null, risk: null },
   });
 }
 
