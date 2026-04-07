@@ -7,6 +7,67 @@ from src.config import STRATEGY
 from src.models import Features, Regime
 
 
+def _detect_divergence(
+    close: pd.Series,
+    indicator: pd.Series,
+    lookback: int = 20,
+) -> int:
+    """Detect bullish or bearish divergence between price and indicator.
+
+    Args:
+        close: Price series.
+        indicator: Indicator series (RSI or MACD).
+        lookback: Number of bars to scan for swing points.
+
+    Returns:
+        1 for bullish divergence, -1 for bearish, 0 for none.
+    """
+    if len(close) < lookback + 5 or len(indicator) < lookback + 5:
+        return 0
+
+    recent_close = close.iloc[-lookback:]
+    recent_ind = indicator.iloc[-lookback:]
+    prev_close = close.iloc[-lookback * 2:-lookback]
+    prev_ind = indicator.iloc[-lookback * 2:-lookback]
+
+    if len(prev_close) < 5 or len(prev_ind) < 5:
+        return 0
+
+    price_low_now = recent_close.min()
+    price_low_prev = prev_close.min()
+    ind_low_now = (
+        recent_ind.loc[recent_close.idxmin()]
+        if recent_close.idxmin() in recent_ind.index
+        else recent_ind.min()
+    )
+    ind_low_prev = (
+        prev_ind.loc[prev_close.idxmin()]
+        if prev_close.idxmin() in prev_ind.index
+        else prev_ind.min()
+    )
+
+    if price_low_now < price_low_prev and ind_low_now > ind_low_prev:
+        return 1
+
+    price_high_now = recent_close.max()
+    price_high_prev = prev_close.max()
+    ind_high_now = (
+        recent_ind.loc[recent_close.idxmax()]
+        if recent_close.idxmax() in recent_ind.index
+        else recent_ind.max()
+    )
+    ind_high_prev = (
+        prev_ind.loc[prev_close.idxmax()]
+        if prev_close.idxmax() in prev_ind.index
+        else prev_ind.max()
+    )
+
+    if price_high_now > price_high_prev and ind_high_now < ind_high_prev:
+        return -1
+
+    return 0
+
+
 def compute_features(df: pd.DataFrame, pair: str) -> Features:
     """Compute all technical features from OHLCV DataFrame.
 
@@ -37,6 +98,9 @@ def compute_features(df: pd.DataFrame, pair: str) -> Features:
     macd_col = macd_df.columns[0]
     signal_col = macd_df.columns[1]
     hist_col = macd_df.columns[2]
+
+    rsi_div = _detect_divergence(close, rsi, lookback=20)
+    macd_div = _detect_divergence(close, macd_df[hist_col], lookback=20)
 
     atr = ta.atr(high, low, close, length=20)
 
@@ -93,4 +157,6 @@ def compute_features(df: pd.DataFrame, pair: str) -> Features:
         returns_1bar=returns_1,
         returns_5bar=returns_5,
         returns_20bar=returns_20,
+        rsi_divergence=rsi_div,
+        macd_divergence=macd_div,
     )

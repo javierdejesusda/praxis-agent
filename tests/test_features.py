@@ -75,3 +75,11 @@ def test_features_divergence_fields():
     )
     assert bullish.rsi_divergence == 1
     assert bullish.macd_divergence == 1
+
+
+def test_divergence_fields_populated():
+    """Feature engine should populate divergence fields."""
+    df = _make_ohlcv()
+    features = compute_features(df, "BTCUSD")
+    assert features.rsi_divergence in (-1, 0, 1)
+    assert features.macd_divergence in (-1, 0, 1)
