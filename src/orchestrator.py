@@ -497,14 +497,14 @@ async def run_protective_check(
             if side == "long":
                 peak = max(peak, current_price)
                 atr = pos.get("atr_20", abs(entry_price - atr_stop) / 2.0 if atr_stop else (entry_price * 0.02))
-                trail = peak - atr * 1.5
-                if peak > entry_price * 1.005:
+                trail = peak - atr * 2.0
+                if peak > entry_price * 1.02:
                     trail = max(trail, entry_price)
                 if atr_stop and current_price <= atr_stop:
                     logger.warning("ATR stop hit for %s LONG @ %.2f (stop=%.2f)", pair, current_price, atr_stop)
                     closed_pairs.append(pair)
                     close_prices[pair] = current_price
-                elif current_price <= trail and peak > entry_price * 1.005:
+                elif current_price <= trail and peak > entry_price * 1.02:
                     logger.info("Trailing stop hit for %s LONG @ %.2f (trail=%.2f)", pair, current_price, trail)
                     closed_pairs.append(pair)
                     close_prices[pair] = current_price
@@ -515,14 +515,14 @@ async def run_protective_check(
             else:
                 peak = min(peak, current_price)
                 atr = pos.get("atr_20", abs(atr_stop - entry_price) / 2.0 if atr_stop else (entry_price * 0.02))
-                trail = peak + atr * 1.5
-                if peak < entry_price * 0.995:
+                trail = peak + atr * 2.0
+                if peak < entry_price * 0.98:
                     trail = min(trail, entry_price)
                 if atr_stop and current_price >= atr_stop:
                     logger.warning("ATR stop hit for %s SHORT @ %.2f (stop=%.2f)", pair, current_price, atr_stop)
                     closed_pairs.append(pair)
                     close_prices[pair] = current_price
-                elif current_price >= trail and peak < entry_price * 0.995:
+                elif current_price >= trail and peak < entry_price * 0.98:
                     logger.info("Trailing stop hit for %s SHORT @ %.2f (trail=%.2f)", pair, current_price, trail)
                     closed_pairs.append(pair)
                     close_prices[pair] = current_price
