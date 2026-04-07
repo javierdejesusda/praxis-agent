@@ -247,9 +247,6 @@ def mean_reversion_signal(features: Features) -> SignalReport:
         transition_mode = True
         evidence["transition_mode"] = True
 
-    bb_dist_lower = features.bb_position
-    bb_dist_upper = 1.0 - features.bb_position
-
     if features.bb_position < 0.15 and features.rsi_14 < 35:
         direction = Direction.LONG
         confidence += 30

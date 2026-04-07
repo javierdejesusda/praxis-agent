@@ -161,7 +161,7 @@ def _compute_reputation_score(
         win_rate: Current win rate (0-1).
 
     Returns:
-        Score from 70-95 based on agent performance.
+        Score from 78-95 based on agent performance.
     """
     score = 78
 
@@ -348,7 +348,7 @@ async def run_strategic_cycle(
                 val_score = _compute_validation_score(signals, risk_decision)
                 if router and router.enabled:
                     await _post_validation(router, artifact, score=val_score)
-                    win_rate = (portfolio.trade_count - portfolio.consecutive_losses) / max(1, portfolio.trade_count)
+                    win_rate = max(0.0, min(1.0, (portfolio.trade_count - portfolio.consecutive_losses) / max(1, portfolio.trade_count)))
                     rep_score = _compute_reputation_score(False, portfolio, win_rate)
                     reason = ",".join(risk_decision.reason_codes)
                     await _post_reputation(router, artifact, rep_score, feedback_type=1, comment=f"risk:{reason}")
@@ -374,6 +374,7 @@ async def run_strategic_cycle(
                     "atr_target": intent.atr_target,
                     "trailing_stop": intent.atr_stop,
                     "peak_price": receipt.fill_price,
+                    "atr_20": features.atr_20,
                 }
                 logger.info(
                     "Trade executed: %s %s $%.2f @ %.2f",
@@ -388,13 +389,13 @@ async def run_strategic_cycle(
 
             if router and router.enabled and intent.erc_eligible:
                 await _submit_onchain(router, intent, artifact)
-                win_rate = (portfolio.trade_count - portfolio.consecutive_losses) / max(1, portfolio.trade_count)
+                win_rate = max(0.0, min(1.0, (portfolio.trade_count - portfolio.consecutive_losses) / max(1, portfolio.trade_count)))
                 rep_score = _compute_reputation_score(True, portfolio, win_rate)
                 await _post_reputation(router, artifact, rep_score, feedback_type=0, comment="trade_executed")
             elif router and router.enabled:
                 val_score = _compute_validation_score(signals, risk_decision)
                 await _post_validation(router, artifact, score=val_score)
-                win_rate = (portfolio.trade_count - portfolio.consecutive_losses) / max(1, portfolio.trade_count)
+                win_rate = max(0.0, min(1.0, (portfolio.trade_count - portfolio.consecutive_losses) / max(1, portfolio.trade_count)))
                 rep_score = _compute_reputation_score(True, portfolio, win_rate)
                 await _post_reputation(router, artifact, rep_score, feedback_type=0, comment="paper_trade")
 
@@ -478,6 +479,7 @@ async def run_protective_check(
         return portfolio
 
     closed_pairs = []
+    close_prices = {}
     for pair, pos in portfolio.positions.items():
         try:
             ticker = await get_ticker(pair)
@@ -494,34 +496,40 @@ async def run_protective_check(
 
             if side == "long":
                 peak = max(peak, current_price)
-                atr = abs(entry_price - atr_stop) / 2.0 if atr_stop else (entry_price * 0.02)
+                atr = pos.get("atr_20", abs(entry_price - atr_stop) / 2.0 if atr_stop else (entry_price * 0.02))
                 trail = peak - atr * 1.5
                 if peak > entry_price * 1.005:
                     trail = max(trail, entry_price)
                 if atr_stop and current_price <= atr_stop:
                     logger.warning("ATR stop hit for %s LONG @ %.2f (stop=%.2f)", pair, current_price, atr_stop)
                     closed_pairs.append(pair)
+                    close_prices[pair] = current_price
                 elif current_price <= trail and peak > entry_price * 1.005:
                     logger.info("Trailing stop hit for %s LONG @ %.2f (trail=%.2f)", pair, current_price, trail)
                     closed_pairs.append(pair)
+                    close_prices[pair] = current_price
                 elif atr_target and current_price >= atr_target:
                     logger.info("ATR target hit for %s LONG @ %.2f (target=%.2f)", pair, current_price, atr_target)
                     closed_pairs.append(pair)
+                    close_prices[pair] = current_price
             else:
                 peak = min(peak, current_price)
-                atr = abs(atr_stop - entry_price) / 2.0 if atr_stop else (entry_price * 0.02)
+                atr = pos.get("atr_20", abs(atr_stop - entry_price) / 2.0 if atr_stop else (entry_price * 0.02))
                 trail = peak + atr * 1.5
                 if peak < entry_price * 0.995:
                     trail = min(trail, entry_price)
                 if atr_stop and current_price >= atr_stop:
                     logger.warning("ATR stop hit for %s SHORT @ %.2f (stop=%.2f)", pair, current_price, atr_stop)
                     closed_pairs.append(pair)
+                    close_prices[pair] = current_price
                 elif current_price >= trail and peak < entry_price * 0.995:
                     logger.info("Trailing stop hit for %s SHORT @ %.2f (trail=%.2f)", pair, current_price, trail)
                     closed_pairs.append(pair)
+                    close_prices[pair] = current_price
                 elif atr_target and current_price <= atr_target:
                     logger.info("ATR target hit for %s SHORT @ %.2f (target=%.2f)", pair, current_price, atr_target)
                     closed_pairs.append(pair)
+                    close_prices[pair] = current_price
 
             pos["peak_price"] = peak
             pos["trailing_stop"] = trail
@@ -534,12 +542,7 @@ async def run_protective_check(
         if pos and router and router.enabled:
             entry = pos.get("entry_price", 0)
             side = pos.get("side", "long")
-            try:
-                ticker = await get_ticker(pair)
-                tk = next((k for k in ticker if k != "last"), None)
-                exit_price = float(ticker[tk]["c"][0]) if tk and tk in ticker else entry
-            except Exception:
-                exit_price = entry
+            exit_price = close_prices.get(pair, entry)
 
             if side == "long":
                 pnl_pct = (exit_price - entry) / entry if entry > 0 else 0
