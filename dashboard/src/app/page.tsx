@@ -14,7 +14,16 @@ import { AgentPipeline } from "@/components/AgentPipeline";
 import { KillCriteriaPanel } from "@/components/KillCriteriaPanel";
 import { ArtifactLog } from "@/components/ArtifactLog";
 import { EquityChart } from "@/components/EquityChart";
-import { usePortfolio, useStats, useKillCriteria, useArtifacts, useLatestSignals } from "@/lib/hooks";
+import { TradeHistory } from "@/components/TradeHistory";
+import {
+  usePortfolio,
+  useStats,
+  useKillCriteria,
+  useArtifacts,
+  useLatestSignals,
+  useRegime,
+  useTrades,
+} from "@/lib/hooks";
 
 export default function Dashboard() {
   const { data: portfolio } = usePortfolio();
@@ -22,8 +31,18 @@ export default function Dashboard() {
   const { data: killCriteria } = useKillCriteria();
   const { data: artifacts } = useArtifacts();
   const { data: signalData } = useLatestSignals();
+  const { data: regimeData } = useRegime();
+  const { data: tradeList } = useTrades();
 
   if (!portfolio || !stats || !killCriteria) return null;
+
+  const regimeLabel = regimeData?.regime?.toUpperCase() || "UNKNOWN";
+  const regimeColor =
+    regimeLabel === "TRENDING"
+      ? "text-amber-400 bg-amber-400/10 border-amber-400/20"
+      : regimeLabel === "RANGING"
+      ? "text-sky-400 bg-sky-400/10 border-sky-400/20"
+      : "text-slate-400 bg-slate-400/10 border-slate-400/20";
 
   const pnlPositive = portfolio.total_pnl >= 0;
 
@@ -51,6 +70,16 @@ export default function Dashboard() {
         </div>
 
         <div className="flex items-center gap-3">
+          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border ${regimeColor}`}>
+            <span className="text-[10px] font-bold tracking-wider">
+              {regimeLabel}
+            </span>
+            {regimeData?.adx != null && regimeData.adx > 0 && (
+              <span className="text-[9px] opacity-60">
+                ADX {regimeData.adx.toFixed(0)}
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-400/10 border border-emerald-400/15">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-live text-emerald-400" />
             <span className="text-[10px] font-semibold tracking-wider text-emerald-400">
@@ -128,8 +157,9 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Artifact Log */}
-      <div className="mt-6">
+      {/* Trade History + Artifact Log */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <TradeHistory trades={tradeList || []} />
         <ArtifactLog artifacts={artifacts || []} />
       </div>
 

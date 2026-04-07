@@ -10,8 +10,13 @@ import pandas as pd
 
 from src.agents.llm_analyst import deterministic_fallback, llm_analyze
 from src.agents.risk_governor import evaluate_risk
-from src.agents.signals import spread_cost_signal, trend_signal, volatility_signal
-from src.artifacts.hasher import build_artifact, canonical_json
+from src.agents.signals import (
+    mean_reversion_signal,
+    spread_cost_signal,
+    trend_signal,
+    volatility_signal,
+)
+from src.artifacts.hasher import artifact_hash, build_artifact, canonical_json
 from src.config import ARTIFACTS_DIR, RISK, STATE_DIR, STRATEGY
 from src.execution.kraken_adapter import (
     execute_paper_trade,
@@ -20,8 +25,9 @@ from src.execution.kraken_adapter import (
     init_paper,
     paper_status,
 )
+from src.execution.risk_router import RiskRouterAdapter
 from src.features.engine import compute_features
-from src.models import Direction, Portfolio
+from src.models import Direction, Portfolio, TradeIntent
 
 logger = logging.getLogger(__name__)
 
@@ -59,10 +65,12 @@ def _parse_ohlc_to_dataframe(raw: dict, pair: str) -> pd.DataFrame:
 
 
 def _save_state(portfolio: Portfolio) -> None:
-    """Persist portfolio state to JSON."""
+    """Persist portfolio state to JSON atomically."""
     STATE_DIR.mkdir(exist_ok=True)
     state_path = STATE_DIR / "portfolio.json"
-    state_path.write_text(canonical_json(portfolio.model_dump()))
+    tmp_path = state_path.with_suffix(".tmp")
+    tmp_path.write_text(canonical_json(portfolio.model_dump()))
+    tmp_path.replace(state_path)
 
 
 def _load_state() -> Portfolio:
@@ -77,17 +85,72 @@ def _load_state() -> Portfolio:
 def _save_artifact(artifact: dict) -> None:
     """Save artifact to local JSON file."""
     ARTIFACTS_DIR.mkdir(exist_ok=True)
-    ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_%f")
     atype = artifact.get("type", "unknown")
-    path = ARTIFACTS_DIR / f"{atype}_{ts}.json"
-    path.write_text(canonical_json(artifact))
+    pair = artifact.get("payload", {}).get("pair", "")
+    path = ARTIFACTS_DIR / f"{atype}_{pair}_{ts}.json"
+    tmp_path = path.with_suffix(".tmp")
+    tmp_path.write_text(canonical_json(artifact))
+    tmp_path.replace(path)
 
 
-async def run_strategic_cycle(portfolio: Portfolio) -> Portfolio:
+async def _submit_onchain(
+    router: RiskRouterAdapter,
+    intent: TradeIntent,
+    artifact: dict,
+) -> None:
+    """Submit a trade intent on-chain and post validation attestation.
+
+    Args:
+        router: Initialized Risk Router adapter.
+        intent: The approved trade intent.
+        artifact: The saved artifact dict for hashing.
+    """
+    try:
+        receipt = router.submit_trade_intent(intent, router._address)
+        logger.info(
+            "On-chain submission: %s (status=%s)",
+            intent.intent_id,
+            receipt.status,
+        )
+        await _post_validation(router, artifact, score=int(intent.signal_score))
+    except Exception as e:
+        logger.error("On-chain submission failed: %s", e)
+
+
+async def _post_validation(
+    router: RiskRouterAdapter,
+    artifact: dict,
+    score: int,
+) -> None:
+    """Post a validation attestation for an artifact.
+
+    Args:
+        router: Initialized Risk Router adapter.
+        artifact: Artifact dict containing the decision data.
+        score: Validation score (0-100).
+    """
+    try:
+        art_hash = artifact.get("hash", "")
+        checkpoint = bytes.fromhex(art_hash[:64]) if len(art_hash) >= 64 else b"\x00" * 32
+        art_type = artifact.get("type", "unknown")
+        notes = f"{art_type}: score={score}"
+        tx = router.post_validation(checkpoint, score, notes)
+        if tx:
+            logger.info("Validation attestation posted: tx=%s", tx)
+    except Exception as e:
+        logger.error("Validation post failed: %s", e)
+
+
+async def run_strategic_cycle(
+    portfolio: Portfolio,
+    router: RiskRouterAdapter | None = None,
+) -> Portfolio:
     """Execute one strategic trading cycle.
 
     Args:
         portfolio: Current portfolio state.
+        router: Optional Risk Router adapter for on-chain execution.
 
     Returns:
         Updated portfolio state.
@@ -109,17 +172,30 @@ async def run_strategic_cycle(portfolio: Portfolio) -> Portfolio:
 
             features = compute_features(df, pair)
 
+            try:
+                ticker = await get_ticker(pair)
+                tk = next((k for k in ticker if k != "last"), None)
+                if tk and tk in ticker:
+                    ask = float(ticker[tk]["a"][0])
+                    bid = float(ticker[tk]["b"][0])
+                    mid = (ask + bid) / 2
+                    if mid > 0:
+                        features.spread_bps = ((ask - bid) / mid) * 10000
+            except Exception as e:
+                logger.warning("Spread fetch failed for %s: %s", pair, e)
+
             signals = [
                 trend_signal(features),
                 volatility_signal(features),
                 spread_cost_signal(features),
+                mean_reversion_signal(features),
             ]
 
+            analyst = None
             try:
                 analyst = await llm_analyze(features, signals)
             except Exception as e:
-                logger.warning("LLM fallback for %s: %s", pair, e)
-                analyst = deterministic_fallback(signals, features)
+                logger.warning("LLM unavailable for %s, using deterministic consensus: %s", pair, e)
 
             risk_decision, intent = evaluate_risk(
                 signals=signals,
@@ -142,6 +218,8 @@ async def run_strategic_cycle(portfolio: Portfolio) -> Portfolio:
                 logger.info(
                     "No trade for %s: %s", pair, risk_decision.reason_codes
                 )
+                if router and router.enabled:
+                    await _post_validation(router, artifact, score=75)
                 continue
 
             receipt = await execute_paper_trade(intent)
@@ -171,6 +249,9 @@ async def run_strategic_cycle(portfolio: Portfolio) -> Portfolio:
 
             artifact = build_artifact("trade-execution", artifact_data)
             _save_artifact(artifact)
+
+            if router and router.enabled and intent.erc_eligible:
+                await _submit_onchain(router, intent, artifact)
 
         except Exception as e:
             logger.error("Strategic cycle error for %s: %s", pair, e, exc_info=True)
@@ -220,6 +301,26 @@ async def main_loop() -> None:
     except Exception as e:
         logger.warning("Paper init skipped (may already exist): %s", e)
 
+    router = RiskRouterAdapter()
+    if router.enabled:
+        agent_id_path = STATE_DIR / "agent_id.json"
+        if agent_id_path.exists():
+            saved = json.loads(agent_id_path.read_text())
+            router._agent_id = saved.get("agent_id")
+            logger.info("Loaded agent ID %d from state", router._agent_id)
+        else:
+            try:
+                agent_id = router.register_agent()
+                STATE_DIR.mkdir(exist_ok=True)
+                agent_id_path.write_text(json.dumps({"agent_id": agent_id}))
+                logger.info("Registered agent ID %d on-chain", agent_id)
+                router.claim_vault()
+            except Exception as e:
+                logger.error("Agent registration failed: %s", e)
+        logger.info("Risk Router adapter enabled — on-chain execution active")
+    else:
+        logger.info("Risk Router adapter disabled — paper-only mode")
+
     portfolio = _load_state()
     logger.info("Portfolio loaded: equity=%.2f", portfolio.equity)
 
@@ -234,7 +335,7 @@ async def main_loop() -> None:
             portfolio = await run_protective_check(portfolio)
 
             if now - last_strategic >= strategic_interval:
-                portfolio = await run_strategic_cycle(portfolio)
+                portfolio = await run_strategic_cycle(portfolio, router)
                 last_strategic = now
 
             _save_state(portfolio)

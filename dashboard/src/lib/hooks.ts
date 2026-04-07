@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import type { Portfolio, Stats, KillCriteria, Artifact, Signal } from "./api";
+import type { Portfolio, Stats, KillCriteria, Artifact, Signal, RegimeData } from "./api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -58,6 +58,20 @@ export function useKillCriteria() {
 
 export function useArtifacts(limit = 30) {
   return useSWR<Artifact[]>(`${API_BASE}/api/artifacts?limit=${limit}`, fetcher, {
+    refreshInterval: 8000,
+    fallbackData: [],
+  });
+}
+
+export function useRegime() {
+  return useSWR<RegimeData>(`${API_BASE}/api/regime`, fetcher, {
+    refreshInterval: 5000,
+    fallbackData: { regime: "unknown", adx: 0, pair: "", timestamp: null },
+  });
+}
+
+export function useTrades() {
+  return useSWR<Artifact[]>(`${API_BASE}/api/trades`, fetcher, {
     refreshInterval: 8000,
     fallbackData: [],
   });

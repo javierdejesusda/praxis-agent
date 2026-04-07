@@ -96,7 +96,7 @@ async def llm_analyze(
             {"role": "user", "content": _build_user_prompt(features, signals)},
         ],
         temperature=0.1,
-        max_tokens=300,
+        max_completion_tokens=300,
         timeout=timeout,
     )
 

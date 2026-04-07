@@ -219,16 +219,17 @@ class RiskRouterAdapter:
         """
         with _nonce_lock:
             nonce = self._w3.eth.get_transaction_count(self._address)
+            gas_price = int(self._w3.eth.gas_price * 1.5)
             tx = tx_func.build_transaction({
                 "from": self._address,
                 "nonce": nonce,
-                "gas": 300_000,
-                "gasPrice": self._w3.eth.gas_price,
+                "gas": 500_000,
+                "gasPrice": gas_price,
                 "chainId": CONTRACTS.chain_id,
             })
             signed = self._account.sign_transaction(tx)
             tx_hash = self._w3.eth.send_raw_transaction(signed.raw_transaction)
-            receipt = self._w3.eth.wait_for_transaction_receipt(tx_hash, timeout=60)
+            receipt = self._w3.eth.wait_for_transaction_receipt(tx_hash, timeout=180)
             return receipt
 
     def register_agent(
@@ -261,11 +262,20 @@ class RiskRouterAdapter:
             )
         )
 
-        logs = self._agent_registry.events.AgentRegistered().process_receipt(receipt)
-        if logs:
-            self._agent_id = logs[0]["args"]["agentId"]
-        else:
+        self._agent_id = None
+        for log in receipt.get("logs", []):
+            topics = log.get("topics", [])
+            if len(topics) >= 2:
+                try:
+                    candidate = int(topics[1].hex(), 16)
+                    if 0 < candidate < 100_000:
+                        self._agent_id = candidate
+                        break
+                except (ValueError, AttributeError):
+                    continue
+        if self._agent_id is None:
             self._agent_id = 1
+            logger.warning("Could not parse agent ID from logs, defaulting to 1")
 
         logger.info("Agent registered with ID: %d", self._agent_id)
         return self._agent_id

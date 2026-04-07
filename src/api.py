@@ -43,14 +43,15 @@ def _load_portfolio() -> dict:
 def _load_artifacts(limit: int = 50) -> list[dict]:
     if not ARTIFACTS_DIR.exists():
         return []
-    files = sorted(ARTIFACTS_DIR.glob("*.json"), reverse=True)[:limit]
+    files = ARTIFACTS_DIR.glob("*.json")
     artifacts = []
     for f in files:
         try:
             artifacts.append(json.loads(f.read_text()))
-        except Exception:
+        except (json.JSONDecodeError, OSError):
             pass
-    return artifacts
+    artifacts.sort(key=lambda a: a.get("timestamp", ""), reverse=True)
+    return artifacts[:limit]
 
 
 @app.get("/api/health")
@@ -99,16 +100,58 @@ async def latest_signals():
 @app.get("/api/kill-criteria")
 async def kill_criteria():
     portfolio = _load_portfolio()
+    daily_pnl = float(portfolio.get("daily_pnl", 0))
+    equity = float(portfolio.get("equity", 10000))
+    drawdown = float(portfolio.get("drawdown_pct", 0))
     return {
         "stale_data": False,
         "malformed_output": False,
         "ledger_mismatch": False,
         "spread_too_wide": False,
-        "daily_loss_breached": portfolio.get("daily_pnl", 0) < -(
-            portfolio.get("equity", 10000) * 0.03
-        ),
-        "max_drawdown_breached": portfolio.get("drawdown_pct", 0) > 0.08,
+        "daily_loss_breached": daily_pnl < -(equity * 0.03),
+        "max_drawdown_breached": drawdown > 0.08,
         "kill_switch": False,
+    }
+
+
+@app.get("/api/regime")
+async def regime():
+    """Current market regime from the latest signal cycle."""
+    all_artifacts = _load_artifacts(10)
+    for a in all_artifacts:
+        payload = a.get("payload", {})
+        signals = payload.get("signals", [])
+        for sig in signals:
+            evidence = sig.get("evidence", {})
+            if "regime" in evidence:
+                return {
+                    "regime": evidence["regime"],
+                    "adx": evidence.get("adx", 0),
+                    "pair": sig.get("pair", ""),
+                    "timestamp": a.get("timestamp"),
+                }
+    return {"regime": "unknown", "adx": 0, "pair": "", "timestamp": None}
+
+
+@app.get("/api/onchain/status")
+async def onchain_status():
+    """On-chain execution status summary."""
+    all_artifacts = _load_artifacts(500)
+    onchain_trades = []
+    for a in all_artifacts:
+        payload = a.get("payload", {})
+        receipt = payload.get("receipt", {})
+        if receipt.get("adapter") == "risk_router":
+            onchain_trades.append({
+                "intent_id": receipt.get("intent_id"),
+                "status": receipt.get("status"),
+                "tx_hash": receipt.get("order_id"),
+                "timestamp": a.get("timestamp"),
+            })
+    return {
+        "enabled": True,
+        "total_onchain_trades": len(onchain_trades),
+        "trades": onchain_trades[:20],
     }
 
 

@@ -63,6 +63,13 @@ export interface Stats {
   positions: Record<string, unknown>;
 }
 
+export interface RegimeData {
+  regime: string;
+  adx: number;
+  pair: string;
+  timestamp: string | null;
+}
+
 export const api = {
   health: () => fetchApi<{ status: string; timestamp: string }>("/api/health"),
   portfolio: () => fetchApi<Portfolio>("/api/portfolio"),
@@ -75,4 +82,5 @@ export const api = {
     ),
   killCriteria: () => fetchApi<KillCriteria>("/api/kill-criteria"),
   stats: () => fetchApi<Stats>("/api/stats"),
+  regime: () => fetchApi<RegimeData>("/api/regime"),
 };
