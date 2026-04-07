@@ -138,3 +138,4 @@ class Portfolio(BaseModel):
     consecutive_losses: int = 0
     trade_count: int = 0
     daily_trade_count: int = 0
+    last_trade_bar: int = 0

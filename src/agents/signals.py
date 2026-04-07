@@ -59,6 +59,13 @@ def trend_signal(features: Features) -> SignalReport:
         confidence += 10
         evidence["below_ema200"] = True
 
+    if direction == Direction.LONG and features.rsi_14 > 75:
+        confidence *= 0.5
+        evidence["trend_exhaustion_bull"] = True
+    elif direction == Direction.SHORT and features.rsi_14 < 20:
+        confidence *= 0.5
+        evidence["trend_exhaustion_bear"] = True
+
     if features.regime == Regime.TRENDING:
         confidence *= 1.2
     elif features.regime == Regime.RANGING:
@@ -339,6 +346,13 @@ def momentum_signal(features: Features) -> SignalReport:
         if features.volume_ratio > 1.3:
             confidence += 10
             evidence["volume_supports"] = True
+
+        if direction == Direction.LONG and features.rsi_14 > 75:
+            confidence *= 0.5
+            evidence["momentum_exhaustion_bull"] = True
+        elif direction == Direction.SHORT and features.rsi_14 < 20:
+            confidence *= 0.5
+            evidence["momentum_exhaustion_bear"] = True
 
     confidence = max(0.0, min(100.0, confidence))
 
