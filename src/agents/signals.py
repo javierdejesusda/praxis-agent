@@ -303,8 +303,8 @@ def momentum_signal(features: Features) -> SignalReport:
     evidence["r5"] = round(r5 * 100, 3)
     evidence["r20"] = round(r20 * 100, 3)
 
-    bull_momentum = r5 > 0.005 and r20 > 0
-    bear_momentum = r5 < -0.005 and r20 < 0
+    bull_momentum = r5 > 0.003 and r20 > -0.01
+    bear_momentum = r5 < -0.003 and r20 < 0.01
     evidence["bull_momentum"] = bull_momentum
     evidence["bear_momentum"] = bear_momentum
 

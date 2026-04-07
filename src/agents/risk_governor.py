@@ -7,6 +7,7 @@ import uuid
 from datetime import datetime, timezone
 
 from src.config import RISK, STRATEGY
+
 from src.models import (
     AnalystReport,
     Direction,
@@ -140,11 +141,13 @@ def evaluate_risk(
     long_count = sum(1 for d in directions if d == Direction.LONG)
     short_count = sum(1 for d in directions if d == Direction.SHORT)
 
-    if analyst is not None:
+    if analyst is not None and analyst.direction != Direction.HOLD:
         if long_count > short_count and analyst.direction == Direction.LONG:
             consensus_direction = Direction.LONG
         elif short_count > long_count and analyst.direction == Direction.SHORT:
             consensus_direction = Direction.SHORT
+        elif analyst.conviction >= 60:
+            consensus_direction = analyst.direction
         else:
             decision = RiskDecision(
                 approved=False,
@@ -153,19 +156,18 @@ def evaluate_risk(
                 drawdown_pct=drawdown,
             )
             return decision, None
+    elif long_count > short_count:
+        consensus_direction = Direction.LONG
+    elif short_count > long_count:
+        consensus_direction = Direction.SHORT
     else:
-        if long_count >= 2 and long_count > short_count:
-            consensus_direction = Direction.LONG
-        elif short_count >= 2 and short_count > long_count:
-            consensus_direction = Direction.SHORT
-        else:
-            decision = RiskDecision(
-                approved=False,
-                reason_codes=["FALLBACK_NO_CONSENSUS"],
-                daily_pnl=portfolio.daily_pnl,
-                drawdown_pct=drawdown,
-            )
-            return decision, None
+        decision = RiskDecision(
+            approved=False,
+            reason_codes=["FALLBACK_NO_CONSENSUS"],
+            daily_pnl=portfolio.daily_pnl,
+            drawdown_pct=drawdown,
+        )
+        return decision, None
 
     aligned_signals = [
         s for s in signals
@@ -179,6 +181,12 @@ def evaluate_risk(
         if aligned_signals
         else 0.0
     )
+
+    if len(aligned_signals) >= 3:
+        avg_confidence *= 1.15
+    elif len(aligned_signals) >= 2:
+        avg_confidence *= 1.05
+    avg_confidence = min(100.0, avg_confidence)
 
     erc_eligible = avg_confidence >= RISK.min_signal_score_erc
     paper_eligible = avg_confidence >= RISK.min_signal_score_paper
@@ -226,8 +234,9 @@ def evaluate_risk(
     current_exposure = sum(
         abs(v.get("size_usd", 0)) for v in portfolio.positions.values()
     )
-    max_exposure = portfolio.equity * RISK.max_position_pct
-    if current_exposure + intent.size_usd > max_exposure:
+    max_total_exposure = portfolio.equity * RISK.max_position_pct * len(STRATEGY.pairs)
+    pair_already_open = features.pair in portfolio.positions
+    if pair_already_open or current_exposure + intent.size_usd > max_total_exposure:
         decision = RiskDecision(
             approved=False,
             reason_codes=["MAX_EXPOSURE"],
