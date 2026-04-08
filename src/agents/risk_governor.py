@@ -212,12 +212,20 @@ def evaluate_risk(
 
     atr = features.atr_20
     entry_price = features.ema_9
+
+    if features.adx_14 >= 35:
+        target_mult = 4.0
+    elif features.adx_14 >= 25:
+        target_mult = 2.0
+    else:
+        target_mult = 1.5
+
     if consensus_direction == Direction.LONG:
         atr_stop = entry_price - (atr * 3.0)
-        atr_target = entry_price + (atr * 4.0)
+        atr_target = entry_price + (atr * target_mult)
     else:
         atr_stop = entry_price + (atr * 3.0)
-        atr_target = entry_price - (atr * 4.0)
+        atr_target = entry_price - (atr * target_mult)
 
     intent = TradeIntent(
         intent_id=str(uuid.uuid4())[:8],

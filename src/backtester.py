@@ -96,7 +96,7 @@ def backtest_pair(
     rsi_short_max: float = 100.0,
     r20_short_max: float = 1.0,
     stop_mult: float = 3.0,
-    target_mult: float = 4.0,
+    target_mult: float = 0,
 ):
     """Run walk-forward backtest on a single pair.
 
@@ -266,12 +266,21 @@ def backtest_pair(
         portfolio.trade_count += 1
 
         atr = features.atr_20
+        if target_mult > 0:
+            tgt_m = target_mult
+        elif features.adx_14 >= 35:
+            tgt_m = 4.0
+        elif features.adx_14 >= 25:
+            tgt_m = 2.0
+        else:
+            tgt_m = 1.5
+
         if intent.side == Direction.LONG:
             actual_stop = fill_price - atr * stop_mult
-            actual_target = fill_price + atr * target_mult
+            actual_target = fill_price + atr * tgt_m
         else:
             actual_stop = fill_price + atr * stop_mult
-            actual_target = fill_price - atr * target_mult
+            actual_target = fill_price - atr * tgt_m
 
         position = {
             "side": intent.side.value,
