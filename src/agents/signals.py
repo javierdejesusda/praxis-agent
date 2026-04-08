@@ -420,3 +420,72 @@ def momentum_signal(features: Features) -> SignalReport:
         confidence=confidence,
         evidence=evidence,
     )
+
+
+def swing_structure_signal(features: Features) -> SignalReport:
+    """Price action swing structure agent.
+
+    Analyzes EMA relationships and returns to determine if price is
+    making higher highs/lows (bullish) or lower highs/lows (bearish).
+
+    Args:
+        features: Computed technical features for a single bar.
+
+    Returns:
+        SignalReport with direction and confidence.
+    """
+    confidence = 0.0
+    evidence = {}
+    direction = Direction.HOLD
+
+    ema_bull = features.ema_9 > features.ema_21 > features.ema_55 > features.ema_200
+    ema_bear = features.ema_9 < features.ema_21 < features.ema_55 < features.ema_200
+
+    r5_up = features.returns_5bar > 0
+    r20_up = features.returns_20bar > 0
+    r5_dn = features.returns_5bar < 0
+    r20_dn = features.returns_20bar < 0
+
+    if ema_bull and r5_up and r20_up:
+        direction = Direction.LONG
+        confidence += 45
+        evidence["full_bull_structure"] = True
+    elif ema_bear and r5_dn and r20_dn:
+        direction = Direction.SHORT
+        confidence += 45
+        evidence["full_bear_structure"] = True
+
+    if direction == Direction.LONG and features.macd_slope > 0:
+        confidence += 10
+        evidence["swing_macd_acc"] = True
+    elif direction == Direction.SHORT and features.macd_slope < 0:
+        confidence += 10
+        evidence["swing_macd_acc"] = True
+
+    if direction == Direction.LONG and features.rsi_divergence == 1:
+        confidence += 10
+        evidence["swing_div_bull"] = True
+    elif direction == Direction.SHORT and features.rsi_divergence == -1:
+        confidence += 10
+        evidence["swing_div_bear"] = True
+
+    if direction == Direction.LONG and features.engulfing == 1:
+        confidence += 15
+        evidence["swing_engulfing_bull"] = True
+    elif direction == Direction.SHORT and features.engulfing == -1:
+        confidence += 15
+        evidence["swing_engulfing_bear"] = True
+
+    confidence = max(0.0, min(100.0, confidence))
+
+    if confidence < 20:
+        direction = Direction.HOLD
+
+    return SignalReport(
+        agent_name="swing",
+        pair=features.pair,
+        timestamp=features.timestamp,
+        direction=direction,
+        confidence=confidence,
+        evidence=evidence,
+    )

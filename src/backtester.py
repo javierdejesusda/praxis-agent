@@ -19,6 +19,7 @@ from src.agents.signals import (
     mean_reversion_signal,
     momentum_signal,
     spread_cost_signal,
+    swing_structure_signal,
     trend_signal,
     volatility_signal,
 )
@@ -37,13 +38,14 @@ BREAKEVEN_PCT = 0.02
 
 
 def _run_signals(features):
-    """Run all 5 deterministic signal agents."""
+    """Run all 6 deterministic signal agents."""
     return [
         trend_signal(features),
         volatility_signal(features),
         spread_cost_signal(features),
         mean_reversion_signal(features),
         momentum_signal(features),
+        swing_structure_signal(features),
     ]
 
 
@@ -97,6 +99,7 @@ def backtest_pair(
     r20_short_max: float = 1.0,
     stop_mult: float = 3.0,
     target_mult: float = 0,
+    cooldown: int = 2,
 ):
     """Run walk-forward backtest on a single pair.
 
@@ -232,7 +235,7 @@ def backtest_pair(
         if position is not None:
             continue
 
-        if bars_since_trade < 2:
+        if bars_since_trade < cooldown:
             continue
 
         signals = _run_signals(features)

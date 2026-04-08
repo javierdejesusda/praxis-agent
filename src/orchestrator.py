@@ -14,6 +14,7 @@ from src.agents.signals import (
     mean_reversion_signal,
     momentum_signal,
     spread_cost_signal,
+    swing_structure_signal,
     trend_signal,
     volatility_signal,
 )
@@ -314,6 +315,7 @@ async def run_strategic_cycle(
                 spread_cost_signal(features),
                 mean_reversion_signal(features),
                 momentum_signal(features),
+                swing_structure_signal(features),
             ]
             signals = _apply_cross_pair_boost(signals, pair)
 
