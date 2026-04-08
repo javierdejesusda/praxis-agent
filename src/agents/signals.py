@@ -48,7 +48,10 @@ def trend_signal(features: Features) -> SignalReport:
         confidence += 15
     evidence["returns_5bar"] = features.returns_5bar
 
-    if features.volume_ratio > 1.5:
+    if features.volume_ratio > 2.0:
+        confidence += 15
+        evidence["strong_volume"] = True
+    elif features.volume_ratio > 1.5:
         confidence += 10
         evidence["volume_confirmed"] = True
 
