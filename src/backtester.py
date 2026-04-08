@@ -155,7 +155,7 @@ def backtest_pair(
                 peak = max(peak, close_price)
                 trail = peak - atr * trail_mult
                 if peak > entry * (1 + BREAKEVEN_PCT):
-                    trail = max(trail, entry)
+                    trail = max(trail, entry * 0.998)
 
                 close_trade = False
                 reason = ""
@@ -172,7 +172,7 @@ def backtest_pair(
                 peak = min(peak, close_price)
                 trail = peak + atr * trail_mult
                 if peak < entry * (1 - BREAKEVEN_PCT):
-                    trail = min(trail, entry)
+                    trail = min(trail, entry * 1.002)
 
                 close_trade = False
                 reason = ""

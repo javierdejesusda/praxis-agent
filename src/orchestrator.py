@@ -499,7 +499,7 @@ async def run_protective_check(
                 atr = pos.get("atr_20", abs(entry_price - atr_stop) / 3.0 if atr_stop else (entry_price * 0.02))
                 trail = peak - atr * 2.0
                 if peak > entry_price * 1.02:
-                    trail = max(trail, entry_price)
+                    trail = max(trail, entry_price * 0.998)
                 if atr_stop and current_price <= atr_stop:
                     logger.warning("ATR stop hit for %s LONG @ %.2f (stop=%.2f)", pair, current_price, atr_stop)
                     closed_pairs.append(pair)
@@ -517,7 +517,7 @@ async def run_protective_check(
                 atr = pos.get("atr_20", abs(atr_stop - entry_price) / 3.0 if atr_stop else (entry_price * 0.02))
                 trail = peak + atr * 2.0
                 if peak < entry_price * 0.98:
-                    trail = min(trail, entry_price)
+                    trail = min(trail, entry_price * 1.002)
                 if atr_stop and current_price >= atr_stop:
                     logger.warning("ATR stop hit for %s SHORT @ %.2f (stop=%.2f)", pair, current_price, atr_stop)
                     closed_pairs.append(pair)
