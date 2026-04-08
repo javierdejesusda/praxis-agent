@@ -81,6 +81,14 @@ def trend_signal(features: Features) -> SignalReport:
     elif direction == Direction.SHORT and features.macd_slope < 0:
         confidence += 10
         evidence["macd_accelerating_bear"] = True
+
+    if direction == Direction.LONG and features.engulfing == 1:
+        confidence += 15
+        evidence["bullish_engulfing"] = True
+    elif direction == Direction.SHORT and features.engulfing == -1:
+        confidence += 15
+        evidence["bearish_engulfing"] = True
+
     if direction == Direction.LONG and features.rsi_14 > 75:
         confidence *= 0.5
         evidence["trend_exhaustion_bull"] = True

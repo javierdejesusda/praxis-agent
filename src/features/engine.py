@@ -137,6 +137,20 @@ def compute_features(df: pd.DataFrame, pair: str) -> Features:
     hist_prev = float(macd_df[hist_col].iloc[latest - 1]) if latest > 0 else hist_now
     macd_slope_val = hist_now - hist_prev
 
+    engulfing_val = 0
+    if latest >= 1:
+        o_prev = float(df["open"].iloc[latest - 1])
+        c_prev = float(df["close"].iloc[latest - 1])
+        o_curr = float(df["open"].iloc[latest])
+        c_curr = float(df["close"].iloc[latest])
+        body_prev = abs(c_prev - o_prev)
+        body_curr = abs(c_curr - o_curr)
+        if body_curr > body_prev * 1.2:
+            if c_prev < o_prev and c_curr > o_curr and o_curr <= c_prev and c_curr >= o_prev:
+                engulfing_val = 1
+            elif c_prev > o_prev and c_curr < o_curr and o_curr >= c_prev and c_curr <= o_prev:
+                engulfing_val = -1
+
     ema9_val = float(ema_9.iloc[latest])
     ema21_val = float(ema_21.iloc[latest])
     ema55_val = float(ema_55.iloc[latest])
@@ -170,4 +184,5 @@ def compute_features(df: pd.DataFrame, pair: str) -> Features:
         macd_divergence=macd_div,
         macd_slope=macd_slope_val,
         ema_spread=ema_spread_val,
+        engulfing=engulfing_val,
     )

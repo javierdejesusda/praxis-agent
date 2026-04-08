@@ -63,6 +63,7 @@ class Features(BaseModel):
     macd_divergence: int = 0  # -1 = bearish, 0 = none, 1 = bullish
     macd_slope: float = 0.0   # change in MACD histogram from prev bar
     ema_spread: float = 0.0   # EMA fan spread: abs(ema9 - ema55) / ema21
+    engulfing: int = 0        # -1 = bearish engulfing, 0 = none, 1 = bullish engulfing
 
 
 class SignalReport(BaseModel):
