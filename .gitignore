@@ -27,6 +27,10 @@ sota-red-team-research.md
 sota-sources-comprehensive.md
 NEXT_PHASE.md
 
+# Runtime data
+artifacts/
+state/
+
 # OS
 .DS_Store
 Thumbs.db
