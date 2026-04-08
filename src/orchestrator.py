@@ -496,7 +496,7 @@ async def run_protective_check(
 
             if side == "long":
                 peak = max(peak, current_price)
-                atr = pos.get("atr_20", abs(entry_price - atr_stop) / 2.0 if atr_stop else (entry_price * 0.02))
+                atr = pos.get("atr_20", abs(entry_price - atr_stop) / 3.0 if atr_stop else (entry_price * 0.02))
                 trail = peak - atr * 2.0
                 if peak > entry_price * 1.02:
                     trail = max(trail, entry_price)
@@ -514,7 +514,7 @@ async def run_protective_check(
                     close_prices[pair] = current_price
             else:
                 peak = min(peak, current_price)
-                atr = pos.get("atr_20", abs(atr_stop - entry_price) / 2.0 if atr_stop else (entry_price * 0.02))
+                atr = pos.get("atr_20", abs(atr_stop - entry_price) / 3.0 if atr_stop else (entry_price * 0.02))
                 trail = peak + atr * 2.0
                 if peak < entry_price * 0.98:
                     trail = min(trail, entry_price)

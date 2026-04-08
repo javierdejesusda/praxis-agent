@@ -86,13 +86,26 @@ async def fetch_data(pair: str, interval: int, bars: int) -> pd.DataFrame:
     return _parse_ohlc_to_dataframe(raw, pair)
 
 
-def backtest_pair(df: pd.DataFrame, pair: str, initial_equity: float = 10000.0):
+def backtest_pair(
+    df: pd.DataFrame,
+    pair: str,
+    initial_equity: float = 10000.0,
+    max_hold_bars: int = 999,
+    min_confidence: int = 70,
+    rsi_long_max: float = 100.0,
+    rsi_short_max: float = 100.0,
+    r20_short_max: float = 1.0,
+    stop_mult: float = 3.0,
+    target_mult: float = 4.0,
+):
     """Run walk-forward backtest on a single pair.
 
     Args:
         df: Full OHLCV DataFrame (must have 200+ rows).
         pair: Trading pair name.
         initial_equity: Starting equity.
+        max_hold_bars: Close position after this many bars if not exited.
+        min_confidence: Minimum signal score to approve trade.
 
     Returns:
         Dict with backtest results.
@@ -109,6 +122,7 @@ def backtest_pair(df: pd.DataFrame, pair: str, initial_equity: float = 10000.0):
     buy_hold_entry = float(df["close"].iloc[warmup])
     position = None
     bars_since_trade = 0
+    bars_held = 0
 
     for i in range(warmup, total_bars):
         window = df.iloc[max(0, i - warmup):i + 1]
@@ -126,15 +140,20 @@ def backtest_pair(df: pd.DataFrame, pair: str, initial_equity: float = 10000.0):
             continue
 
         if position is not None:
+            bars_held += 1
             entry = position["entry_price"]
             atr_stop = position.get("atr_stop")
             atr_target = position.get("atr_target")
             peak = position.get("peak_price", entry)
             atr = position.get("atr_20", features.atr_20)
 
+            trail_mult = TRAIL_ATR_MULT
+            if bars_held > 10:
+                trail_mult = max(1.0, TRAIL_ATR_MULT - (bars_held - 10) * 0.1)
+
             if position["side"] == "long":
                 peak = max(peak, close_price)
-                trail = peak - atr * TRAIL_ATR_MULT
+                trail = peak - atr * trail_mult
                 if peak > entry * (1 + BREAKEVEN_PCT):
                     trail = max(trail, entry)
 
@@ -151,7 +170,7 @@ def backtest_pair(df: pd.DataFrame, pair: str, initial_equity: float = 10000.0):
                     reason = "atr_target"
             else:
                 peak = min(peak, close_price)
-                trail = peak + atr * TRAIL_ATR_MULT
+                trail = peak + atr * trail_mult
                 if peak < entry * (1 - BREAKEVEN_PCT):
                     trail = min(trail, entry)
 
@@ -166,6 +185,10 @@ def backtest_pair(df: pd.DataFrame, pair: str, initial_equity: float = 10000.0):
                 elif atr_target and close_price <= atr_target:
                     close_trade = True
                     reason = "atr_target"
+
+            if not close_trade and bars_held >= max_hold_bars:
+                close_trade = True
+                reason = "time_exit"
 
             position["peak_price"] = peak
 
@@ -203,6 +226,7 @@ def backtest_pair(df: pd.DataFrame, pair: str, initial_equity: float = 10000.0):
                     del portfolio.positions[pair]
                 position = None
                 bars_since_trade = 0
+                bars_held = 0
                 continue
 
         if position is not None:
@@ -225,18 +249,36 @@ def backtest_pair(df: pd.DataFrame, pair: str, initial_equity: float = 10000.0):
         if not risk_decision.approved or intent is None:
             continue
 
+        if intent.signal_score < min_confidence:
+            continue
+
+        if intent.side == Direction.LONG and features.rsi_14 > rsi_long_max:
+            continue
+        if intent.side == Direction.SHORT and features.rsi_14 > rsi_short_max:
+            continue
+        if intent.side == Direction.SHORT and features.returns_20bar > r20_short_max:
+            continue
+
         fill_price = close_price
         fees = intent.size_usd * FEE_RATE
         portfolio.cash -= fees
         portfolio.equity -= fees
         portfolio.trade_count += 1
 
+        atr = features.atr_20
+        if intent.side == Direction.LONG:
+            actual_stop = fill_price - atr * stop_mult
+            actual_target = fill_price + atr * target_mult
+        else:
+            actual_stop = fill_price + atr * stop_mult
+            actual_target = fill_price - atr * target_mult
+
         position = {
             "side": intent.side.value,
             "size_usd": intent.size_usd,
             "entry_price": fill_price,
-            "atr_stop": intent.atr_stop,
-            "atr_target": intent.atr_target,
+            "atr_stop": actual_stop,
+            "atr_target": actual_target,
             "peak_price": fill_price,
             "atr_20": features.atr_20,
             "intent_id": intent.intent_id,

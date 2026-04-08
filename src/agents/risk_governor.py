@@ -213,11 +213,11 @@ def evaluate_risk(
     atr = features.atr_20
     entry_price = features.ema_9
     if consensus_direction == Direction.LONG:
-        atr_stop = entry_price - (atr * 2.0)
-        atr_target = entry_price + (atr * 3.0)
+        atr_stop = entry_price - (atr * 3.0)
+        atr_target = entry_price + (atr * 4.0)
     else:
-        atr_stop = entry_price + (atr * 2.0)
-        atr_target = entry_price - (atr * 3.0)
+        atr_stop = entry_price + (atr * 3.0)
+        atr_target = entry_price - (atr * 4.0)
 
     intent = TradeIntent(
         intent_id=str(uuid.uuid4())[:8],
