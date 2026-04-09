@@ -48,6 +48,27 @@ export function parsePortfolio(raw: Record<string, unknown>): Portfolio {
   };
 }
 
+export function parseSignal(raw: Record<string, unknown>): Signal {
+  return {
+    agent_name: typeof raw.agent_name === "string" ? raw.agent_name : "",
+    pair: typeof raw.pair === "string" ? raw.pair : "",
+    direction: typeof raw.direction === "string" ? raw.direction : "hold",
+    confidence: toNumber(raw.confidence),
+    evidence: (raw.evidence as Record<string, unknown>) ?? {},
+  };
+}
+
+export function parseLatestSignals(raw: Record<string, unknown>): {
+  timestamp: string;
+  signals: Signal[];
+} {
+  const rawSignals = Array.isArray(raw.signals) ? raw.signals : [];
+  return {
+    timestamp: typeof raw.timestamp === "string" ? raw.timestamp : "",
+    signals: rawSignals.map((s) => parseSignal(s as Record<string, unknown>)),
+  };
+}
+
 export function parseStats(raw: Record<string, unknown>): Stats {
   return {
     equity: toNumber(raw.equity),

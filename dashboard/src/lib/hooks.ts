@@ -2,6 +2,7 @@
 
 import useSWR from "swr";
 import {
+  parseLatestSignals,
   parsePortfolio,
   parseStats,
   type Portfolio,
@@ -25,6 +26,11 @@ const portfolioFetcher = async (url: string): Promise<Portfolio> =>
 
 const statsFetcher = async (url: string): Promise<Stats> =>
   parseStats(await fetcher(url));
+
+const latestSignalsFetcher = async (
+  url: string,
+): Promise<{ timestamp: string; signals: Signal[] }> =>
+  parseLatestSignals(await fetcher(url));
 
 export function usePortfolio() {
   return useSWR<Portfolio>(`${API_BASE}/api/portfolio`, portfolioFetcher, {
@@ -106,7 +112,7 @@ export function usePrism(symbol: string) {
 export function useLatestSignals() {
   return useSWR<{ timestamp: string; signals: Signal[] }>(
     `${API_BASE}/api/signals/latest`,
-    fetcher,
+    latestSignalsFetcher,
     { refreshInterval: 5000, fallbackData: { timestamp: "", signals: [] } }
   );
 }
