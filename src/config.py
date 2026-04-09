@@ -14,7 +14,7 @@ class RiskParams:
     """Deterministic risk governor parameters."""
 
     risk_per_trade_pct: float = 0.01
-    max_position_pct: float = 0.10
+    max_position_pct: float = 0.22
     max_daily_loss_pct: float = 0.03
     max_drawdown_pct: float = 0.08
     max_consecutive_losses: int = 3
@@ -22,7 +22,9 @@ class RiskParams:
     real_cost_bps: float = 55.0
     required_edge_multiplier: float = 1.1
     min_signal_score_erc: int = 85
-    min_signal_score_paper: int = 70
+    min_signal_score_paper: int = 85
+    min_signal_score_short: int = 90
+    shorts_enabled: bool = True
     execution_mode: str = "paper"
 
 
@@ -57,6 +59,7 @@ OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.2")
 SEPOLIA_RPC_URL = os.getenv("SEPOLIA_RPC_URL", "")
 SEPOLIA_PRIVATE_KEY = os.getenv("SEPOLIA_PRIVATE_KEY", "")
 PRISM_API_KEY = os.getenv("PRISM_API_KEY", "")
+FMP_API_KEY = os.getenv("FMP_API_KEY", "")
 
 STATE_DIR = Path("state")
 ARTIFACTS_DIR = Path("artifacts")

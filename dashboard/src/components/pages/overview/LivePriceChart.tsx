@@ -93,6 +93,7 @@ export function LivePriceChart({
   const { data: tradesData } = useTrades();
 
   const candles = series?.candles ?? [];
+  const source = series?.source;
   const trades = tradesData ?? [];
   const markers = buildMarkers(trades, pair);
 
@@ -124,14 +125,21 @@ export function LivePriceChart({
           />
         </div>
         <span className="text-[9px] uppercase tracking-[0.12em] text-[color:var(--color-muted)]">
-          1h · last 120 bars
+          1h · last 120 bars{source ? ` · ${source}` : ""}
         </span>
       </div>
       <SectionHeader title="Price" count={markers.length || undefined} />
       <div className="px-2 pb-3" style={{ height: 220 }}>
         {candles.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-[11px] text-[color:var(--color-muted)]">
-            No price data yet.
+          <div className="h-full flex flex-col items-center justify-center gap-1 text-center px-4">
+            <span className="text-[11px] text-[color:var(--color-muted)]">
+              No price data yet.
+            </span>
+            <span className="text-[10px] text-[color:var(--color-muted-soft)]">
+              {series?.error
+                ? series.error
+                : "Set FMP_API_KEY in .env and restart the backend."}
+            </span>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">

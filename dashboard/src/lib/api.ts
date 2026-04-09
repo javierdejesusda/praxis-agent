@@ -246,6 +246,7 @@ export interface PriceSeries {
   pair: string;
   interval: number;
   candles: PriceCandle[];
+  source?: "fmp" | "kraken" | "error";
   error?: string;
 }
 

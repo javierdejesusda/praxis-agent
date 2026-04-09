@@ -1,6 +1,7 @@
 """FastAPI backend serving trading data to the dashboard frontend."""
 
 import json
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -12,7 +13,10 @@ from fastapi.responses import JSONResponse
 from src.artifacts.hasher import canonical_json
 from src.config import ARTIFACTS_DIR, STATE_DIR
 from src.execution.kraken_adapter import get_ohlc
+from src.features.fmp_prices import get_crypto_intraday
 from src.features.prism import get_signals as prism_signals, get_risk_metrics as prism_risk
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Aegis Agent API", version="0.1.0")
 
@@ -202,25 +206,9 @@ async def backtest_report():
         return {"available": False, "error": str(exc)}
 
 
-@app.get("/api/prices/{pair}")
-async def prices(pair: str, interval: int = 60, limit: int = 120):
-    """OHLC candle series for a trading pair via Kraken.
-
-    Args:
-        pair: Trading pair (e.g. "BTCUSD", "ETHUSD").
-        interval: Candle interval in minutes (1, 5, 15, 30, 60, 240, 1440).
-        limit: Maximum number of most-recent candles to return.
-
-    Returns:
-        Dict with pair, interval, and a list of candle dicts
-        ``{t, o, h, l, c, v}`` where ``t`` is unix seconds.
-    """
-    pair_up = pair.upper()
-    try:
-        result = await get_ohlc(pair_up, interval=interval)
-    except Exception as exc:  # noqa: BLE001 — surface upstream errors as empty
-        return {"pair": pair_up, "interval": interval, "candles": [], "error": str(exc)}
-
+async def _kraken_candles(pair: str, interval: int, limit: int) -> list[dict]:
+    """Fallback: fetch candles from Kraken OHLC when FMP is unavailable."""
+    result = await get_ohlc(pair, interval=interval)
     rows: list[list] = []
     for key, value in result.items():
         if key == "last":
@@ -228,11 +216,9 @@ async def prices(pair: str, interval: int = 60, limit: int = 120):
         if isinstance(value, list):
             rows = value
             break
-
     if limit > 0 and len(rows) > limit:
         rows = rows[-limit:]
-
-    candles = []
+    candles: list[dict] = []
     for row in rows:
         if len(row) < 7:
             continue
@@ -249,8 +235,58 @@ async def prices(pair: str, interval: int = 60, limit: int = 120):
             )
         except (TypeError, ValueError):
             continue
+    return candles
 
-    return {"pair": pair_up, "interval": interval, "candles": candles}
+
+@app.get("/api/prices/{pair}")
+async def prices(pair: str, interval: int = 60, limit: int = 120):
+    """OHLC candle series for a trading pair.
+
+    Prefers Financial Modeling Prep (FMP) for reliable, geo-agnostic data.
+    Falls back to Kraken OHLC if FMP is unconfigured or fails.
+
+    Args:
+        pair: Trading pair (e.g. "BTCUSD", "ETHUSD").
+        interval: Candle interval in minutes (1, 5, 60 for FMP).
+        limit: Maximum number of most-recent candles to return.
+
+    Returns:
+        Dict with pair, interval, source, and a list of candle dicts
+        ``{t, o, h, l, c, v}`` where ``t`` is unix seconds.
+    """
+    pair_up = pair.upper()
+
+    try:
+        candles = await get_crypto_intraday(pair_up, interval=interval, limit=limit)
+        if candles:
+            return {
+                "pair": pair_up,
+                "interval": interval,
+                "source": "fmp",
+                "candles": candles,
+            }
+    except RuntimeError as exc:
+        logger.info("FMP unavailable, falling back to Kraken: %s", exc)
+    except Exception as exc:  # noqa: BLE001 — fall through to Kraken
+        logger.warning("FMP error for %s, falling back to Kraken: %s", pair_up, exc)
+
+    try:
+        candles = await _kraken_candles(pair_up, interval=interval, limit=limit)
+    except Exception as exc:  # noqa: BLE001 — surface as empty
+        return {
+            "pair": pair_up,
+            "interval": interval,
+            "source": "error",
+            "candles": [],
+            "error": str(exc),
+        }
+
+    return {
+        "pair": pair_up,
+        "interval": interval,
+        "source": "kraken",
+        "candles": candles,
+    }
 
 
 @app.get("/api/prism/{symbol}")
