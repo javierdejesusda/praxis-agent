@@ -203,6 +203,7 @@ class RiskRouterAdapter:
         )
 
         self._agent_id: Optional[int] = None
+        self._cached_nonce: Optional[int] = None
 
     @property
     def enabled(self) -> bool:
@@ -211,6 +212,12 @@ class RiskRouterAdapter:
     def _send_tx(self, tx_func) -> dict:
         """Build, sign, and send a transaction with nonce locking.
 
+        Uses the maximum of the node's pending nonce and a locally cached
+        nonce, then increments the cache on success. This absorbs RPC
+        replication lag where get_transaction_count briefly returns a stale
+        value after a just-mined tx, which otherwise causes "nonce too low"
+        errors on back-to-back sends.
+
         Args:
             tx_func: A contract function call (e.g. contract.functions.foo(args)).
 
@@ -218,7 +225,11 @@ class RiskRouterAdapter:
             Transaction receipt dict.
         """
         with _nonce_lock:
-            nonce = self._w3.eth.get_transaction_count(self._address)
+            node_nonce = self._w3.eth.get_transaction_count(self._address, "pending")
+            if self._cached_nonce is None or node_nonce > self._cached_nonce:
+                nonce = node_nonce
+            else:
+                nonce = self._cached_nonce
             gas_price = int(self._w3.eth.gas_price * 1.5)
             tx = tx_func.build_transaction({
                 "from": self._address,
@@ -229,6 +240,10 @@ class RiskRouterAdapter:
             })
             signed = self._account.sign_transaction(tx)
             tx_hash = self._w3.eth.send_raw_transaction(signed.raw_transaction)
+            # Advance the cache as soon as the mempool accepts the tx. The
+            # nonce is consumed at this point even if the receipt wait times
+            # out, so we must not reuse it on the next send.
+            self._cached_nonce = nonce + 1
             receipt = self._w3.eth.wait_for_transaction_receipt(tx_hash, timeout=180)
             return receipt
 

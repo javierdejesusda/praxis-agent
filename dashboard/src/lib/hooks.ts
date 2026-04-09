@@ -1,14 +1,33 @@
 "use client";
 
 import useSWR from "swr";
-import type { Portfolio, Stats, KillCriteria, Artifact, Signal, RegimeData, PrismData } from "./api";
+import {
+  parsePortfolio,
+  parseStats,
+  type Portfolio,
+  type Stats,
+  type KillCriteria,
+  type Artifact,
+  type Signal,
+  type RegimeData,
+  type PrismData,
+} from "./api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
+// The /api/portfolio and /api/stats endpoints serialise Decimal values as
+// strings; parse them back to numbers here so components can treat the shape
+// uniformly as numbers.
+const portfolioFetcher = async (url: string): Promise<Portfolio> =>
+  parsePortfolio(await fetcher(url));
+
+const statsFetcher = async (url: string): Promise<Stats> =>
+  parseStats(await fetcher(url));
+
 export function usePortfolio() {
-  return useSWR<Portfolio>(`${API_BASE}/api/portfolio`, fetcher, {
+  return useSWR<Portfolio>(`${API_BASE}/api/portfolio`, portfolioFetcher, {
     refreshInterval: 5000,
     fallbackData: {
       equity: 10000,
@@ -26,7 +45,7 @@ export function usePortfolio() {
 }
 
 export function useStats() {
-  return useSWR<Stats>(`${API_BASE}/api/stats`, fetcher, {
+  return useSWR<Stats>(`${API_BASE}/api/stats`, statsFetcher, {
     refreshInterval: 5000,
     fallbackData: {
       equity: 10000,

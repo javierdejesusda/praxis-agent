@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   AreaChart,
@@ -15,6 +16,13 @@ interface Props {
   pnl: number;
 }
 
+// Deterministic pseudo-noise in [-1, 1] keyed by the sample index. Produces
+// the same value on server and client so hydration does not mismatch.
+function seededNoise(index: number): number {
+  const s = Math.sin(index * 12.9898) * 43758.5453;
+  return (s - Math.floor(s)) * 2 - 1;
+}
+
 function generateEquityHistory(currentEquity: number): { time: string; equity: number }[] {
   const points = 24;
   const data: { time: string; equity: number }[] = [];
@@ -23,7 +31,7 @@ function generateEquityHistory(currentEquity: number): { time: string; equity: n
 
   for (let i = 0; i < points; i++) {
     const progress = i / (points - 1);
-    const noise = (Math.random() - 0.5) * 50;
+    const noise = seededNoise(i) * 25;
     const equity = baseEquity + delta * progress + noise * (1 - progress * 0.5);
     const hour = String(i).padStart(2, "0");
     data.push({ time: `${hour}:00`, equity: Math.round(equity * 100) / 100 });
@@ -34,7 +42,7 @@ function generateEquityHistory(currentEquity: number): { time: string; equity: n
 }
 
 export function EquityChart({ equity, pnl }: Props) {
-  const data = generateEquityHistory(equity);
+  const data = useMemo(() => generateEquityHistory(equity), [equity]);
   const isPositive = pnl >= 0;
 
   return (
