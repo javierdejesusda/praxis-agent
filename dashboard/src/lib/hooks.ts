@@ -11,6 +11,7 @@ import {
   type RegimeData,
   type PrismData,
   type PriceSeries,
+  type LiveQuote,
   type OnchainStatus,
   type BacktestReport,
   type Attestation,
@@ -152,8 +153,19 @@ export function usePrices(pair: string, interval = 60, limit = 120) {
     `${API_BASE}/api/prices/${pair}?interval=${interval}&limit=${limit}`,
     numericFetcher,
     {
-      refreshInterval: 30000,
+      refreshInterval: 60000,
       fallbackData: { pair, interval, candles: [] },
+    },
+  );
+}
+
+export function useQuote(pair: string) {
+  return useSWR<LiveQuote>(
+    `${API_BASE}/api/quote/${pair}`,
+    numericFetcher,
+    {
+      refreshInterval: 3000,
+      fallbackData: { pair, ts: "" },
     },
   );
 }

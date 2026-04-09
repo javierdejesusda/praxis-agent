@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -13,8 +14,8 @@ import {
 import { HairlineCard } from "@/components/ui/HairlineCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { StatusPill, type PillTone } from "@/components/ui/StatusPill";
-import { usePrices, useTrades } from "@/lib/hooks";
-import { fmtUsd } from "@/lib/format";
+import { usePrices, useQuote, useTrades } from "@/lib/hooks";
+import { fmtUsd, fmtRelative } from "@/lib/format";
 import { colors } from "@/lib/tokens";
 import type { Artifact } from "@/lib/api";
 
@@ -90,6 +91,7 @@ export function LivePriceChart({
   display?: string;
 }) {
   const { data: series } = usePrices(pair, 60, 120);
+  const { data: quote } = useQuote(pair);
   const { data: tradesData } = useTrades();
 
   const candles = series?.candles ?? [];
@@ -97,13 +99,26 @@ export function LivePriceChart({
   const trades = tradesData ?? [];
   const markers = buildMarkers(trades, pair);
 
+  // Force re-render every second so the relative "last tick" clock ticks
+  // visibly even between the 3s quote polls.
+  const [, forceTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => forceTick((n) => n + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+
   const label = display ?? pair.replace("USD", "");
   const first = candles[0]?.c;
-  const last = candles[candles.length - 1]?.c;
-  const change = first && last ? (last - first) / first : 0;
+  const lastBar = candles[candles.length - 1]?.c;
+  // Prefer the live quote over the most-recent-bar close so the header ticks
+  // in real time. Fall back to the bar close if the quote endpoint is down.
+  const livePrice = quote?.price ?? lastBar;
+  const change = first && livePrice ? (livePrice - first) / first : 0;
   const tone: PillTone = change > 0 ? "ok" : change < 0 ? "crit" : "neutral";
   const stroke = change >= 0 ? colors.gain : colors.loss;
   const fill = change >= 0 ? colors.gainSoft : colors.lossSoft;
+  const quoteFresh = quote?.price != null && !quote?.error;
+  const lastTickLabel = quote?.ts ? fmtRelative(quote.ts) : "—";
 
   return (
     <HairlineCard padded={false}>
@@ -112,8 +127,8 @@ export function LivePriceChart({
           <h3 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[color:var(--color-ink)]">
             {label}USD
           </h3>
-          <span className="num text-[18px] text-[color:var(--color-ink)]">
-            {last ? fmtUsd(last, { decimals: 0 }) : "—"}
+          <span className="num text-[20px] font-medium text-[color:var(--color-ink)] leading-none">
+            {livePrice ? fmtUsd(livePrice, { decimals: 2 }) : "—"}
           </span>
           <StatusPill
             tone={tone}
@@ -124,9 +139,26 @@ export function LivePriceChart({
             }
           />
         </div>
-        <span className="text-[9px] uppercase tracking-[0.12em] text-[color:var(--color-muted)]">
-          1h · last 120 bars{source ? ` · ${source}` : ""}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="flex items-center gap-1.5">
+            <span
+              className={`inline-block w-1.5 h-1.5 ${quoteFresh ? "live-dot" : ""}`}
+              style={{
+                background: quoteFresh ? colors.gain : colors.muted,
+                borderRadius: 1,
+              }}
+            />
+            <span
+              className="text-[9px] uppercase tracking-[0.12em]"
+              style={{ color: quoteFresh ? colors.gain : colors.muted }}
+            >
+              {quoteFresh ? "LIVE" : "STALE"}
+            </span>
+          </span>
+          <span className="text-[9px] uppercase tracking-[0.12em] text-[color:var(--color-muted)]">
+            {lastTickLabel} · 1h bars{source ? ` · ${source}` : ""}
+          </span>
+        </div>
       </div>
       <SectionHeader title="Price" count={markers.length || undefined} />
       <div className="px-2 pb-3" style={{ height: 220 }}>

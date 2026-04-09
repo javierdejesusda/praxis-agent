@@ -42,6 +42,48 @@ def _normalize_crypto_symbol(pair: str) -> str:
     return pair.upper()
 
 
+async def get_crypto_quote(pair: str) -> Optional[dict]:
+    """Fetch the latest live quote for a crypto pair.
+
+    Args:
+        pair: Symbol like ``BTCUSD`` or ``ETHUSD``.
+
+    Returns:
+        Dict with ``{symbol, price, change, volume}`` or None on failure.
+
+    Raises:
+        RuntimeError: If no API key is configured.
+    """
+    if not FMP_API_KEY:
+        raise RuntimeError(
+            "FMP_API_KEY not set — add it to .env to enable live quotes."
+        )
+
+    symbol = _normalize_crypto_symbol(pair)
+    try:
+        resp = await _get_client().get(
+            "/quote-short", params={"symbol": symbol, "apikey": FMP_API_KEY}
+        )
+        resp.raise_for_status()
+        raw = resp.json()
+    except httpx.HTTPError as exc:
+        logger.warning("FMP quote fetch failed for %s: %s", symbol, exc)
+        return None
+
+    if not isinstance(raw, list) or not raw:
+        return None
+    row = raw[0]
+    try:
+        return {
+            "symbol": str(row.get("symbol", symbol)),
+            "price": float(row["price"]),
+            "change": float(row.get("change", 0) or 0),
+            "volume": float(row.get("volume", 0) or 0),
+        }
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
 async def get_crypto_intraday(
     pair: str, interval: int = 60, limit: int = 120
 ) -> list[dict]:

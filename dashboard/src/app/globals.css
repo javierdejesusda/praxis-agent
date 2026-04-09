@@ -111,6 +111,19 @@ table.data-table td.num, table.data-table th.num {
 ::-webkit-scrollbar-track { background: var(--color-bone); }
 ::-webkit-scrollbar-thumb { background: var(--color-rule-strong); border-radius: 0; }
 
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.live-dot {
+  animation: live-pulse 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot { animation: none; }
+}
+
 .recharts-cartesian-grid line { stroke: var(--color-rule); stroke-dasharray: 0; }
 .recharts-cartesian-axis-line { stroke: var(--color-rule-strong); }
 .recharts-cartesian-axis-tick-value {

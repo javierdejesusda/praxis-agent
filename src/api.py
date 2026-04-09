@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from src.artifacts.hasher import canonical_json
 from src.config import ARTIFACTS_DIR, STATE_DIR
 from src.execution.kraken_adapter import get_ohlc
-from src.features.fmp_prices import get_crypto_intraday
+from src.features.fmp_prices import get_crypto_intraday, get_crypto_quote
 from src.features.prism import get_signals as prism_signals, get_risk_metrics as prism_risk
 
 logger = logging.getLogger(__name__)
@@ -286,6 +286,36 @@ async def prices(pair: str, interval: int = 60, limit: int = 120):
         "interval": interval,
         "source": "kraken",
         "candles": candles,
+    }
+
+
+@app.get("/api/quote/{pair}")
+async def quote(pair: str):
+    """Live quote for a crypto pair via FMP.
+
+    Intended for a fast (~3s) polling loop from the dashboard's real-time
+    ticker. Returns ``{pair, price, change, volume, ts}`` or an
+    ``error`` field when the upstream is unavailable.
+    """
+    pair_up = pair.upper()
+    now_iso = datetime.now(timezone.utc).isoformat()
+    try:
+        data = await get_crypto_quote(pair_up)
+    except RuntimeError as exc:
+        return {"pair": pair_up, "ts": now_iso, "error": str(exc)}
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("FMP quote error for %s: %s", pair_up, exc)
+        return {"pair": pair_up, "ts": now_iso, "error": str(exc)}
+
+    if not data:
+        return {"pair": pair_up, "ts": now_iso, "error": "no quote"}
+
+    return {
+        "pair": pair_up,
+        "ts": now_iso,
+        "price": data["price"],
+        "change": data["change"],
+        "volume": data["volume"],
     }
 
 

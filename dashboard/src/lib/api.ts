@@ -250,6 +250,15 @@ export interface PriceSeries {
   error?: string;
 }
 
+export interface LiveQuote {
+  pair: string;
+  ts: string;
+  price?: number;
+  change?: number;
+  volume?: number;
+  error?: string;
+}
+
 export interface PrismData {
   symbol: string;
   signals: {
@@ -298,6 +307,7 @@ export const api = {
     fetchNormalized<PriceSeries>(
       `/api/prices/${pair}?interval=${interval}&limit=${limit}`,
     ),
+  quote: (pair: string) => fetchNormalized<LiveQuote>(`/api/quote/${pair}`),
   onchainStatus: () => fetchNormalized<OnchainStatus>("/api/onchain/status"),
   attestations: () =>
     fetchNormalized<{ total: number; records: Attestation[] }>("/api/attestations"),
