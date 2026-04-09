@@ -13,7 +13,7 @@ from src.config import FMP_API_KEY
 
 logger = logging.getLogger(__name__)
 
-BASE_URL = "https://financialmodelingprep.com/api/v3"
+BASE_URL = "https://financialmodelingprep.com/stable"
 _client: Optional[httpx.AsyncClient] = None
 
 
@@ -71,10 +71,12 @@ async def get_crypto_intraday(
         )
 
     symbol = _normalize_crypto_symbol(pair)
-    url = f"/{path}/{symbol}"
+    url = f"/{path}"
 
     try:
-        resp = await _get_client().get(url, params={"apikey": FMP_API_KEY})
+        resp = await _get_client().get(
+            url, params={"symbol": symbol, "apikey": FMP_API_KEY}
+        )
         resp.raise_for_status()
         raw = resp.json()
     except httpx.HTTPError as exc:
