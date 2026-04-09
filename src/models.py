@@ -64,6 +64,7 @@ class Features(BaseModel):
     macd_slope: float = 0.0   # change in MACD histogram from prev bar
     ema_spread: float = 0.0   # EMA fan spread: abs(ema9 - ema55) / ema21
     engulfing: int = 0        # -1 = bearish engulfing, 0 = none, 1 = bullish engulfing
+    rsi_2: float = 50.0       # 2-period RSI (ultra-sensitive mean-reversion)
 
 
 class SignalReport(BaseModel):

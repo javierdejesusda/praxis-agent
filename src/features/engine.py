@@ -68,6 +68,185 @@ def _detect_divergence(
     return 0
 
 
+def compute_features_bulk(df: pd.DataFrame, pair: str) -> pd.DataFrame:
+    """Pre-compute all technical features for the full DataFrame at once.
+
+    This is much faster than calling compute_features() per-bar because
+    pandas_ta vectorizes the indicator computations across all rows.
+
+    Args:
+        df: Full OHLCV DataFrame (must have 200+ rows).
+        pair: Trading pair identifier.
+
+    Returns:
+        DataFrame with all feature columns added, indexed same as input.
+    """
+    if len(df) < 200:
+        raise ValueError(f"Need 200+ bars, got {len(df)}")
+
+    close = df["close"]
+    high = df["high"]
+    low = df["low"]
+    volume = df["volume"]
+
+    feat = pd.DataFrame(index=df.index)
+    feat["close"] = close
+
+    feat["ema_9"] = ta.ema(close, length=9)
+    feat["ema_21"] = ta.ema(close, length=21)
+    feat["ema_55"] = ta.ema(close, length=55)
+    feat["ema_200"] = ta.ema(close, length=200)
+
+    feat["rsi_14"] = ta.rsi(close, length=14)
+    feat["rsi_2"] = ta.rsi(close, length=2)
+
+    macd_df = ta.macd(close, fast=12, slow=26, signal=9)
+    feat["macd"] = macd_df.iloc[:, 0]
+    feat["macd_signal"] = macd_df.iloc[:, 1]
+    feat["macd_histogram"] = macd_df.iloc[:, 2]
+
+    feat["atr_20"] = ta.atr(high, low, close, length=20)
+
+    adx_df = ta.adx(high, low, close, length=14)
+    adx_col = [c for c in adx_df.columns if c.startswith("ADX")][0]
+    feat["adx_14"] = adx_df[adx_col]
+
+    bb_df = ta.bbands(close, length=20, std=2)
+    bbl_col = [c for c in bb_df.columns if "BBL" in c][0]
+    bbm_col = [c for c in bb_df.columns if "BBM" in c][0]
+    bbu_col = [c for c in bb_df.columns if "BBU" in c][0]
+    feat["bb_lower"] = bb_df[bbl_col]
+    feat["bb_middle"] = bb_df[bbm_col]
+    feat["bb_upper"] = bb_df[bbu_col]
+    bb_range = feat["bb_upper"] - feat["bb_lower"]
+    bb_range = bb_range.replace(0, 1e-10)
+    feat["bb_position"] = (close - feat["bb_lower"]) / bb_range
+
+    vol_avg = volume.rolling(20).mean()
+    feat["volume_ratio"] = (volume / vol_avg).fillna(0)
+
+    feat["returns_1bar"] = close.pct_change(1)
+    feat["returns_5bar"] = close.pct_change(5)
+    feat["returns_20bar"] = close.pct_change(20)
+
+    feat["macd_slope"] = feat["macd_histogram"].diff()
+
+    ema_spread_raw = (feat["ema_9"] - feat["ema_55"]).abs()
+    feat["ema_spread"] = (ema_spread_raw / feat["ema_21"]).fillna(0)
+
+    o_prev = df["open"].shift(1)
+    c_prev = df["close"].shift(1)
+    o_curr = df["open"]
+    c_curr = df["close"]
+    body_prev = (c_prev - o_prev).abs()
+    body_curr = (c_curr - o_curr).abs()
+    bullish = (
+        (c_prev < o_prev) & (c_curr > o_curr)
+        & (o_curr <= c_prev) & (c_curr >= o_prev)
+        & (body_curr > body_prev * 1.2)
+    )
+    bearish = (
+        (c_prev > o_prev) & (c_curr < o_curr)
+        & (o_curr >= c_prev) & (c_curr <= o_prev)
+        & (body_curr > body_prev * 1.2)
+    )
+    feat["engulfing"] = 0
+    feat.loc[bullish, "engulfing"] = 1
+    feat.loc[bearish, "engulfing"] = -1
+
+    feat["regime"] = "transition"
+    feat.loc[feat["adx_14"] > STRATEGY.adx_trending_threshold, "regime"] = "trending"
+    feat.loc[feat["adx_14"] < STRATEGY.adx_ranging_threshold, "regime"] = "ranging"
+
+    feat["rsi_divergence"] = 0
+    feat["macd_divergence"] = 0
+    lookback = 20
+    for i in range(lookback * 2, len(df)):
+        recent_close = close.iloc[i - lookback:i]
+        prev_close = close.iloc[i - lookback * 2:i - lookback]
+        recent_rsi = feat["rsi_14"].iloc[i - lookback:i]
+        prev_rsi = feat["rsi_14"].iloc[i - lookback * 2:i - lookback]
+        recent_hist = feat["macd_histogram"].iloc[i - lookback:i]
+        prev_hist = feat["macd_histogram"].iloc[i - lookback * 2:i - lookback]
+
+        if recent_close.isna().any() or recent_rsi.isna().any():
+            continue
+
+        p_low_now = recent_close.min()
+        p_low_prev = prev_close.min()
+        r_low_now = recent_rsi.min()
+        r_low_prev = prev_rsi.min()
+        p_high_now = recent_close.max()
+        p_high_prev = prev_close.max()
+        r_high_now = recent_rsi.max()
+        r_high_prev = prev_rsi.max()
+
+        if p_low_now < p_low_prev and r_low_now > r_low_prev:
+            feat.iloc[i, feat.columns.get_loc("rsi_divergence")] = 1
+        elif p_high_now > p_high_prev and r_high_now < r_high_prev:
+            feat.iloc[i, feat.columns.get_loc("rsi_divergence")] = -1
+
+        if not recent_hist.isna().any() and not prev_hist.isna().any():
+            h_low_now = recent_hist.min()
+            h_low_prev = prev_hist.min()
+            h_high_now = recent_hist.max()
+            h_high_prev = prev_hist.max()
+            if p_low_now < p_low_prev and h_low_now > h_low_prev:
+                feat.iloc[i, feat.columns.get_loc("macd_divergence")] = 1
+            elif p_high_now > p_high_prev and h_high_now < h_high_prev:
+                feat.iloc[i, feat.columns.get_loc("macd_divergence")] = -1
+
+    feat["pair"] = pair
+    return feat
+
+
+def features_at(bulk: pd.DataFrame, idx: int) -> Features:
+    """Extract a Features object from pre-computed bulk DataFrame at index.
+
+    Args:
+        bulk: DataFrame from compute_features_bulk().
+        idx: Row index position.
+
+    Returns:
+        Features object for that bar.
+    """
+    row = bulk.iloc[idx]
+    regime_map = {
+        "trending": Regime.TRENDING,
+        "ranging": Regime.RANGING,
+        "transition": Regime.TRANSITION,
+    }
+    return Features(
+        pair=row["pair"],
+        timestamp=bulk.index[idx],
+        ema_9=float(row["ema_9"]),
+        ema_21=float(row["ema_21"]),
+        ema_55=float(row["ema_55"]),
+        ema_200=float(row["ema_200"]),
+        rsi_14=float(row["rsi_14"]),
+        macd=float(row["macd"]),
+        macd_signal=float(row["macd_signal"]),
+        macd_histogram=float(row["macd_histogram"]),
+        atr_20=float(row["atr_20"]),
+        adx_14=float(row["adx_14"]),
+        bb_upper=float(row["bb_upper"]),
+        bb_middle=float(row["bb_middle"]),
+        bb_lower=float(row["bb_lower"]),
+        bb_position=float(row["bb_position"]),
+        volume_ratio=float(row["volume_ratio"]),
+        regime=regime_map.get(row["regime"], Regime.TRANSITION),
+        returns_1bar=float(row["returns_1bar"]),
+        returns_5bar=float(row["returns_5bar"]),
+        returns_20bar=float(row["returns_20bar"]),
+        rsi_divergence=int(row["rsi_divergence"]),
+        macd_divergence=int(row["macd_divergence"]),
+        macd_slope=float(row["macd_slope"]),
+        ema_spread=float(row["ema_spread"]),
+        engulfing=int(row["engulfing"]),
+        rsi_2=float(row["rsi_2"]) if not pd.isna(row.get("rsi_2", 50)) else 50.0,
+    )
+
+
 def compute_features(df: pd.DataFrame, pair: str) -> Features:
     """Compute all technical features from OHLCV DataFrame.
 

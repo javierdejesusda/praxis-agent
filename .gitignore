@@ -30,6 +30,7 @@ NEXT_PHASE.md
 # Runtime data
 artifacts/
 state/
+data/
 
 # OS
 .DS_Store

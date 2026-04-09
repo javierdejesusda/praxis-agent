@@ -153,12 +153,12 @@ def deterministic_fallback(
         s.confidence for s in signals if s.direction == Direction.SHORT
     )
 
-    if long_conf > short_conf and long_conf > 100:
+    if long_conf > short_conf and long_conf > 120:
         direction = Direction.LONG
-        conviction = min(70.0, long_conf / len(signals))
-    elif short_conf > long_conf and short_conf > 100:
+        conviction = min(90.0, long_conf / len(signals))
+    elif short_conf > long_conf and short_conf > 120:
         direction = Direction.SHORT
-        conviction = min(70.0, short_conf / len(signals))
+        conviction = min(90.0, short_conf / len(signals))
     else:
         direction = Direction.HOLD
         conviction = 0.0

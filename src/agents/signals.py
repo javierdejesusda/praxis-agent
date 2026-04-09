@@ -7,7 +7,7 @@ from src.models import Direction, Features, Regime, SignalReport
 
 
 def trend_signal(features: Features) -> SignalReport:
-    """Momentum/trend signal agent. Active primarily in trending regime.
+    """Trend signal agent requiring strong multi-timeframe alignment.
 
     Args:
         features: Computed technical features for a single bar.
@@ -19,91 +19,83 @@ def trend_signal(features: Features) -> SignalReport:
     evidence = {}
     direction = Direction.HOLD
 
-    ema_aligned_bull = (
+    full_bull = (
+        features.ema_9 > features.ema_21 > features.ema_55 > features.ema_200
+    )
+    full_bear = (
+        features.ema_9 < features.ema_21 < features.ema_55 < features.ema_200
+    )
+    partial_bull = (
         features.ema_9 > features.ema_21 > features.ema_55
     )
-    ema_aligned_bear = (
+    partial_bear = (
         features.ema_9 < features.ema_21 < features.ema_55
     )
-    evidence["ema_aligned_bull"] = ema_aligned_bull
-    evidence["ema_aligned_bear"] = ema_aligned_bear
 
-    if ema_aligned_bull:
-        confidence += 30
+    if full_bull and features.adx_14 > 22:
         direction = Direction.LONG
-    elif ema_aligned_bear:
-        confidence += 30
+        confidence += 40
+        evidence["full_bull_alignment"] = True
+    elif full_bear and features.adx_14 > 22:
         direction = Direction.SHORT
+        confidence += 40
+        evidence["full_bear_alignment"] = True
+    elif partial_bull and features.adx_14 > 28:
+        direction = Direction.LONG
+        confidence += 25
+        evidence["partial_bull_strong_adx"] = True
+    elif partial_bear and features.adx_14 > 28:
+        direction = Direction.SHORT
+        confidence += 25
+        evidence["partial_bear_strong_adx"] = True
 
-    if features.macd_histogram > 0 and direction == Direction.LONG:
-        confidence += 20
-        evidence["macd_bullish"] = True
-    elif features.macd_histogram < 0 and direction == Direction.SHORT:
-        confidence += 20
-        evidence["macd_bearish"] = True
+    if direction == Direction.HOLD:
+        return SignalReport(
+            agent_name="trend",
+            pair=features.pair,
+            timestamp=features.timestamp,
+            direction=Direction.HOLD,
+            confidence=0.0,
+            evidence=evidence,
+        )
 
-    if features.returns_5bar > 0.01 and direction == Direction.LONG:
+    if direction == Direction.LONG and features.macd_histogram > 0:
         confidence += 15
-    elif features.returns_5bar < -0.01 and direction == Direction.SHORT:
+        if features.macd_slope > 0:
+            confidence += 10
+            evidence["macd_accelerating"] = True
+    elif direction == Direction.SHORT and features.macd_histogram < 0:
         confidence += 15
-    evidence["returns_5bar"] = features.returns_5bar
+        if features.macd_slope < 0:
+            confidence += 10
+            evidence["macd_accelerating"] = True
 
-    if features.volume_ratio > 2.0:
-        confidence += 15
-        evidence["strong_volume"] = True
-    elif features.volume_ratio > 1.5:
+    if direction == Direction.LONG and features.returns_5bar > 0:
+        confidence += 10
+    elif direction == Direction.SHORT and features.returns_5bar < 0:
+        confidence += 10
+
+    if features.volume_ratio > 1.5:
         confidence += 10
         evidence["volume_confirmed"] = True
 
-    if direction == Direction.LONG and features.ema_9 > features.ema_200:
-        confidence += 10
-        evidence["above_ema200"] = True
-    elif direction == Direction.SHORT and features.ema_9 < features.ema_200:
-        confidence += 10
-        evidence["below_ema200"] = True
-
-    if direction == Direction.LONG and features.rsi_divergence == 1:
-        confidence += 12
-        evidence["rsi_divergence_bull"] = True
-    elif direction == Direction.SHORT and features.rsi_divergence == -1:
-        confidence += 12
-        evidence["rsi_divergence_bear"] = True
-    if direction == Direction.LONG and features.macd_divergence == 1:
-        confidence += 8
-        evidence["macd_divergence_bull"] = True
-    elif direction == Direction.SHORT and features.macd_divergence == -1:
-        confidence += 8
-        evidence["macd_divergence_bear"] = True
-
-    if direction == Direction.LONG and features.macd_slope > 0:
-        confidence += 10
-        evidence["macd_accelerating_bull"] = True
-    elif direction == Direction.SHORT and features.macd_slope < 0:
-        confidence += 10
-        evidence["macd_accelerating_bear"] = True
-
     if direction == Direction.LONG and features.engulfing == 1:
-        confidence += 15
+        confidence += 10
         evidence["bullish_engulfing"] = True
     elif direction == Direction.SHORT and features.engulfing == -1:
-        confidence += 15
+        confidence += 10
         evidence["bearish_engulfing"] = True
 
-    if direction == Direction.LONG and features.rsi_14 > 75:
-        confidence *= 0.5
-        evidence["trend_exhaustion_bull"] = True
-    elif direction == Direction.SHORT and features.rsi_14 < 20:
-        confidence *= 0.5
-        evidence["trend_exhaustion_bear"] = True
-
-    if features.regime == Regime.TRENDING:
-        confidence *= 1.2
-    elif features.regime == Regime.RANGING:
-        confidence *= 0.7
+    if direction == Direction.LONG and features.rsi_14 > 78:
+        confidence *= 0.4
+        evidence["exhaustion"] = True
+    elif direction == Direction.SHORT and features.rsi_14 < 22:
+        confidence *= 0.4
+        evidence["exhaustion"] = True
 
     confidence = min(100.0, confidence)
 
-    if confidence < 30:
+    if confidence < 35:
         direction = Direction.HOLD
 
     return SignalReport(
@@ -142,12 +134,12 @@ def volatility_signal(features: Features) -> SignalReport:
     evidence["adx"] = features.adx_14
     evidence["regime"] = features.regime.value
 
-    if features.regime == Regime.RANGING:
-        if features.rsi_14 < 35 and features.bb_position < 0.2:
+    if features.regime in (Regime.RANGING, Regime.TRANSITION):
+        if features.rsi_14 < 40 and features.bb_position < 0.30:
             direction = Direction.LONG
             confidence += 25
             evidence["oversold_bounce"] = True
-        elif features.rsi_14 > 65 and features.bb_position > 0.8:
+        elif features.rsi_14 > 60 and features.bb_position > 0.70:
             direction = Direction.SHORT
             confidence += 25
             evidence["overbought_fade"] = True
@@ -249,8 +241,7 @@ def mean_reversion_signal(features: Features) -> SignalReport:
     evidence["bb_position"] = round(features.bb_position, 4)
     evidence["rsi_14"] = round(features.rsi_14, 2)
 
-    transition_mode = False
-    if features.regime == Regime.TRENDING:
+    if features.regime == Regime.TRENDING and features.adx_14 > 30:
         evidence["inactive"] = True
         return SignalReport(
             agent_name="mean_reversion",
@@ -260,52 +251,46 @@ def mean_reversion_signal(features: Features) -> SignalReport:
             confidence=0.0,
             evidence=evidence,
         )
-    elif features.regime == Regime.TRANSITION:
-        transition_mode = True
-        evidence["transition_mode"] = True
 
-    if features.bb_position < 0.15 and features.rsi_14 < 35:
+    if features.bb_position < 0.25 and features.rsi_14 < 40:
         direction = Direction.LONG
         confidence += 30
         evidence["oversold"] = True
 
-        if features.bb_position < 0.05:
-            confidence += 15
+        if features.bb_position < 0.10:
+            confidence += 20
             evidence["extreme_oversold"] = True
-        if features.rsi_14 < 25:
+        elif features.bb_position < 0.15:
             confidence += 10
+        if features.rsi_14 < 28:
+            confidence += 15
             evidence["deep_rsi_oversold"] = True
+        elif features.rsi_14 < 35:
+            confidence += 8
 
-    elif features.bb_position > 0.85 and features.rsi_14 > 65:
+    elif features.bb_position > 0.75 and features.rsi_14 > 60:
         direction = Direction.SHORT
         confidence += 30
         evidence["overbought"] = True
 
-        if features.bb_position > 0.95:
-            confidence += 15
+        if features.bb_position > 0.90:
+            confidence += 20
             evidence["extreme_overbought"] = True
-        if features.rsi_14 > 75:
+        elif features.bb_position > 0.85:
             confidence += 10
+        if features.rsi_14 > 72:
+            confidence += 15
             evidence["deep_rsi_overbought"] = True
+        elif features.rsi_14 > 65:
+            confidence += 8
 
     if direction != Direction.HOLD:
-        if features.volume_ratio < 1.0:
+        if features.volume_ratio > 1.5:
             confidence += 10
-            evidence["low_vol_favorable"] = True
-        elif features.volume_ratio > 2.0:
-            confidence *= 0.6
-            evidence["high_vol_warning"] = True
-
-        reversion_target = abs(features.ema_21 - features.bb_middle)
-        if features.ema_21 > 0:
-            reversion_pct = reversion_target / features.ema_21
-            if reversion_pct < 0.001:
-                confidence += 5
-                evidence["tight_bands"] = True
-
-    if transition_mode and direction != Direction.HOLD:
-        confidence *= 0.7
-        evidence["transition_discount"] = True
+            evidence["capitulation_volume"] = True
+        elif features.volume_ratio < 0.5:
+            confidence *= 0.7
+            evidence["low_volume_warning"] = True
 
     confidence = max(0.0, min(100.0, confidence))
 
@@ -323,10 +308,7 @@ def mean_reversion_signal(features: Features) -> SignalReport:
 
 
 def momentum_signal(features: Features) -> SignalReport:
-    """Momentum signal agent using multi-timeframe returns and MACD.
-
-    Active in both trending and ranging regimes. Provides directional
-    confirmation based on price momentum across multiple timeframes.
+    """Momentum signal requiring multi-timeframe alignment.
 
     Args:
         features: Computed technical features for a single bar.
@@ -341,75 +323,59 @@ def momentum_signal(features: Features) -> SignalReport:
     r1 = features.returns_1bar
     r5 = features.returns_5bar
     r20 = features.returns_20bar
-    evidence["r1"] = round(r1 * 100, 3)
-    evidence["r5"] = round(r5 * 100, 3)
-    evidence["r20"] = round(r20 * 100, 3)
 
-    atr_pct = (features.atr_20 / features.ema_21) if features.ema_21 > 0 else 0.01
-    mom_threshold = max(0.0015, atr_pct * 0.15)
-    evidence["adaptive_threshold"] = round(mom_threshold * 100, 4)
+    all_bull = r1 > 0 and r5 > 0 and r20 > 0
+    all_bear = r1 < 0 and r5 < 0 and r20 < 0
+    evidence["all_bull"] = all_bull
+    evidence["all_bear"] = all_bear
 
-    bull_momentum = r5 > mom_threshold and r20 > -0.01
-    bear_momentum = r5 < -mom_threshold and r20 < 0.01
-    evidence["bull_momentum"] = bull_momentum
-    evidence["bear_momentum"] = bear_momentum
-
-    if bull_momentum:
+    if all_bull and features.adx_14 > 20:
         direction = Direction.LONG
-        confidence += 25
-        if r1 > 0:
-            confidence += 10
-            evidence["r1_confirms"] = True
-    elif bear_momentum:
+        confidence += 35
+    elif all_bear and features.adx_14 > 20:
         direction = Direction.SHORT
-        confidence += 25
-        if r1 < 0:
-            confidence += 10
-            evidence["r1_confirms"] = True
+        confidence += 35
+    elif r5 > 0 and r20 > 0 and features.adx_14 > 25:
+        direction = Direction.LONG
+        confidence += 20
+    elif r5 < 0 and r20 < 0 and features.adx_14 > 25:
+        direction = Direction.SHORT
+        confidence += 20
+
+    if direction == Direction.HOLD:
+        return SignalReport(
+            agent_name="momentum",
+            pair=features.pair,
+            timestamp=features.timestamp,
+            direction=Direction.HOLD,
+            confidence=0.0,
+            evidence=evidence,
+        )
 
     if direction == Direction.LONG and features.macd_histogram > 0:
         confidence += 15
-        evidence["macd_confirms_bull"] = True
+        if features.macd_slope > 0:
+            confidence += 10
     elif direction == Direction.SHORT and features.macd_histogram < 0:
         confidence += 15
-        evidence["macd_confirms_bear"] = True
-
-    if direction == Direction.LONG and features.rsi_divergence == 1:
-        confidence += 10
-        evidence["divergence_confirms_bull"] = True
-    elif direction == Direction.SHORT and features.rsi_divergence == -1:
-        confidence += 10
-        evidence["divergence_confirms_bear"] = True
-
-    if direction == Direction.LONG and features.macd_slope > 0:
-        confidence += 8
-        evidence["momentum_accelerating"] = True
-    elif direction == Direction.SHORT and features.macd_slope < 0:
-        confidence += 8
-        evidence["momentum_accelerating"] = True
-
-    if direction != Direction.HOLD:
-        if features.adx_14 > 25:
-            confidence += 15
-            evidence["strong_adx"] = True
-        elif features.adx_14 < 15:
-            confidence *= 0.6
-            evidence["weak_adx"] = True
-
-        if features.volume_ratio > 1.3:
+        if features.macd_slope < 0:
             confidence += 10
-            evidence["volume_supports"] = True
 
-        if direction == Direction.LONG and features.rsi_14 > 75:
-            confidence *= 0.5
-            evidence["momentum_exhaustion_bull"] = True
-        elif direction == Direction.SHORT and features.rsi_14 < 20:
-            confidence *= 0.5
-            evidence["momentum_exhaustion_bear"] = True
+    if features.volume_ratio > 1.3:
+        confidence += 10
 
-    confidence = max(0.0, min(100.0, confidence))
+    if features.adx_14 > 30:
+        confidence += 10
+        evidence["very_strong_trend"] = True
 
-    if confidence < 20:
+    if direction == Direction.LONG and features.rsi_14 > 78:
+        confidence *= 0.4
+    elif direction == Direction.SHORT and features.rsi_14 < 22:
+        confidence *= 0.4
+
+    confidence = min(100.0, confidence)
+
+    if confidence < 25:
         direction = Direction.HOLD
 
     return SignalReport(
@@ -423,10 +389,7 @@ def momentum_signal(features: Features) -> SignalReport:
 
 
 def swing_structure_signal(features: Features) -> SignalReport:
-    """Price action swing structure agent.
-
-    Analyzes EMA relationships and returns to determine if price is
-    making higher highs/lows (bullish) or lower highs/lows (bearish).
+    """Price action swing structure agent requiring full alignment.
 
     Args:
         features: Computed technical features for a single bar.
@@ -441,44 +404,40 @@ def swing_structure_signal(features: Features) -> SignalReport:
     ema_bull = features.ema_9 > features.ema_21 > features.ema_55 > features.ema_200
     ema_bear = features.ema_9 < features.ema_21 < features.ema_55 < features.ema_200
 
-    r5_up = features.returns_5bar > 0
-    r20_up = features.returns_20bar > 0
-    r5_dn = features.returns_5bar < 0
-    r20_dn = features.returns_20bar < 0
-
-    if ema_bull and r5_up and r20_up:
+    if ema_bull and features.returns_5bar > 0 and features.returns_20bar > 0:
         direction = Direction.LONG
-        confidence += 45
+        confidence += 40
         evidence["full_bull_structure"] = True
-    elif ema_bear and r5_dn and r20_dn:
+
+        if features.macd_histogram > 0 and features.macd_slope > 0:
+            confidence += 15
+            evidence["macd_confirms"] = True
+        if features.adx_14 > 25:
+            confidence += 10
+        if features.volume_ratio > 1.2:
+            confidence += 10
+
+    elif ema_bear and features.returns_5bar < 0 and features.returns_20bar < 0:
         direction = Direction.SHORT
-        confidence += 45
+        confidence += 40
         evidence["full_bear_structure"] = True
 
-    if direction == Direction.LONG and features.macd_slope > 0:
-        confidence += 10
-        evidence["swing_macd_acc"] = True
-    elif direction == Direction.SHORT and features.macd_slope < 0:
-        confidence += 10
-        evidence["swing_macd_acc"] = True
+        if features.macd_histogram < 0 and features.macd_slope < 0:
+            confidence += 15
+            evidence["macd_confirms"] = True
+        if features.adx_14 > 25:
+            confidence += 10
+        if features.volume_ratio > 1.2:
+            confidence += 10
 
-    if direction == Direction.LONG and features.rsi_divergence == 1:
-        confidence += 10
-        evidence["swing_div_bull"] = True
-    elif direction == Direction.SHORT and features.rsi_divergence == -1:
-        confidence += 10
-        evidence["swing_div_bear"] = True
+    if direction == Direction.LONG and features.rsi_14 > 80:
+        confidence *= 0.3
+    elif direction == Direction.SHORT and features.rsi_14 < 20:
+        confidence *= 0.3
 
-    if direction == Direction.LONG and features.engulfing == 1:
-        confidence += 15
-        evidence["swing_engulfing_bull"] = True
-    elif direction == Direction.SHORT and features.engulfing == -1:
-        confidence += 15
-        evidence["swing_engulfing_bear"] = True
+    confidence = min(100.0, confidence)
 
-    confidence = max(0.0, min(100.0, confidence))
-
-    if confidence < 20:
+    if confidence < 30:
         direction = Direction.HOLD
 
     return SignalReport(

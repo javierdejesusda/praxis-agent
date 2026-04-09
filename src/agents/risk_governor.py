@@ -176,16 +176,25 @@ def evaluate_risk(
     if not aligned_signals:
         aligned_signals = [s for s in signals if s.direction != Direction.HOLD]
 
+    if len(aligned_signals) < 2:
+        decision = RiskDecision(
+            approved=False,
+            reason_codes=["INSUFFICIENT_ALIGNMENT"],
+            daily_pnl=portfolio.daily_pnl,
+            drawdown_pct=drawdown,
+        )
+        return decision, None
+
     avg_confidence = (
         sum(s.confidence for s in aligned_signals) / len(aligned_signals)
         if aligned_signals
         else 0.0
     )
 
-    if len(aligned_signals) >= 3:
+    if len(aligned_signals) >= 4:
         avg_confidence *= 1.15
-    elif len(aligned_signals) >= 2:
-        avg_confidence *= 1.05
+    elif len(aligned_signals) >= 3:
+        avg_confidence *= 1.08
     avg_confidence = min(100.0, avg_confidence)
 
     erc_eligible = avg_confidence >= RISK.min_signal_score_erc

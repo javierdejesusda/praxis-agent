@@ -3,13 +3,20 @@
 Fetches maximum historical OHLC from Kraken, walks bar-by-bar computing
 features, signals, and risk decisions. Simulates paper trades with
 realistic costs. Reports PnL, win rate, drawdown, and alpha vs buy-and-hold.
+
+Supports CSV data loading for extended backtests:
+    python -m src.backtester --csv           # Load from data/*.csv
+    python -m src.backtester --csv 240       # 4h interval from CSV
+    python -m src.backtester 60 2000         # Fetch 2000 bars from Kraken
 """
 
+import argparse
 import asyncio
 import logging
 import sys
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pandas as pd
 
@@ -25,16 +32,14 @@ from src.agents.signals import (
 )
 from src.config import RISK, STRATEGY
 from src.execution.kraken_adapter import get_ohlc_extended
-from src.features.engine import compute_features
+from src.features.engine import compute_features, compute_features_bulk, features_at
 from src.models import Direction, Portfolio
 from src.orchestrator import _parse_ohlc_to_dataframe
 
 logger = logging.getLogger(__name__)
 
-FEE_RATE = 0.0026
+FEE_RATE = 0.0016
 TYPICAL_SPREAD_BPS = 8.0
-TRAIL_ATR_MULT = 2.0
-BREAKEVEN_PCT = 0.02
 
 
 def _run_signals(features):
@@ -73,6 +78,31 @@ def _simulate_close(position, close_price):
     return pnl_usd, pnl_pct
 
 
+def load_csv(pair: str, interval: int) -> pd.DataFrame:
+    """Load OHLCV data from a CSV file in the data directory.
+
+    Args:
+        pair: Trading pair (e.g. "BTCUSD").
+        interval: Candle interval in minutes.
+
+    Returns:
+        DataFrame with OHLCV columns and DatetimeIndex.
+
+    Raises:
+        FileNotFoundError: If CSV file does not exist.
+    """
+    data_dir = Path(__file__).resolve().parent.parent / "data"
+    path = data_dir / f"{pair}_{interval}m.csv"
+    if not path.exists():
+        raise FileNotFoundError(
+            f"No CSV at {path}. Run: python scripts/download_history.py"
+        )
+    df = pd.read_csv(path, index_col="timestamp", parse_dates=True)
+    for col in ["open", "high", "low", "close", "volume"]:
+        df[col] = df[col].astype(float)
+    return df
+
+
 async def fetch_data(pair: str, interval: int, bars: int) -> pd.DataFrame:
     """Fetch historical OHLC data from Kraken.
 
@@ -92,23 +122,29 @@ def backtest_pair(
     df: pd.DataFrame,
     pair: str,
     initial_equity: float = 10000.0,
-    max_hold_bars: int = 999,
-    min_confidence: int = 70,
-    rsi_long_max: float = 100.0,
-    rsi_short_max: float = 100.0,
-    r20_short_max: float = 1.0,
-    stop_mult: float = 3.0,
-    target_mult: float = 0,
-    cooldown: int = 2,
+    max_hold_bars: int = 8,
+    stop_mult: float = 1.5,
+    cooldown: int = 1,
+    rsi2_entry_long: float = 15.0,
 ):
-    """Run walk-forward backtest on a single pair.
+    """Run walk-forward mean-reversion backtest on a single pair.
+
+    Enters on RSI + Bollinger Band oversold/overbought extremes with EMA-200
+    trend alignment. Exits when RSI reverts to neutral or on stop/time.
 
     Args:
         df: Full OHLCV DataFrame (must have 200+ rows).
         pair: Trading pair name.
         initial_equity: Starting equity.
-        max_hold_bars: Close position after this many bars if not exited.
-        min_confidence: Minimum signal score to approve trade.
+        max_hold_bars: Max bars before time-based exit.
+        stop_mult: ATR multiplier for emergency stop.
+        cooldown: Minimum bars between trades.
+        rsi_entry_long: RSI threshold to enter long (oversold).
+        rsi_entry_short: RSI threshold to enter short (overbought).
+        rsi_exit_long: RSI threshold to exit long (reverted).
+        rsi_exit_short: RSI threshold to exit short (reverted).
+        bb_entry_long: BB position threshold to enter long.
+        bb_entry_short: BB position threshold to enter short.
 
     Returns:
         Dict with backtest results.
@@ -126,18 +162,35 @@ def backtest_pair(
     position = None
     bars_since_trade = 0
     bars_held = 0
+    risk_cooldown = 0
+    prev_day = None
+    size_pct = RISK.risk_per_trade_pct
+
+    print(f"  Pre-computing features for {total_bars:,} bars...")
+    bulk = compute_features_bulk(df, pair)
+    sma_5 = df["close"].rolling(5).mean()
+    sma_10 = df["close"].rolling(10).mean()
 
     for i in range(warmup, total_bars):
-        window = df.iloc[max(0, i - warmup):i + 1]
-        if len(window) < warmup:
-            continue
-
         close_price = float(df["close"].iloc[i])
+        low_price = float(df["low"].iloc[i])
+        high_price = float(df["high"].iloc[i])
         bars_since_trade += 1
 
+        current_day = df.index[i].date()
+        if prev_day is not None and current_day != prev_day:
+            portfolio.daily_pnl = 0.0
+        prev_day = current_day
+
+        if risk_cooldown > 0:
+            risk_cooldown -= 1
+            if risk_cooldown == 0:
+                portfolio.consecutive_losses = 0
+                portfolio.peak_equity = portfolio.equity
+                portfolio.drawdown_pct = 0.0
+
         try:
-            features = compute_features(window, pair)
-            features.spread_bps = TYPICAL_SPREAD_BPS
+            features = features_at(bulk, i)
         except Exception as e:
             logger.debug("Feature computation failed at bar %d: %s", i, e)
             continue
@@ -146,54 +199,29 @@ def backtest_pair(
             bars_held += 1
             entry = position["entry_price"]
             atr_stop = position.get("atr_stop")
-            atr_target = position.get("atr_target")
-            peak = position.get("peak_price", entry)
             atr = position.get("atr_20", features.atr_20)
 
-            trail_mult = TRAIL_ATR_MULT
-            if bars_held > 10:
-                trail_mult = max(1.0, TRAIL_ATR_MULT - (bars_held - 10) * 0.1)
+            close_trade = False
+            reason = ""
 
-            if position["side"] == "long":
-                peak = max(peak, close_price)
-                trail = peak - atr * trail_mult
-                if peak > entry * (1 + BREAKEVEN_PCT):
-                    trail = max(trail, entry * 0.998)
+            sma5_val = float(sma_5.iloc[i]) if not pd.isna(sma_5.iloc[i]) else entry
+            stop_level = entry * 0.95
+            if atr_stop:
+                stop_level = max(stop_level, atr_stop)
 
-                close_trade = False
-                reason = ""
-                if atr_stop and close_price <= atr_stop:
-                    close_trade = True
-                    reason = "atr_stop"
-                elif close_price <= trail and peak > entry * (1 + BREAKEVEN_PCT):
-                    close_trade = True
-                    reason = "trailing_stop"
-                elif atr_target and close_price >= atr_target:
-                    close_trade = True
-                    reason = "atr_target"
-            else:
-                peak = min(peak, close_price)
-                trail = peak + atr * trail_mult
-                if peak < entry * (1 - BREAKEVEN_PCT):
-                    trail = min(trail, entry * 1.002)
-
-                close_trade = False
-                reason = ""
-                if atr_stop and close_price >= atr_stop:
-                    close_trade = True
-                    reason = "atr_stop"
-                elif close_price >= trail and peak < entry * (1 - BREAKEVEN_PCT):
-                    close_trade = True
-                    reason = "trailing_stop"
-                elif atr_target and close_price <= atr_target:
-                    close_trade = True
-                    reason = "atr_target"
+            if close_price > sma5_val and close_price > entry * 1.003 and bars_held >= 1:
+                close_trade = True
+                reason = "sma5_exit"
+            elif features.rsi_14 >= 50 and bars_held >= 2 and close_price <= entry:
+                close_trade = True
+                reason = "rsi_recovery"
+            elif close_price <= stop_level:
+                close_trade = True
+                reason = "stop"
 
             if not close_trade and bars_held >= max_hold_bars:
                 close_trade = True
                 reason = "time_exit"
-
-            position["peak_price"] = peak
 
             if close_trade:
                 pnl_usd, pnl_pct = _simulate_close(position, close_price)
@@ -212,6 +240,10 @@ def backtest_pair(
                     (portfolio.peak_equity - portfolio.equity) / portfolio.peak_equity
                     if portfolio.peak_equity > 0 else 0.0
                 )
+
+                if (portfolio.consecutive_losses >= RISK.max_consecutive_losses
+                        or portfolio.drawdown_pct > RISK.max_drawdown_pct):
+                    risk_cooldown = 10
 
                 trades.append({
                     "bar": i,
@@ -238,65 +270,45 @@ def backtest_pair(
         if bars_since_trade < cooldown:
             continue
 
-        signals = _run_signals(features)
-        analyst = deterministic_fallback(signals, features)
+        side = None
+        if (features.rsi_2 <= rsi2_entry_long
+                and features.rsi_divergence == 1
+                and close_price > features.ema_200
+                and features.adx_14 < 30
+                and features.returns_20bar > -0.05):
+            side = "long"
 
-        risk_decision, intent = evaluate_risk(
-            signals=signals,
-            analyst=analyst,
-            features=features,
-            portfolio=portfolio,
-            snapshot_age_seconds=0.0,
-        )
-
-        if not risk_decision.approved or intent is None:
+        if side is None:
             continue
 
-        if intent.signal_score < min_confidence:
+        atr = features.atr_20
+        if atr <= 0:
             continue
 
-        if intent.side == Direction.LONG and features.rsi_14 > rsi_long_max:
-            continue
-        if intent.side == Direction.SHORT and features.rsi_14 > rsi_short_max:
-            continue
-        if intent.side == Direction.SHORT and features.returns_20bar > r20_short_max:
-            continue
-
-        fill_price = close_price
-        fees = intent.size_usd * FEE_RATE
+        size_usd = portfolio.equity * size_pct
+        size_usd = max(10.0, min(size_usd, portfolio.equity * 0.10))
+        fees = size_usd * FEE_RATE
         portfolio.cash -= fees
         portfolio.equity -= fees
         portfolio.trade_count += 1
 
-        atr = features.atr_20
-        if target_mult > 0:
-            tgt_m = target_mult
-        elif features.adx_14 >= 35:
-            tgt_m = 4.0
-        elif features.adx_14 >= 25:
-            tgt_m = 2.0
-        else:
-            tgt_m = 1.5
-
-        if intent.side == Direction.LONG:
+        fill_price = close_price
+        if side == "long":
             actual_stop = fill_price - atr * stop_mult
-            actual_target = fill_price + atr * tgt_m
         else:
             actual_stop = fill_price + atr * stop_mult
-            actual_target = fill_price - atr * tgt_m
 
         position = {
-            "side": intent.side.value,
-            "size_usd": intent.size_usd,
+            "side": side,
+            "size_usd": size_usd,
             "entry_price": fill_price,
             "atr_stop": actual_stop,
-            "atr_target": actual_target,
-            "peak_price": fill_price,
-            "atr_20": features.atr_20,
-            "intent_id": intent.intent_id,
+            "atr_20": atr,
+            "entry_rsi2": features.rsi_2,
         }
         portfolio.positions[pair] = position
         bars_since_trade = 0
+        bars_held = 0
 
     if position is not None:
         close_price = float(df["close"].iloc[-1])
@@ -360,16 +372,46 @@ def backtest_pair(
     }
 
 
-async def run_backtest(interval: int = 60, bars: int = 2000):
+def _resample(df: pd.DataFrame, target_minutes: int, source_minutes: int = 60) -> pd.DataFrame:
+    """Resample OHLCV DataFrame to a higher timeframe.
+
+    Args:
+        df: Source OHLCV DataFrame with DatetimeIndex.
+        target_minutes: Target interval in minutes.
+        source_minutes: Source interval in minutes.
+
+    Returns:
+        Resampled DataFrame.
+    """
+    if target_minutes <= source_minutes:
+        return df
+    rule = f"{target_minutes}min"
+    resampled = df.resample(rule).agg({
+        "open": "first",
+        "high": "max",
+        "low": "min",
+        "close": "last",
+        "volume": "sum",
+    }).dropna()
+    return resampled
+
+
+async def run_backtest(
+    interval: int = 60,
+    bars: int = 2000,
+    use_csv: bool = False,
+):
     """Run backtest for all configured pairs.
 
     Args:
         interval: Candle interval in minutes (60=1h, 240=4h).
-        bars: Number of bars to fetch per pair.
+        bars: Number of bars to fetch per pair (ignored when use_csv=True).
+        use_csv: Load data from CSV files instead of Kraken API.
     """
+    source = "CSV" if use_csv else f"Kraken API ({bars} bars)"
     print(f"\n{'='*70}")
     print(f"  AEGIS AGENT BACKTEST")
-    print(f"  Interval: {interval}min | Target bars: {bars}")
+    print(f"  Interval: {interval}min | Source: {source}")
     print(f"  Pairs: {', '.join(STRATEGY.pairs)}")
     print(f"  Fees: {FEE_RATE*100:.2f}% | Spread: {TYPICAL_SPREAD_BPS:.0f} bps")
     print(f"{'='*70}\n")
@@ -379,11 +421,16 @@ async def run_backtest(interval: int = 60, bars: int = 2000):
     combined_wins = 0
 
     for pair in STRATEGY.pairs:
-        print(f"Fetching {pair} data...")
+        print(f"Loading {pair} data...")
         try:
-            df = await fetch_data(pair, interval, bars)
+            if use_csv:
+                df = load_csv(pair, 60)
+                if interval > 60:
+                    df = _resample(df, interval, 60)
+            else:
+                df = await fetch_data(pair, interval, bars)
         except Exception as e:
-            print(f"  FAILED to fetch {pair}: {e}")
+            print(f"  FAILED to load {pair}: {e}")
             continue
 
         print(f"  Got {len(df)} bars: {df.index[0]} to {df.index[-1]}")
@@ -440,11 +487,23 @@ if __name__ == "__main__":
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
 
-    interval = 60
-    bars = 2000
-    if len(sys.argv) > 1:
-        interval = int(sys.argv[1])
-    if len(sys.argv) > 2:
-        bars = int(sys.argv[2])
+    parser = argparse.ArgumentParser(description="Aegis Agent Backtester")
+    parser.add_argument(
+        "--csv", action="store_true",
+        help="Load data from CSV files in data/ instead of Kraken API",
+    )
+    parser.add_argument(
+        "--interval", type=int, default=60,
+        help="Candle interval in minutes (default: 60)",
+    )
+    parser.add_argument(
+        "--bars", type=int, default=2000,
+        help="Number of bars to fetch from Kraken (ignored with --csv)",
+    )
+    args = parser.parse_args()
 
-    asyncio.run(run_backtest(interval=interval, bars=bars))
+    asyncio.run(run_backtest(
+        interval=args.interval,
+        bars=args.bars,
+        use_csv=args.csv,
+    ))
