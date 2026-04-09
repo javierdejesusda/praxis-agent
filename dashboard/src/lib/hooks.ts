@@ -2,9 +2,7 @@
 
 import useSWR from "swr";
 import {
-  parseLatestSignals,
-  parsePortfolio,
-  parseStats,
+  numberize,
   type Portfolio,
   type Stats,
   type KillCriteria,
@@ -16,24 +14,22 @@ import {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+// Single shared SWR fetcher that recursively converts canonical Decimal
+// strings from the Python backend into numbers before components see
+// them. Used everywhere a response may contain Decimal-serialised values.
+async function numericFetcher<T>(url: string): Promise<T> {
+  const res = await fetch(url);
+  const json = await res.json();
+  return numberize(json) as T;
+}
 
-// The /api/portfolio and /api/stats endpoints serialise Decimal values as
-// strings; parse them back to numbers here so components can treat the shape
-// uniformly as numbers.
-const portfolioFetcher = async (url: string): Promise<Portfolio> =>
-  parsePortfolio(await fetcher(url));
-
-const statsFetcher = async (url: string): Promise<Stats> =>
-  parseStats(await fetcher(url));
-
-const latestSignalsFetcher = async (
-  url: string,
-): Promise<{ timestamp: string; signals: Signal[] }> =>
-  parseLatestSignals(await fetcher(url));
+// Raw fetcher for endpoints with no Decimal content (booleans/strings
+// only) — keeps the payload untouched.
+const rawFetcher = <T>(url: string): Promise<T> =>
+  fetch(url).then((r) => r.json());
 
 export function usePortfolio() {
-  return useSWR<Portfolio>(`${API_BASE}/api/portfolio`, portfolioFetcher, {
+  return useSWR<Portfolio>(`${API_BASE}/api/portfolio`, numericFetcher, {
     refreshInterval: 5000,
     fallbackData: {
       equity: 10000,
@@ -51,7 +47,7 @@ export function usePortfolio() {
 }
 
 export function useStats() {
-  return useSWR<Stats>(`${API_BASE}/api/stats`, statsFetcher, {
+  return useSWR<Stats>(`${API_BASE}/api/stats`, numericFetcher, {
     refreshInterval: 5000,
     fallbackData: {
       equity: 10000,
@@ -67,7 +63,7 @@ export function useStats() {
 }
 
 export function useKillCriteria() {
-  return useSWR<KillCriteria>(`${API_BASE}/api/kill-criteria`, fetcher, {
+  return useSWR<KillCriteria>(`${API_BASE}/api/kill-criteria`, rawFetcher, {
     refreshInterval: 3000,
     fallbackData: {
       stale_data: false,
@@ -82,28 +78,29 @@ export function useKillCriteria() {
 }
 
 export function useArtifacts(limit = 30) {
-  return useSWR<Artifact[]>(`${API_BASE}/api/artifacts?limit=${limit}`, fetcher, {
-    refreshInterval: 8000,
-    fallbackData: [],
-  });
+  return useSWR<Artifact[]>(
+    `${API_BASE}/api/artifacts?limit=${limit}`,
+    numericFetcher,
+    { refreshInterval: 8000, fallbackData: [] },
+  );
 }
 
 export function useRegime() {
-  return useSWR<RegimeData>(`${API_BASE}/api/regime`, fetcher, {
+  return useSWR<RegimeData>(`${API_BASE}/api/regime`, numericFetcher, {
     refreshInterval: 5000,
     fallbackData: { regime: "unknown", adx: 0, pair: "", timestamp: null },
   });
 }
 
 export function useTrades() {
-  return useSWR<Artifact[]>(`${API_BASE}/api/trades`, fetcher, {
+  return useSWR<Artifact[]>(`${API_BASE}/api/trades`, numericFetcher, {
     refreshInterval: 8000,
     fallbackData: [],
   });
 }
 
 export function usePrism(symbol: string) {
-  return useSWR<PrismData>(`${API_BASE}/api/prism/${symbol}`, fetcher, {
+  return useSWR<PrismData>(`${API_BASE}/api/prism/${symbol}`, numericFetcher, {
     refreshInterval: 30000,
     fallbackData: { symbol, signals: null, risk: null },
   });
@@ -112,7 +109,7 @@ export function usePrism(symbol: string) {
 export function useLatestSignals() {
   return useSWR<{ timestamp: string; signals: Signal[] }>(
     `${API_BASE}/api/signals/latest`,
-    latestSignalsFetcher,
-    { refreshInterval: 5000, fallbackData: { timestamp: "", signals: [] } }
+    numericFetcher,
+    { refreshInterval: 5000, fallbackData: { timestamp: "", signals: [] } },
   );
 }

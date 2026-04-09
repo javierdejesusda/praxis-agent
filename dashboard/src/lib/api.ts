@@ -6,80 +6,39 @@ async function fetchApi<T>(path: string): Promise<T> {
   return res.json();
 }
 
-// The Python backend serialises Decimal values as strings to preserve
-// financial precision (canonical JSON). Parse them back to numbers at the
-// fetch boundary so downstream components can treat the types uniformly.
-function toNumber(value: unknown): number {
-  if (typeof value === "number") return value;
+// The Python backend serialises Decimal values as fixed-precision strings
+// (canonical JSON, e.g. "10000.00000000") to preserve financial precision.
+// This pattern matches those strings and nothing else: it requires a
+// decimal point, so plain integers, ISO timestamps, hex hashes, pair names
+// and status codes are all left untouched.
+const DECIMAL_STRING = /^-?\d+\.\d+$/;
+
+/**
+ * Recursively walks a JSON-parsed value and replaces any string that looks
+ * like a canonical Decimal with its numeric form. Non-matching strings,
+ * plain numbers, booleans, nulls and object keys are preserved as-is.
+ * Applied once at the fetch boundary so downstream components can rely on
+ * numeric fields actually being numbers.
+ */
+export function numberize(value: unknown): unknown {
   if (typeof value === "string") {
-    const n = Number(value);
-    return Number.isFinite(n) ? n : 0;
+    if (DECIMAL_STRING.test(value)) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : value;
+    }
+    return value;
   }
-  return 0;
-}
-
-function parsePositions(raw: unknown): Portfolio["positions"] {
-  if (!raw || typeof raw !== "object") return {};
-  const out: Portfolio["positions"] = {};
-  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
-    if (!value || typeof value !== "object") continue;
-    const pos = value as Record<string, unknown>;
-    out[key] = {
-      side: typeof pos.side === "string" ? pos.side : "",
-      size_usd: toNumber(pos.size_usd),
-      entry_price: toNumber(pos.entry_price),
-    };
+  if (Array.isArray(value)) {
+    return value.map(numberize);
   }
-  return out;
-}
-
-export function parsePortfolio(raw: Record<string, unknown>): Portfolio {
-  return {
-    equity: toNumber(raw.equity),
-    cash: toNumber(raw.cash),
-    positions: parsePositions(raw.positions),
-    daily_pnl: toNumber(raw.daily_pnl),
-    total_pnl: toNumber(raw.total_pnl),
-    peak_equity: toNumber(raw.peak_equity),
-    drawdown_pct: toNumber(raw.drawdown_pct),
-    consecutive_losses: toNumber(raw.consecutive_losses),
-    trade_count: toNumber(raw.trade_count),
-    daily_trade_count: toNumber(raw.daily_trade_count),
-  };
-}
-
-export function parseSignal(raw: Record<string, unknown>): Signal {
-  return {
-    agent_name: typeof raw.agent_name === "string" ? raw.agent_name : "",
-    pair: typeof raw.pair === "string" ? raw.pair : "",
-    direction: typeof raw.direction === "string" ? raw.direction : "hold",
-    confidence: toNumber(raw.confidence),
-    evidence: (raw.evidence as Record<string, unknown>) ?? {},
-  };
-}
-
-export function parseLatestSignals(raw: Record<string, unknown>): {
-  timestamp: string;
-  signals: Signal[];
-} {
-  const rawSignals = Array.isArray(raw.signals) ? raw.signals : [];
-  return {
-    timestamp: typeof raw.timestamp === "string" ? raw.timestamp : "",
-    signals: rawSignals.map((s) => parseSignal(s as Record<string, unknown>)),
-  };
-}
-
-export function parseStats(raw: Record<string, unknown>): Stats {
-  return {
-    equity: toNumber(raw.equity),
-    total_pnl: toNumber(raw.total_pnl),
-    drawdown_pct: toNumber(raw.drawdown_pct),
-    trade_count: toNumber(raw.trade_count),
-    rejection_count: toNumber(raw.rejection_count),
-    total_decisions: toNumber(raw.total_decisions),
-    validation_rate: toNumber(raw.validation_rate),
-    positions: (raw.positions as Record<string, unknown>) ?? {},
-  };
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      out[k] = numberize(v);
+    }
+    return out;
+  }
+  return value;
 }
 
 export interface Portfolio {
@@ -169,20 +128,25 @@ export interface PrismData {
   } | null;
 }
 
+async function fetchNormalized<T>(path: string): Promise<T> {
+  return numberize(await fetchApi<unknown>(path)) as T;
+}
+
 export const api = {
   health: () => fetchApi<{ status: string; timestamp: string }>("/api/health"),
-  portfolio: async () =>
-    parsePortfolio(await fetchApi<Record<string, unknown>>("/api/portfolio")),
-  artifacts: (limit = 50) => fetchApi<Artifact[]>(`/api/artifacts?limit=${limit}`),
-  trades: () => fetchApi<Artifact[]>("/api/trades"),
-  rejections: () => fetchApi<Artifact[]>("/api/rejections"),
+  portfolio: () => fetchNormalized<Portfolio>("/api/portfolio"),
+  artifacts: (limit = 50) => fetchNormalized<Artifact[]>(`/api/artifacts?limit=${limit}`),
+  trades: () => fetchNormalized<Artifact[]>("/api/trades"),
+  rejections: () => fetchNormalized<Artifact[]>("/api/rejections"),
   signals: () =>
-    fetchApi<{ timestamp: string; signals: Signal[]; analyst: unknown; risk_decision: unknown }>(
-      "/api/signals/latest"
-    ),
+    fetchNormalized<{
+      timestamp: string;
+      signals: Signal[];
+      analyst: unknown;
+      risk_decision: unknown;
+    }>("/api/signals/latest"),
   killCriteria: () => fetchApi<KillCriteria>("/api/kill-criteria"),
-  stats: async () =>
-    parseStats(await fetchApi<Record<string, unknown>>("/api/stats")),
-  regime: () => fetchApi<RegimeData>("/api/regime"),
-  prism: (symbol: string) => fetchApi<PrismData>(`/api/prism/${symbol}`),
+  stats: () => fetchNormalized<Stats>("/api/stats"),
+  regime: () => fetchNormalized<RegimeData>("/api/regime"),
+  prism: (symbol: string) => fetchNormalized<PrismData>(`/api/prism/${symbol}`),
 };
