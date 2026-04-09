@@ -8,23 +8,9 @@ import { NumericValue } from "@/components/ui/NumericValue";
 import { KeyValueGrid } from "@/components/ui/KeyValueGrid";
 import { EmptyState } from "@/components/ui/EmptyState";
 
-type RiskDecision = {
-  approved: boolean;
-  reason_codes: string[];
-  final_side: string;
-  final_size_usd: number;
-  exposure_before: number;
-  exposure_after: number;
-  daily_pnl: number;
-  drawdown_pct: number;
-  kill_switch_active: boolean;
-};
-
 export function RiskDecisionBlock() {
   const { data } = useArtifacts(1);
-  const decision = data?.[0]?.payload?.risk_decision as unknown as
-    | RiskDecision
-    | undefined;
+  const decision = data?.[0]?.payload?.risk_decision;
 
   return (
     <HairlineCard>

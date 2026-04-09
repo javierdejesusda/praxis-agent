@@ -36,7 +36,7 @@ function ExpansionDetail({ artifact }: { artifact: Artifact }) {
   const analyst = payload.analyst;
   const risk = payload.risk_decision;
   const receipt = payload.receipt;
-  const source = (payload as { source?: string }).source;
+  const source = payload.source;
 
   const items: Array<{ k: string; v: React.ReactNode }> = [
     { k: "Source", v: source ?? "—" },
@@ -130,7 +130,7 @@ export function ArtifactsTable() {
                 const payload = artifact.payload ?? {};
                 const side =
                   payload.intent?.side ??
-                  (payload.risk_decision as { final_side?: string } | undefined)?.final_side ??
+                  payload.risk_decision?.final_side ??
                   "—";
                 const pair = payload.pair ?? "—";
                 const sizeUsd = payload.intent?.size_usd ?? 0;

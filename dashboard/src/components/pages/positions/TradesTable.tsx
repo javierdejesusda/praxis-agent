@@ -9,35 +9,6 @@ import { StatusPill, type PillTone } from "@/components/ui/StatusPill";
 import { KeyValueGrid } from "@/components/ui/KeyValueGrid";
 import { fmtHashShort, fmtTimestamp } from "@/lib/format";
 
-type TradePayload = Artifact["payload"] & {
-  intent?: {
-    intent_id: string;
-    pair: string;
-    side: string;
-    size_usd: number;
-    analyst_conviction?: number;
-  };
-  receipt?: {
-    status: string;
-    fill_price: number;
-    order_id?: string;
-    fees?: number;
-    fee?: number;
-  };
-  risk_decision?: {
-    approved: boolean;
-    reason_codes: string[];
-    final_size_usd: number;
-    drawdown_pct: number;
-  };
-  analyst?: {
-    direction: string;
-    conviction: number;
-    rationale: string;
-    regime_assessment: string;
-  };
-};
-
 function sideTone(side: string | undefined): PillTone {
   const s = (side || "").toLowerCase();
   if (s === "long" || s === "buy") return "ok";
@@ -54,7 +25,7 @@ function statusTone(status: string | undefined): PillTone {
 }
 
 function buildDetails(artifact: Artifact) {
-  const payload = artifact.payload as TradePayload;
+  const payload = artifact.payload;
   const intent = payload.intent;
   const receipt = payload.receipt;
   const decision = payload.risk_decision;
@@ -74,9 +45,11 @@ function buildDetails(artifact: Artifact) {
       v: <NumericValue value={receipt.fill_price} kind="usd" />,
     });
   }
-  const fees = receipt?.fees ?? receipt?.fee;
-  if (fees != null) {
-    items.push({ k: "Fees", v: <NumericValue value={fees} kind="usd" /> });
+  if (receipt?.fees_usd != null) {
+    items.push({
+      k: "Fees",
+      v: <NumericValue value={receipt.fees_usd} kind="usd" />,
+    });
   }
   if (receipt?.status) {
     items.push({
@@ -170,7 +143,7 @@ export function TradesTable() {
           {rows.map((artifact, idx) => {
             const key = artifact.hash || `${artifact.timestamp}-${idx}`;
             const isOpen = expanded === key;
-            const payload = artifact.payload as TradePayload;
+            const payload = artifact.payload;
             const pair = payload.pair || payload.intent?.pair || "—";
             const side = payload.intent?.side;
             const size = payload.intent?.size_usd;

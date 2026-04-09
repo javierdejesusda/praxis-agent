@@ -7,14 +7,6 @@ import { StatusPill, type PillTone } from "@/components/ui/StatusPill";
 import { NumericValue } from "@/components/ui/NumericValue";
 import { EmptyState } from "@/components/ui/EmptyState";
 
-type Analyst = {
-  direction: string;
-  conviction: number;
-  rationale: string;
-  regime_assessment: string;
-  key_risks?: string[];
-};
-
 function directionTone(direction: string): PillTone {
   const d = direction?.toLowerCase();
   if (d === "long") return "ok";
@@ -24,9 +16,7 @@ function directionTone(direction: string): PillTone {
 
 export function AnalystBlock() {
   const { data } = useArtifacts(1);
-  const analyst = data?.[0]?.payload?.analyst as unknown as
-    | Analyst
-    | undefined;
+  const analyst = data?.[0]?.payload?.analyst;
 
   return (
     <HairlineCard>
