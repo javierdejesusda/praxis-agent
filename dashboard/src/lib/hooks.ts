@@ -10,6 +10,8 @@ import {
   type Signal,
   type RegimeData,
   type PrismData,
+  type OnchainStatus,
+  type BacktestReport,
 } from "./api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -112,4 +114,25 @@ export function useLatestSignals() {
     numericFetcher,
     { refreshInterval: 5000, fallbackData: { timestamp: "", signals: [] } },
   );
+}
+
+export function useOnchainStatus() {
+  return useSWR<OnchainStatus>(`${API_BASE}/api/onchain/status`, numericFetcher, {
+    refreshInterval: 8000,
+    fallbackData: {
+      enabled: false,
+      total_onchain_trades: 0,
+      trades: [],
+      attestation_totals: { validation: 0, reputation: 0, trade_intent: 0 },
+      total_attestations: 0,
+      recent_attestations: [],
+    },
+  });
+}
+
+export function useBacktestReport() {
+  return useSWR<BacktestReport>(`${API_BASE}/api/backtest`, numericFetcher, {
+    refreshInterval: 60000,
+    fallbackData: { available: false },
+  });
 }

@@ -16,6 +16,8 @@ import { ArtifactLog } from "@/components/ArtifactLog";
 import { EquityChart } from "@/components/EquityChart";
 import { TradeHistory } from "@/components/TradeHistory";
 import { PrismPanel } from "@/components/PrismPanel";
+import { AttestationsPanel } from "@/components/AttestationsPanel";
+import { BacktestPanel } from "@/components/BacktestPanel";
 import {
   usePortfolio,
   useStats,
@@ -25,6 +27,8 @@ import {
   useRegime,
   useTrades,
   usePrism,
+  useOnchainStatus,
+  useBacktestReport,
 } from "@/lib/hooks";
 
 export default function Dashboard() {
@@ -37,8 +41,11 @@ export default function Dashboard() {
   const { data: tradeList } = useTrades();
   const { data: prismBtc } = usePrism("BTC");
   const { data: prismEth } = usePrism("ETH");
+  const { data: onchainStatus } = useOnchainStatus();
+  const { data: backtestReport } = useBacktestReport();
 
-  if (!portfolio || !stats || !killCriteria) return null;
+  if (!portfolio || !stats || !killCriteria || !onchainStatus || !backtestReport)
+    return null;
 
   const regimeLabel = regimeData?.regime?.toUpperCase() || "UNKNOWN";
   const regimeColor =
@@ -149,6 +156,12 @@ export default function Dashboard() {
               : null
           }
         />
+      </div>
+
+      {/* Backtest Proof + On-Chain Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <BacktestPanel report={backtestReport} />
+        <AttestationsPanel status={onchainStatus} />
       </div>
 
       {/* Main Content Grid */}

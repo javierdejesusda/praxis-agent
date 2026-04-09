@@ -134,9 +134,19 @@ async def regime():
     return {"regime": "unknown", "adx": 0, "pair": "", "timestamp": None}
 
 
+def _load_attestations() -> list[dict]:
+    path = STATE_DIR / "attestations.json"
+    if not path.exists():
+        return []
+    try:
+        return json.loads(path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return []
+
+
 @app.get("/api/onchain/status")
 async def onchain_status():
-    """On-chain execution status summary."""
+    """On-chain execution status summary across trades and attestations."""
     all_artifacts = _load_artifacts(500)
     onchain_trades = []
     for a in all_artifacts:
@@ -149,11 +159,46 @@ async def onchain_status():
                 "tx_hash": receipt.get("order_id"),
                 "timestamp": a.get("timestamp"),
             })
+
+    attestations = _load_attestations()
+    totals = {"validation": 0, "reputation": 0, "trade_intent": 0}
+    for rec in attestations:
+        kind = rec.get("kind")
+        if kind in totals:
+            totals[kind] += 1
+
     return {
         "enabled": True,
         "total_onchain_trades": len(onchain_trades),
         "trades": onchain_trades[:20],
+        "attestation_totals": totals,
+        "total_attestations": sum(totals.values()),
+        "recent_attestations": list(reversed(attestations))[:20],
     }
+
+
+@app.get("/api/attestations")
+async def attestations():
+    """Full persisted attestation log (most recent first)."""
+    records = _load_attestations()
+    return {
+        "total": len(records),
+        "records": list(reversed(records)),
+    }
+
+
+@app.get("/api/backtest")
+async def backtest_report():
+    """Return the most recent saved backtest report."""
+    path = STATE_DIR / "backtest_report.json"
+    if not path.exists():
+        return {"available": False}
+    try:
+        data = json.loads(path.read_text())
+        data["available"] = True
+        return data
+    except (json.JSONDecodeError, OSError) as exc:
+        return {"available": False, "error": str(exc)}
 
 
 @app.get("/api/prism/{symbol}")

@@ -105,6 +105,84 @@ export interface RegimeData {
   timestamp: string | null;
 }
 
+export interface Attestation {
+  kind: "validation" | "reputation" | "trade_intent";
+  tx_hash: string;
+  artifact_hash: string;
+  artifact_type: string;
+  pair: string;
+  timestamp: string;
+  score?: number;
+  feedback_type?: number;
+  comment?: string;
+  intent_id?: string;
+  side?: string;
+  size_usd?: number;
+  status?: string;
+}
+
+export interface OnchainStatus {
+  enabled: boolean;
+  total_onchain_trades: number;
+  trades: Array<{
+    intent_id?: string;
+    status?: string;
+    tx_hash?: string;
+    timestamp?: string;
+  }>;
+  attestation_totals: {
+    validation: number;
+    reputation: number;
+    trade_intent: number;
+  };
+  total_attestations: number;
+  recent_attestations: Attestation[];
+}
+
+export interface BacktestReport {
+  available: boolean;
+  generated_at?: string;
+  config?: {
+    min_signal_score_paper: number;
+    min_signal_score_short: number;
+    shorts_enabled: boolean;
+  };
+  combined?: {
+    total_trades: number;
+    wins: number;
+    losses: number;
+    win_rate_pct: number;
+    total_pnl_usd: number;
+    portfolio_return_pct: number;
+    profit_factor: number;
+    max_drawdown_pct: number;
+    calmar: number;
+  };
+  per_pair?: Array<{
+    pair: string;
+    period_start: string;
+    period_end: string;
+    trades: number;
+    wins: number;
+    losses: number;
+    win_rate_pct: number;
+    return_pct: number;
+    profit_factor: number;
+    max_drawdown_pct: number;
+    sharpe: number;
+    calmar: number;
+    avg_win_pct: number;
+    avg_loss_pct: number;
+  }>;
+  recent?: {
+    window_start: string;
+    trades: number;
+    win_rate_pct: number;
+    pnl_usd: number;
+    profit_factor: number;
+  } | null;
+}
+
 export interface PrismData {
   symbol: string;
   signals: {
@@ -149,4 +227,8 @@ export const api = {
   stats: () => fetchNormalized<Stats>("/api/stats"),
   regime: () => fetchNormalized<RegimeData>("/api/regime"),
   prism: (symbol: string) => fetchNormalized<PrismData>(`/api/prism/${symbol}`),
+  onchainStatus: () => fetchNormalized<OnchainStatus>("/api/onchain/status"),
+  attestations: () =>
+    fetchNormalized<{ total: number; records: Attestation[] }>("/api/attestations"),
+  backtest: () => fetchNormalized<BacktestReport>("/api/backtest"),
 };

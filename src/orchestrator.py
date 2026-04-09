@@ -18,9 +18,11 @@ from src.agents.signals import (
     trend_signal,
     volatility_signal,
 )
+from src.artifacts.attestations import record_attestation_async
 from src.artifacts.hasher import artifact_hash, build_artifact, canonical_json
 from src.config import ARTIFACTS_DIR, RISK, STATE_DIR, STRATEGY
 from src.execution.kraken_adapter import (
+    close_paper_position,
     execute_paper_trade,
     get_ohlc,
     get_ticker,
@@ -204,6 +206,18 @@ async def _submit_onchain(
             intent.intent_id,
             receipt.status,
         )
+        if receipt.order_id:
+            await record_attestation_async(
+                "trade_intent",
+                receipt.order_id,
+                artifact,
+                extra={
+                    "intent_id": intent.intent_id,
+                    "side": intent.side.value,
+                    "size_usd": intent.size_usd,
+                    "status": receipt.status,
+                },
+            )
         await _post_validation(router, artifact, score=int(intent.signal_score))
     except Exception as e:
         logger.error("On-chain submission failed: %s", e)
@@ -229,6 +243,9 @@ async def _post_validation(
         tx = router.post_validation(checkpoint, score, notes)
         if tx:
             logger.info("Validation attestation posted: tx=%s", tx)
+            await record_attestation_async(
+                "validation", tx, artifact, extra={"score": score}
+            )
     except Exception as e:
         logger.error("Validation post failed: %s", e)
 
@@ -255,6 +272,16 @@ async def _post_reputation(
         tx = router.post_reputation(score, outcome_ref, comment, feedback_type)
         if tx:
             logger.info("Reputation posted: score=%d type=%d tx=%s", score, feedback_type, tx)
+            await record_attestation_async(
+                "reputation",
+                tx,
+                artifact,
+                extra={
+                    "score": score,
+                    "feedback_type": feedback_type,
+                    "comment": comment,
+                },
+            )
     except Exception as e:
         logger.error("Reputation post failed: %s", e)
 
@@ -317,7 +344,7 @@ async def run_strategic_cycle(
                 momentum_signal(features),
                 swing_structure_signal(features),
             ]
-            signals = _apply_cross_pair_boost(signals, pair)
+            signals = await _apply_cross_pair_boost(signals, pair)
 
             analyst = None
             try:
@@ -367,14 +394,32 @@ async def run_strategic_cycle(
                 fees = receipt.fees_usd
                 portfolio.cash -= fees
                 portfolio.equity -= fees
+                portfolio.total_pnl -= fees
+                portfolio.daily_pnl -= fees
+
+                atr = features.atr_20
+                stop_mult = 2.5
+                if features.adx_14 >= 35:
+                    target_mult = 5.0
+                elif features.adx_14 >= 25:
+                    target_mult = 3.0
+                else:
+                    target_mult = 2.0
+                if intent.side.value == "long":
+                    live_stop = receipt.fill_price - atr * stop_mult
+                    live_target = receipt.fill_price + atr * target_mult
+                else:
+                    live_stop = receipt.fill_price + atr * stop_mult
+                    live_target = receipt.fill_price - atr * target_mult
+
                 portfolio.positions[pair] = {
                     "side": intent.side.value,
                     "size_usd": intent.size_usd,
                     "entry_price": receipt.fill_price,
                     "intent_id": intent.intent_id,
-                    "atr_stop": intent.atr_stop,
-                    "atr_target": intent.atr_target,
-                    "trailing_stop": intent.atr_stop,
+                    "atr_stop": round(live_stop, 2),
+                    "atr_target": round(live_target, 2),
+                    "trailing_stop": round(live_stop, 2),
                     "peak_price": receipt.fill_price,
                     "atr_20": features.atr_20,
                 }
@@ -415,16 +460,20 @@ async def run_strategic_cycle(
 
 
 _last_pair_signals: dict[str, str] = {}
+_signal_boost_lock = asyncio.Lock()
 
 
-def _apply_cross_pair_boost(
+async def _apply_cross_pair_boost(
     signals: list,
     pair: str,
 ) -> list:
     """Boost signal confidence when BTC and ETH agree on direction.
 
     Stores each pair's majority direction and boosts confidence by 10%
-    when both pairs point the same way (macro confirmation).
+    when both pairs point the same way (macro confirmation). Access to
+    the shared direction map is guarded by an asyncio lock so concurrent
+    strategic cycles for different pairs cannot observe a partially
+    updated snapshot.
 
     Args:
         signals: Signal list for the current pair.
@@ -433,26 +482,27 @@ def _apply_cross_pair_boost(
     Returns:
         Modified signal list with cross-pair boost applied.
     """
-    directional = [s for s in signals if s.direction.value != "hold"]
-    if not directional:
-        _last_pair_signals[pair] = "hold"
+    async with _signal_boost_lock:
+        directional = [s for s in signals if s.direction.value != "hold"]
+        if not directional:
+            _last_pair_signals[pair] = "hold"
+            return signals
+
+        longs = sum(1 for s in directional if s.direction.value == "long")
+        shorts = len(directional) - longs
+        majority = "long" if longs > shorts else "short" if shorts > longs else "hold"
+        _last_pair_signals[pair] = majority
+
+        other_pair = "ETHUSD" if pair == "BTCUSD" else "BTCUSD"
+        other_dir = _last_pair_signals.get(other_pair, "hold")
+
+        if other_dir != "hold" and other_dir == majority:
+            for s in signals:
+                if s.direction.value == majority:
+                    s.confidence = min(100.0, s.confidence * 1.1)
+                    s.evidence["cross_pair_boost"] = True
+
         return signals
-
-    longs = sum(1 for s in directional if s.direction.value == "long")
-    shorts = len(directional) - longs
-    majority = "long" if longs > shorts else "short" if shorts > longs else "hold"
-    _last_pair_signals[pair] = majority
-
-    other_pair = "ETHUSD" if pair == "BTCUSD" else "BTCUSD"
-    other_dir = _last_pair_signals.get(other_pair, "hold")
-
-    if other_dir != "hold" and other_dir == majority:
-        for s in signals:
-            if s.direction.value == majority:
-                s.confidence = min(100.0, s.confidence * 1.1)
-                s.evidence["cross_pair_boost"] = True
-
-    return signals
 
 
 async def run_protective_check(
@@ -470,14 +520,44 @@ async def run_protective_check(
     Returns:
         Updated portfolio state (may trigger position closure).
     """
+    async def _emergency_close_all(reason: str) -> None:
+        """Close all open positions at current market price via the ledger."""
+        for pair in list(portfolio.positions.keys()):
+            try:
+                ticker = await get_ticker(pair)
+                tk = next((k for k in ticker if k != "last"), None)
+                if tk and tk in ticker:
+                    exit_price = float(ticker[tk]["c"][0])
+                else:
+                    exit_price = portfolio.positions[pair].get("entry_price", 0)
+
+                close_result = await close_paper_position(pair, exit_price, reason=reason)
+                if close_result.get("status") == "closed":
+                    pnl_usd = float(close_result["pnl_usd"])
+                    portfolio.equity += pnl_usd
+                    portfolio.cash += pnl_usd
+                    portfolio.total_pnl += pnl_usd
+                    portfolio.daily_pnl += pnl_usd
+                    logger.critical(
+                        "EMERGENCY close %s: pnl=$%.2f equity=$%.2f",
+                        pair, pnl_usd, portfolio.equity,
+                    )
+                del portfolio.positions[pair]
+            except Exception as e:
+                logger.error("Emergency close failed for %s: %s", pair, e)
+                if pair in portfolio.positions:
+                    del portfolio.positions[pair]
+
     if portfolio.drawdown_pct > RISK.max_drawdown_pct:
         logger.critical("KILL: Max drawdown breached (%.2f%%)", portfolio.drawdown_pct * 100)
-        portfolio.positions.clear()
+        await _emergency_close_all("kill_max_drawdown")
+        _save_state(portfolio)
         return portfolio
 
     if portfolio.equity > 0 and portfolio.daily_pnl / portfolio.equity < -RISK.max_daily_loss_pct:
         logger.critical("KILL: Daily loss cap breached")
-        portfolio.positions.clear()
+        await _emergency_close_all("kill_daily_loss")
+        _save_state(portfolio)
         return portfolio
 
     closed_pairs = []
@@ -541,21 +621,66 @@ async def run_protective_check(
 
     for pair in closed_pairs:
         pos = portfolio.positions.get(pair)
-        if pos and router and router.enabled:
-            entry = pos.get("entry_price", 0)
-            side = pos.get("side", "long")
-            exit_price = close_prices.get(pair, entry)
+        if pos is None:
+            continue
 
-            if side == "long":
-                pnl_pct = (exit_price - entry) / entry if entry > 0 else 0
-            else:
-                pnl_pct = (entry - exit_price) / entry if entry > 0 else 0
+        entry = pos.get("entry_price", 0)
+        side = pos.get("side", "long")
+        size_usd = pos.get("size_usd", 0)
+        exit_price = close_prices.get(pair, entry)
 
+        try:
+            close_result = await close_paper_position(
+                pair, exit_price, reason="protective_stop",
+            )
+        except Exception as e:
+            logger.error("Paper ledger close raised for %s: %s", pair, e)
+            continue
+
+        if close_result.get("status") != "closed":
+            logger.error(
+                "Paper ledger refused close for %s: %s — position kept open",
+                pair, close_result.get("error", close_result),
+            )
+            continue
+
+        pnl_usd = float(close_result["pnl_usd"])
+        pnl_pct = float(close_result["pnl_pct"]) / 100.0
+
+        portfolio.equity += pnl_usd
+        portfolio.cash += pnl_usd
+        portfolio.total_pnl += pnl_usd
+        portfolio.daily_pnl += pnl_usd
+
+        if pnl_usd < 0:
+            portfolio.consecutive_losses += 1
+        else:
+            portfolio.consecutive_losses = 0
+
+        portfolio.peak_equity = max(portfolio.peak_equity, portfolio.equity)
+        portfolio.drawdown_pct = (
+            (portfolio.peak_equity - portfolio.equity) / portfolio.peak_equity
+            if portfolio.peak_equity > 0 else 0.0
+        )
+
+        if pair in portfolio.positions:
+            del portfolio.positions[pair]
+
+        _save_state(portfolio)
+
+        logger.info(
+            "Position closed: %s %s pnl=$%.2f (%.2f%%) equity=$%.2f",
+            pair, side, pnl_usd, pnl_pct * 100, portfolio.equity,
+        )
+
+        if router and router.enabled:
             close_data = {
                 "pair": pair,
                 "side": side,
                 "entry_price": entry,
                 "exit_price": exit_price,
+                "size_usd": size_usd,
+                "pnl_usd": round(pnl_usd, 2),
                 "pnl_pct": round(pnl_pct, 6),
                 "close_reason": "protective_stop",
             }
@@ -568,9 +693,6 @@ async def run_protective_check(
             rep_score = min(95, 82 + int(max(0, pnl_pct) * 500))
             comment = f"close:{pair}:pnl={pnl_pct:.4f}"
             await _post_reputation(router, artifact, rep_score, feedback_type=2, comment=comment)
-
-        if pair in portfolio.positions:
-            del portfolio.positions[pair]
 
     return portfolio
 
@@ -613,7 +735,11 @@ async def main_loop() -> None:
     portfolio = _load_state()
     logger.info("Portfolio loaded: equity=%.2f", portfolio.equity)
 
-    strategic_interval = 3600
+    # 15 minute strategic cycle for hackathon demo density. 182 trades in
+    # the 8.5 year backtest (~21/yr) means the live agent is signal-gated,
+    # not cycle-gated: shortening the interval mostly produces more
+    # rejection artifacts that prove the filters are working.
+    strategic_interval = 900
     protective_interval = 60
     last_strategic = 0.0
 
