@@ -10,6 +10,7 @@ import {
   type Signal,
   type RegimeData,
   type PrismData,
+  type PriceSeries,
   type OnchainStatus,
   type BacktestReport,
   type Attestation,
@@ -143,5 +144,16 @@ export function useAttestations() {
     `${API_BASE}/api/attestations`,
     numericFetcher,
     { refreshInterval: 8000, fallbackData: { total: 0, records: [] } },
+  );
+}
+
+export function usePrices(pair: string, interval = 60, limit = 120) {
+  return useSWR<PriceSeries>(
+    `${API_BASE}/api/prices/${pair}?interval=${interval}&limit=${limit}`,
+    numericFetcher,
+    {
+      refreshInterval: 30000,
+      fallbackData: { pair, interval, candles: [] },
+    },
   );
 }

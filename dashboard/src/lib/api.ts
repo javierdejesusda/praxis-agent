@@ -233,6 +233,22 @@ export interface BacktestReport {
   } | null;
 }
 
+export interface PriceCandle {
+  t: number;
+  o: number;
+  h: number;
+  l: number;
+  c: number;
+  v: number;
+}
+
+export interface PriceSeries {
+  pair: string;
+  interval: number;
+  candles: PriceCandle[];
+  error?: string;
+}
+
 export interface PrismData {
   symbol: string;
   signals: {
@@ -277,6 +293,10 @@ export const api = {
   stats: () => fetchNormalized<Stats>("/api/stats"),
   regime: () => fetchNormalized<RegimeData>("/api/regime"),
   prism: (symbol: string) => fetchNormalized<PrismData>(`/api/prism/${symbol}`),
+  prices: (pair: string, interval = 60, limit = 120) =>
+    fetchNormalized<PriceSeries>(
+      `/api/prices/${pair}?interval=${interval}&limit=${limit}`,
+    ),
   onchainStatus: () => fetchNormalized<OnchainStatus>("/api/onchain/status"),
   attestations: () =>
     fetchNormalized<{ total: number; records: Attestation[] }>("/api/attestations"),
