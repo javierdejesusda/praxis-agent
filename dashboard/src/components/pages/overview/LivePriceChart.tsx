@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
+  ReferenceDot,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -94,10 +95,14 @@ export function LivePriceChart({
   const { data: quote } = useQuote(pair);
   const { data: tradesData } = useTrades();
 
-  const candles = series?.candles ?? [];
+  const candles = useMemo(() => series?.candles ?? [], [series?.candles]);
   const source = series?.source;
-  const trades = tradesData ?? [];
-  const markers = buildMarkers(trades, pair);
+  const trades = useMemo(() => tradesData ?? [], [tradesData]);
+  const markers = useMemo(() => buildMarkers(trades, pair), [trades, pair]);
+  const quotePrice = quote?.price;
+  const quoteTsRaw = quote?.ts;
+  const quoteError = quote?.error;
+  const quoteFresh = quotePrice != null && !quoteError;
 
   // Force re-render every second so the relative "last tick" clock ticks
   // visibly even between the 3s quote polls.
@@ -107,18 +112,38 @@ export function LivePriceChart({
     return () => clearInterval(id);
   }, []);
 
+  // Stitch the live quote into the chart as a synthetic "now" point so the
+  // area extends to the right edge and visibly moves on every quote tick.
+  // Without this, the chart only changes when a new 1h bar closes.
+  const chartData = useMemo(() => {
+    if (candles.length === 0) return candles;
+    if (!quoteFresh || quotePrice == null || !quoteTsRaw) return candles;
+    const quoteTs = Math.floor(Date.parse(quoteTsRaw) / 1000);
+    const lastTs = candles[candles.length - 1].t;
+    if (!Number.isFinite(quoteTs) || quoteTs <= lastTs) return candles;
+    return [
+      ...candles,
+      {
+        t: quoteTs,
+        o: quotePrice,
+        h: quotePrice,
+        l: quotePrice,
+        c: quotePrice,
+        v: 0,
+      },
+    ];
+  }, [candles, quotePrice, quoteTsRaw, quoteFresh]);
+
   const label = display ?? pair.replace("USD", "");
-  const first = candles[0]?.c;
+  const first = chartData[0]?.c;
   const lastBar = candles[candles.length - 1]?.c;
-  // Prefer the live quote over the most-recent-bar close so the header ticks
-  // in real time. Fall back to the bar close if the quote endpoint is down.
-  const livePrice = quote?.price ?? lastBar;
+  const livePrice = quotePrice ?? lastBar;
+  const lastChartPoint = chartData[chartData.length - 1];
   const change = first && livePrice ? (livePrice - first) / first : 0;
   const tone: PillTone = change > 0 ? "ok" : change < 0 ? "crit" : "neutral";
   const stroke = change >= 0 ? colors.gain : colors.loss;
   const fill = change >= 0 ? colors.gainSoft : colors.lossSoft;
-  const quoteFresh = quote?.price != null && !quote?.error;
-  const lastTickLabel = quote?.ts ? fmtRelative(quote.ts) : "—";
+  const lastTickLabel = quoteTsRaw ? fmtRelative(quoteTsRaw) : "—";
 
   return (
     <HairlineCard padded={false}>
@@ -176,7 +201,7 @@ export function LivePriceChart({
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
-              data={candles}
+              data={chartData}
               margin={{ top: 6, right: 12, bottom: 0, left: 0 }}
             >
               <XAxis
@@ -222,6 +247,16 @@ export function LivePriceChart({
                 fillOpacity={0.45}
                 isAnimationActive={false}
               />
+              {quoteFresh && lastChartPoint && (
+                <ReferenceDot
+                  x={lastChartPoint.t}
+                  y={lastChartPoint.c}
+                  r={3}
+                  fill={stroke}
+                  stroke={colors.bone}
+                  strokeWidth={1.5}
+                />
+              )}
               {markers.map((m) => {
                 const color = markerColor(m.tone);
                 return (
