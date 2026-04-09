@@ -12,9 +12,10 @@ import {
   type PrismData,
   type OnchainStatus,
   type BacktestReport,
+  type Attestation,
 } from "./api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8888";
 
 // Single shared SWR fetcher that recursively converts canonical Decimal
 // strings from the Python backend into numbers before components see
@@ -135,4 +136,12 @@ export function useBacktestReport() {
     refreshInterval: 60000,
     fallbackData: { available: false },
   });
+}
+
+export function useAttestations() {
+  return useSWR<{ total: number; records: Attestation[] }>(
+    `${API_BASE}/api/attestations`,
+    numericFetcher,
+    { refreshInterval: 8000, fallbackData: { total: 0, records: [] } },
+  );
 }

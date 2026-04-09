@@ -1,0 +1,17 @@
+export const colors = {
+  bone: "#FAFAF7",
+  paper: "#F3F2EC",
+  rule: "#D8D6CE",
+  ruleStrong: "#B8B5A8",
+  ink: "#0A0A0A",
+  inkSoft: "#2B2B28",
+  muted: "#6B6B66",
+  mutedSoft: "#9A978D",
+  gain: "#1F5130",
+  gainSoft: "#E4EBE4",
+  loss: "#8B1A1A",
+  lossSoft: "#F1E3E1",
+  warn: "#B8860B",
+  accent: "#1B3A5C",
+  accentSoft: "#E4E8EE",
+} as const;
