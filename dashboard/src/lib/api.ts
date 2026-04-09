@@ -62,19 +62,69 @@ export interface Signal {
   evidence: Record<string, unknown>;
 }
 
+export interface AnalystReport {
+  pair?: string;
+  direction: string;
+  conviction: number;
+  rationale: string;
+  regime_assessment: string;
+  key_risks?: string[];
+}
+
+export interface RiskDecision {
+  approved: boolean;
+  reason_codes: string[];
+  final_side: string;
+  final_size_usd: number;
+  exposure_before: number;
+  exposure_after: number;
+  daily_pnl: number;
+  drawdown_pct: number;
+  kill_switch_active: boolean;
+}
+
+export interface TradeIntent {
+  intent_id: string;
+  pair: string;
+  side: string;
+  size_usd: number;
+  order_type?: string;
+  limit_price?: number | null;
+  signal_score?: number;
+  erc_eligible?: boolean;
+  atr_stop?: number | null;
+  atr_target?: number | null;
+}
+
+export interface ExecutionReceipt {
+  intent_id?: string;
+  adapter?: string;
+  status: string;
+  order_id?: string;
+  fill_price: number;
+  fees_usd?: number;
+  raw_output?: unknown;
+  error?: string | null;
+}
+
+export interface ArtifactPayload {
+  pair?: string;
+  source?: string;
+  signals?: Signal[];
+  analyst?: AnalystReport;
+  risk_decision?: RiskDecision;
+  intent?: TradeIntent;
+  receipt?: ExecutionReceipt;
+  ticker?: { bid: number; ask: number };
+  prism?: unknown;
+}
+
 export interface Artifact {
   type: string;
   agent_id: string;
   timestamp: string;
   hash: string;
-  payload: {
-    pair?: string;
-    signals?: Signal[];
-    analyst?: { direction: string; conviction: number; rationale: string; regime_assessment: string };
-    risk_decision?: { approved: boolean; reason_codes: string[]; final_size_usd: number; drawdown_pct: number };
-    intent?: { intent_id: string; pair: string; side: string; size_usd: number };
-    receipt?: { status: string; fill_price: number; order_id?: string };
-  };
+  payload: ArtifactPayload;
 }
 
 export interface KillCriteria {

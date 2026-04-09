@@ -80,7 +80,7 @@ function ExpansionDetail({ artifact }: { artifact: Artifact }) {
 
 export function ArtifactsTable() {
   const { data } = useArtifacts(100);
-  const artifacts = data ?? [];
+  const artifacts = useMemo(() => data ?? [], [data]);
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
 

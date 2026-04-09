@@ -28,7 +28,7 @@ export function AttestationsTable() {
   const { data } = useAttestations();
   const [kind, setKind] = useState<KindFilter>("all");
 
-  const records = data?.records ?? [];
+  const records = useMemo(() => data?.records ?? [], [data?.records]);
   const filtered = useMemo(
     () => (kind === "all" ? records : records.filter((r) => r.kind === kind)),
     [records, kind],

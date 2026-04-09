@@ -1,13 +1,12 @@
 "use client";
 
-import { useLatestSignals, useArtifacts } from "@/lib/hooks";
+import { useArtifacts } from "@/lib/hooks";
 import { HairlineCard } from "@/components/ui/HairlineCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { NumericValue } from "@/components/ui/NumericValue";
 
 export function LatestSignalCard() {
-  const { data: signals } = useLatestSignals();
   const { data: artifacts } = useArtifacts(1);
   const latest = artifacts?.[0];
   const analyst = latest?.payload?.analyst;
