@@ -84,6 +84,53 @@ async def get_crypto_quote(pair: str) -> Optional[dict]:
         return None
 
 
+async def get_crypto_daily_closes(pair: str) -> list[float]:
+    """Fetch recent daily close prices for a crypto pair from FMP EOD.
+
+    Returns the most recent ~5 years of daily closes, oldest-first.
+    Used by the multi-timeframe filter in the live orchestrator because
+    Kraken's public OHLC endpoint only returns ~720 bars (30 days of
+    hourly data), which is too shallow for a 200-day EMA.
+
+    Args:
+        pair: Symbol like ``BTCUSD`` or ``ETHUSD``.
+
+    Returns:
+        List of floats, oldest-first. Empty list on failure.
+
+    Raises:
+        RuntimeError: If no API key is configured.
+    """
+    if not FMP_API_KEY:
+        raise RuntimeError("FMP_API_KEY not set")
+    symbol = _normalize_crypto_symbol(pair)
+    try:
+        resp = await _get_client().get(
+            "/historical-price-eod/light",
+            params={"symbol": symbol, "apikey": FMP_API_KEY},
+        )
+        resp.raise_for_status()
+        raw = resp.json()
+    except httpx.HTTPError as exc:
+        logger.warning("FMP daily EOD fetch failed for %s: %s", symbol, exc)
+        return []
+    if not isinstance(raw, list):
+        return []
+    # FMP returns newest-first — reverse to oldest-first
+    closes: list[float] = []
+    for row in reversed(raw):
+        if not isinstance(row, dict):
+            continue
+        try:
+            closes.append(float(row["price"]))
+        except (KeyError, TypeError, ValueError):
+            try:
+                closes.append(float(row["close"]))
+            except (KeyError, TypeError, ValueError):
+                continue
+    return closes
+
+
 async def get_crypto_intraday(
     pair: str, interval: int = 60, limit: int = 120
 ) -> list[dict]:

@@ -113,6 +113,7 @@ def test_consensus_approves_trade():
     signals = [
         _make_signal("trend", Direction.LONG, 85),
         _make_signal("vol", Direction.LONG, 80),
+        _make_signal("momentum", Direction.LONG, 75),
         _make_signal("spread", Direction.HOLD, 50),
     ]
     analyst = _make_analyst(Direction.LONG, 85)
@@ -126,10 +127,27 @@ def test_consensus_approves_trade():
     assert intent.size_usd > 0
 
 
+def test_two_aligned_signals_insufficient():
+    """Two aligned signals should be rejected (minimum is 3)."""
+    signals = [
+        _make_signal("trend", Direction.LONG, 90),
+        _make_signal("vol", Direction.LONG, 85),
+        _make_signal("spread", Direction.HOLD, 50),
+    ]
+    analyst = _make_analyst(Direction.LONG, 90)
+    features = _make_features()
+    portfolio = Portfolio()
+
+    decision, intent = evaluate_risk(signals, analyst, features, portfolio)
+    assert not decision.approved
+    assert "INSUFFICIENT_ALIGNMENT" in decision.reason_codes
+
+
 def test_below_threshold_blocks():
     signals = [
         _make_signal("trend", Direction.LONG, 40),
         _make_signal("vol", Direction.LONG, 30),
+        _make_signal("momentum", Direction.LONG, 25),
         _make_signal("spread", Direction.HOLD, 20),
     ]
     analyst = _make_analyst(Direction.LONG, 40)

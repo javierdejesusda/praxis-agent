@@ -11,6 +11,9 @@ CLAUDE.md
 *.sqlite
 *.db
 
+# Backup files
+*_original.py
+
 # Python
 __pycache__/
 *.pyc

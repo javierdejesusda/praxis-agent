@@ -41,8 +41,8 @@ def _make_features(**overrides) -> Features:
 
 
 def test_mean_reversion_inactive_in_trending():
-    """Mean-reversion should be inactive when regime is TRENDING."""
-    features = _make_features(regime=Regime.TRENDING, bb_position=0.05, rsi_14=25)
+    """Mean-reversion should be inactive when regime is TRENDING with high ADX."""
+    features = _make_features(regime=Regime.TRENDING, adx_14=35.0, bb_position=0.05, rsi_14=25)
     report = mean_reversion_signal(features)
     assert report.direction == Direction.HOLD
     assert report.confidence == 0.0
@@ -108,8 +108,8 @@ def test_mean_reversion_hold_in_neutral():
     assert report.confidence == 0.0
 
 
-def test_mean_reversion_high_volume_penalty():
-    """High volume should penalize mean-reversion confidence."""
+def test_mean_reversion_high_volume_bonus():
+    """High volume should boost mean-reversion confidence (capitulation signal)."""
     features = _make_features(
         regime=Regime.RANGING,
         adx_14=15.0,
@@ -118,7 +118,7 @@ def test_mean_reversion_high_volume_penalty():
         volume_ratio=2.5,
     )
     report = mean_reversion_signal(features)
-    assert report.evidence.get("high_vol_warning") is True
+    assert report.evidence.get("capitulation_volume") is True
     base_features = _make_features(
         regime=Regime.RANGING,
         adx_14=15.0,
@@ -127,7 +127,7 @@ def test_mean_reversion_high_volume_penalty():
         volume_ratio=0.8,
     )
     base_report = mean_reversion_signal(base_features)
-    assert report.confidence < base_report.confidence
+    assert report.confidence > base_report.confidence
 
 
 def test_trend_signal_ema_aligned_bull():
@@ -154,44 +154,43 @@ def test_volatility_signal_shock():
     assert report.confidence < normal_report.confidence
 
 
-def test_trend_bullish_divergence_boost():
-    """Trend agent should get a confidence boost on bullish RSI divergence."""
+def test_trend_volume_confirmation_boost():
+    """Trend agent should get a confidence boost from high volume."""
     base = _make_features(
         ema_9=68500.0, ema_21=68000.0, ema_55=67000.0,
         regime=Regime.TRENDING,
         macd_histogram=50.0,
         returns_5bar=0.005,
         volume_ratio=1.0,
-        rsi_divergence=0,
     )
-    with_div = _make_features(
+    with_vol = _make_features(
         ema_9=68500.0, ema_21=68000.0, ema_55=67000.0,
         regime=Regime.TRENDING,
         macd_histogram=50.0,
         returns_5bar=0.005,
-        volume_ratio=1.0,
-        rsi_divergence=1,
+        volume_ratio=2.0,
     )
     base_report = trend_signal(base)
-    div_report = trend_signal(with_div)
-    assert div_report.confidence > base_report.confidence
-    assert div_report.evidence.get("rsi_divergence_bull") is True
+    vol_report = trend_signal(with_vol)
+    assert vol_report.confidence > base_report.confidence
+    assert vol_report.evidence.get("volume_confirmed") is True
 
 
-def test_momentum_adaptive_threshold():
-    """Momentum agent should use ATR-adaptive threshold."""
+def test_momentum_strong_trend_boost():
+    """Momentum agent should boost confidence on very strong ADX trend."""
     features = _make_features(
-        atr_20=200.0, ema_21=67500.0,
-        returns_5bar=0.002, returns_1bar=0.001, returns_20bar=0.005,
-        macd_histogram=10.0, adx_14=30.0, volume_ratio=1.5,
+        returns_5bar=0.02, returns_1bar=0.01, returns_20bar=0.05,
+        macd_histogram=50.0, adx_14=35.0, volume_ratio=1.5,
         regime=Regime.TRENDING,
     )
     report = momentum_signal(features)
-    assert "adaptive_threshold" in report.evidence
+    assert report.direction == Direction.LONG
+    assert report.evidence.get("very_strong_trend") is True
+    assert report.confidence >= 60
 
 
 def test_mean_reversion_active_in_transition():
-    """Mean-reversion should fire in TRANSITION regime with reduced confidence."""
+    """Mean-reversion should fire in TRANSITION regime (same as ranging)."""
     ranging = _make_features(
         regime=Regime.RANGING, adx_14=18.0,
         bb_position=0.05, rsi_14=22, volume_ratio=0.7,
@@ -204,5 +203,4 @@ def test_mean_reversion_active_in_transition():
     transition_report = mean_reversion_signal(transition)
     assert transition_report.direction == Direction.LONG
     assert transition_report.confidence > 0
-    assert transition_report.confidence < ranging_report.confidence
-    assert transition_report.evidence.get("transition_discount") is True
+    assert transition_report.confidence == ranging_report.confidence

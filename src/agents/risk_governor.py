@@ -24,7 +24,7 @@ def _check_kill_criteria(
     features: Features,
     snapshot_age_seconds: float,
 ) -> list[str]:
-    """Check all 7 kill criteria. Returns list of violation codes."""
+    """Check all kill criteria. Returns list of violation codes."""
     violations = []
 
     if snapshot_age_seconds > STRATEGY.stale_data_seconds:
@@ -46,6 +46,11 @@ def _check_kill_criteria(
 
     if features.spread_bps is not None and features.spread_bps > RISK.min_spread_bps:
         violations.append("SPREAD_TOO_WIDE")
+
+    if features.ema_21 > 0:
+        atr_pct = (features.atr_20 / features.ema_21) * 100
+        if atr_pct > 6.0:
+            violations.append("VOLATILITY_SHOCK")
 
     return violations
 
@@ -176,7 +181,7 @@ def evaluate_risk(
     if not aligned_signals:
         aligned_signals = [s for s in signals if s.direction != Direction.HOLD]
 
-    if len(aligned_signals) < 2:
+    if len(aligned_signals) < 3:
         decision = RiskDecision(
             approved=False,
             reason_codes=["INSUFFICIENT_ALIGNMENT"],
@@ -209,6 +214,43 @@ def evaluate_risk(
         )
         return decision, None
 
+    if consensus_direction == Direction.SHORT:
+        if not RISK.shorts_enabled:
+            decision = RiskDecision(
+                approved=False,
+                reason_codes=["SHORTS_DISABLED"],
+                daily_pnl=portfolio.daily_pnl,
+                drawdown_pct=drawdown,
+            )
+            return decision, None
+        if avg_confidence < RISK.min_signal_score_short:
+            decision = RiskDecision(
+                approved=False,
+                reason_codes=["SHORT_BELOW_THRESHOLD"],
+                daily_pnl=portfolio.daily_pnl,
+                drawdown_pct=drawdown,
+            )
+            return decision, None
+
+    if consensus_direction == Direction.LONG:
+        if features.ema_21 < features.ema_200:
+            decision = RiskDecision(
+                approved=False,
+                reason_codes=["DOWNTREND_NO_LONG"],
+                daily_pnl=portfolio.daily_pnl,
+                drawdown_pct=drawdown,
+            )
+            return decision, None
+    else:
+        if features.ema_21 > features.ema_200:
+            decision = RiskDecision(
+                approved=False,
+                reason_codes=["UPTREND_NO_SHORT"],
+                daily_pnl=portfolio.daily_pnl,
+                drawdown_pct=drawdown,
+            )
+            return decision, None
+
     kelly_fraction = _compute_kelly(portfolio, avg_confidence)
     risk_pct = max(RISK.risk_per_trade_pct, kelly_fraction)
     risk_amount = portfolio.equity * risk_pct
@@ -222,18 +264,20 @@ def evaluate_risk(
     atr = features.atr_20
     entry_price = features.ema_9
 
-    if features.adx_14 >= 35:
-        target_mult = 4.0
-    elif features.adx_14 >= 25:
-        target_mult = 2.0
+    if features.adx_14 >= RISK.adx_hi_threshold:
+        target_mult = RISK.target_mult_hi
+    elif features.adx_14 >= RISK.adx_mid_threshold:
+        target_mult = RISK.target_mult_mid
     else:
-        target_mult = 1.5
+        target_mult = RISK.target_mult_base
+
+    stop_mult = RISK.stop_mult
 
     if consensus_direction == Direction.LONG:
-        atr_stop = entry_price - (atr * 3.0)
+        atr_stop = entry_price - (atr * stop_mult)
         atr_target = entry_price + (atr * target_mult)
     else:
-        atr_stop = entry_price + (atr * 3.0)
+        atr_stop = entry_price + (atr * stop_mult)
         atr_target = entry_price - (atr * target_mult)
 
     intent = TradeIntent(

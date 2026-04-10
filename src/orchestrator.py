@@ -368,6 +368,71 @@ async def run_strategic_cycle(
                 "prism": prism_data if prism_data and prism_data.get("signals") else None,
             }
 
+            if risk_decision.approved and RISK.macro_filter:
+                if RISK.strict_macro:
+                    macro_up = (
+                        features.ema_9 > features.ema_21 > features.ema_55 > features.ema_200
+                    )
+                    macro_down = (
+                        features.ema_9 < features.ema_21 < features.ema_55 < features.ema_200
+                    )
+                else:
+                    macro_up = features.ema_55 > features.ema_200
+                    macro_down = not macro_up
+                if intent.side.value == "long" and not macro_up:
+                    risk_decision.approved = False
+                    risk_decision.reason_codes = ["MACRO_FILTER"]
+                elif intent.side.value == "short" and not macro_down:
+                    risk_decision.approved = False
+                    risk_decision.reason_codes = ["MACRO_FILTER"]
+
+            if risk_decision.approved and RISK.min_adx_for_entry > 0:
+                if features.adx_14 < RISK.min_adx_for_entry:
+                    risk_decision.approved = False
+                    risk_decision.reason_codes = ["MIN_ADX"]
+
+            if risk_decision.approved and RISK.atr_pct_max < 100.0 and features.ema_21 > 0:
+                atr_pct = (features.atr_20 / features.ema_21) * 100
+                if atr_pct > RISK.atr_pct_max:
+                    risk_decision.approved = False
+                    risk_decision.reason_codes = ["ATR_PCT_CEILING"]
+
+            if risk_decision.approved and RISK.mtf_daily_filter:
+                try:
+                    import pandas as pd
+                    import pandas_ta as ta
+                    from src.features.fmp_prices import get_crypto_daily_closes
+                    closes = await get_crypto_daily_closes(pair)
+                    if len(closes) >= RISK.mtf_daily_slow:
+                        s = pd.Series(closes)
+                        ema_f = ta.ema(s, length=RISK.mtf_daily_fast).iloc[-1]
+                        ema_s = ta.ema(s, length=RISK.mtf_daily_slow).iloc[-1]
+                        daily_up = ema_f > ema_s
+                        logger.info(
+                            "MTF daily %s: ema%d=%.0f ema%d=%.0f up=%s",
+                            pair, RISK.mtf_daily_fast, ema_f,
+                            RISK.mtf_daily_slow, ema_s, daily_up,
+                        )
+                        if intent.side.value == "long" and not daily_up:
+                            risk_decision.approved = False
+                            risk_decision.reason_codes = ["MTF_DAILY"]
+                        elif intent.side.value == "short" and daily_up:
+                            risk_decision.approved = False
+                            risk_decision.reason_codes = ["MTF_DAILY"]
+                    else:
+                        logger.warning(
+                            "MTF daily filter skipped for %s: only %d FMP daily closes (need %d)",
+                            pair, len(closes), RISK.mtf_daily_slow,
+                        )
+                except Exception as e:
+                    logger.warning("MTF daily filter failed for %s: %s", pair, e)
+
+            if risk_decision.approved and RISK.dd_scale_threshold < 1.0:
+                if portfolio.drawdown_pct > (1.0 - RISK.dd_scale_threshold):
+                    intent.size_usd = round(
+                        intent.size_usd * RISK.dd_scale_factor, 2
+                    )
+
             if not risk_decision.approved:
                 artifact = build_artifact("no-trade", artifact_data)
                 _save_artifact(artifact)
@@ -398,13 +463,13 @@ async def run_strategic_cycle(
                 portfolio.daily_pnl -= fees
 
                 atr = features.atr_20
-                stop_mult = 2.5
-                if features.adx_14 >= 35:
-                    target_mult = 5.0
-                elif features.adx_14 >= 25:
-                    target_mult = 3.0
+                stop_mult = RISK.stop_mult
+                if features.adx_14 >= RISK.adx_hi_threshold:
+                    target_mult = RISK.target_mult_hi
+                elif features.adx_14 >= RISK.adx_mid_threshold:
+                    target_mult = RISK.target_mult_mid
                 else:
-                    target_mult = 2.0
+                    target_mult = RISK.target_mult_base
                 if intent.side.value == "long":
                     live_stop = receipt.fill_price - atr * stop_mult
                     live_target = receipt.fill_price + atr * target_mult
@@ -579,14 +644,16 @@ async def run_protective_check(
             if side == "long":
                 peak = max(peak, current_price)
                 atr = pos.get("atr_20", abs(entry_price - atr_stop) / 3.0 if atr_stop else (entry_price * 0.02))
-                trail = peak - atr * 2.0
-                if peak > entry_price * 1.02:
-                    trail = max(trail, entry_price * 0.998)
+                trail = peak - atr * RISK.trail_mult
+                if peak > entry_price * 1.006:  # iter18: 1.006 — re-optimal with tgt=2.85/3.5
+                    trail = max(trail, entry_price)
+                if peak > entry_price * 1.012:  # iter10: 1.012 (was 1.015) — sweep-optimal lock trigger
+                    trail = max(trail, entry_price * 1.0065)  # iter19: 1.0065 (was 1.005) — sweep-optimal lock value
                 if atr_stop and current_price <= atr_stop:
                     logger.warning("ATR stop hit for %s LONG @ %.2f (stop=%.2f)", pair, current_price, atr_stop)
                     closed_pairs.append(pair)
                     close_prices[pair] = current_price
-                elif current_price <= trail and peak > entry_price * 1.02:
+                elif current_price <= trail and peak > entry_price * 1.005:
                     logger.info("Trailing stop hit for %s LONG @ %.2f (trail=%.2f)", pair, current_price, trail)
                     closed_pairs.append(pair)
                     close_prices[pair] = current_price
@@ -597,14 +664,16 @@ async def run_protective_check(
             else:
                 peak = min(peak, current_price)
                 atr = pos.get("atr_20", abs(atr_stop - entry_price) / 3.0 if atr_stop else (entry_price * 0.02))
-                trail = peak + atr * 2.0
-                if peak < entry_price * 0.98:
-                    trail = min(trail, entry_price * 1.002)
+                trail = peak + atr * RISK.trail_mult
+                if peak < entry_price * 0.994:  # iter18: 0.994 — re-optimal with tgt=2.85/3.5
+                    trail = min(trail, entry_price)
+                if peak < entry_price * 0.988:  # iter10: 0.988 (was 0.985) — sweep-optimal lock trigger
+                    trail = min(trail, entry_price * 0.9935)  # iter19: 0.9935 (was 0.995) — sweep-optimal lock value
                 if atr_stop and current_price >= atr_stop:
                     logger.warning("ATR stop hit for %s SHORT @ %.2f (stop=%.2f)", pair, current_price, atr_stop)
                     closed_pairs.append(pair)
                     close_prices[pair] = current_price
-                elif current_price >= trail and peak < entry_price * 0.98:
+                elif current_price >= trail and peak < entry_price * 0.995:
                     logger.info("Trailing stop hit for %s SHORT @ %.2f (trail=%.2f)", pair, current_price, trail)
                     closed_pairs.append(pair)
                     close_prices[pair] = current_price
