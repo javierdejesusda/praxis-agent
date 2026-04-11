@@ -1,6 +1,9 @@
 # Secrets
 .env
-.env.*
+.env.local
+.env.production
+.env.development
+!.env.example
 secrets.toml
 *.pem
 *.key
@@ -10,9 +13,6 @@ secrets.toml
 CLAUDE.md
 *.sqlite
 *.db
-
-# Backup files
-*_original.py
 
 # Python
 __pycache__/
@@ -34,6 +34,12 @@ NEXT_PHASE.md
 /artifacts/
 /state/
 
+# Logs (may contain API keys in URLs)
+/logs/
+
+# Playwright MCP cache
+.playwright-mcp/
+
 # OS
 .DS_Store
 Thumbs.db
@@ -42,3 +48,6 @@ Thumbs.db
 .vscode/
 .idea/
 .vercel
+
+# Snapshot files
+snapshot-*.md

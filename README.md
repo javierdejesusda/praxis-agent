@@ -6,6 +6,8 @@ A regime-adaptive AI trading agent built around a single principle the SOTA red-
 
 Built for the [lablab.ai AI Trading Agents Hackathon](https://lablab.ai/ai-hackathons/ai-trading-agents) — combined Kraken CLI + ERC-8004 submission.
 
+> **Disclaimer:** This is an experimental research project. Not financial advice. See [DISCLAIMER.md](DISCLAIMER.md) for full details.
+
 ## Why this design wins
 
 Most trading-agent designs give an LLM authority over order size, retries, tool choice, and exception handling. Recent red-team papers (TradeTrap, MCPTox, TrustTrade) show this is exactly the class of system that can be systematically misled by prompt-injection, tool-poisoning, and adversarial market data. Praxis inverts the responsibilities:
@@ -16,22 +18,33 @@ Most trading-agent designs give an LLM authority over order size, retries, tool 
 
 The pattern is auditable, tamper-evident, and — critically — the backtest shows it actually makes money.
 
-## Backtest proof (Out-of-Sample, 2023-2026)
+## Backtest Results
 
-Run `python scripts/final_report.py` to regenerate. Full BTC/USD + ETH/USD history on 4h candles, validated out-of-sample.
+### Out-of-Sample (Jan 2023 - Apr 2026, unseen data)
 
 | Metric | Value |
 |---|---|
-| Sharpe Ratio | **1.344** |
-| CAGR | **18.47%** |
-| Total Return | **+71.4%** |
-| Total Trades | **53** |
-| Win Rate | **60.4%** |
-| Profit Factor | **3.197** |
-| Max Drawdown | 9.61% |
-| Expectancy | $150.96/trade |
+| Sharpe Ratio | **1.136** |
+| CAGR | **14.21%** |
+| Total Return | **+52.59%** |
+| Calmar Ratio | **1.479** |
+| Max Drawdown | **9.61%** |
+| Total Trades | 53 (31W / 22L) |
+| Win Rate | 58.5% |
+| Profit Factor | 2.648 |
+| Expectancy | $114.00/trade |
+| MC p-value | 0.013 |
+| PSR | 99.4% |
 
-Parameters were optimized on in-sample data (2013-2022) only. The OOS window (2023-2026) was never touched during development.
+### Methodology
+
+- **12+ years of FMP data** — BTC/USD (2013-2026) and ETH/USD (2015-2026) on 4h candles.
+- **Strict IS/OOS separation** — parameters were optimized on pre-2023 data only. The OOS window was never touched by any optimizer. All sweep scripts enforce this boundary.
+- **Realistic execution** — next-bar open fills, 0.26% Kraken taker fees, vol-scaled slippage.
+- **Statistical validation** — Monte Carlo permutation test (p=0.013), Probabilistic Sharpe Ratio (99.4%), Deflated Sharpe Ratio applied to IS with n=3,000 trial correction.
+- **Robustness tested** — cost sensitivity across 4 fee tiers, parameter sensitivity at +/-10% perturbation, regime-specific analysis.
+
+Regenerate with `python scripts/final_report.py`.
 
 ## Architecture
 
@@ -70,12 +83,12 @@ Dashboard     (sepolia.etherscan.io)
 ### Strategy
 
 - **Regime-adaptive**: ADX > 25 trending (momentum bias), ADX < 20 ranging (mean-reversion bias). In between, signals must align harder.
-- **6 deterministic signal agents**: Trend, Volatility, Spread/Cost gate, Mean-Reversion, Momentum, Swing Structure. Each returns a typed `SignalOutput` with direction, confidence, and an evidence dict the LLM can read.
+- **6 deterministic signal agents**: Trend, Volatility, Spread/Cost gate, Mean-Reversion, Momentum, Swing Structure. Each returns a typed `SignalOutput` with direction, confidence, and an evidence dict.
 - **LLM analyst** consumes the signals plus features and PRISM market data, then emits a typed `AnalystReport`. Model: OpenAI GPT-5.2 with a deterministic consensus fallback when the API is unavailable.
-- **Risk governor** runs 7 independent kill criteria, requires multi-agent alignment, applies regime gates (no long under EMA(200), etc.), sizes positions via half-Kelly capped at 3%, and places ATR-multiple stops and targets.
+- **Risk governor** runs 7 independent kill criteria, requires multi-agent alignment, applies regime gates, sizes positions via half-Kelly capped at 3%, and places ATR-multiple stops and targets.
 - **Two-tier execution**: score >= 85 -> ERC-8004 eligible (submitted on-chain), score >= 70 -> paper trade only.
 
-### 7 kill criteria (hard gates; LLM cannot override)
+### 7 Kill Criteria (hard gates; LLM cannot override)
 
 | # | Criterion | Limit |
 |---|---|---|
@@ -87,23 +100,31 @@ Dashboard     (sepolia.etherscan.io)
 | 6 | Volatility shock | ATR > 6% of price |
 | 7 | Manual kill switch | Operator override |
 
-## On-chain identity
+## On-chain Identity
 
 - **Agent ID**: 35 (registered on hackathon AgentRegistry)
 - **Chain**: Sepolia (11155111)
 - **Contracts**: RiskRouter `0xd6A6952545FF6E6E6681c2d15C59f9EB8F40FdBC`
 - **Attestation cadence**: validation + reputation post after every strategic cycle, including rejections. The dashboard links each entry to Etherscan.
 
-## Quick start
+## Quick Start
 
 ```bash
-# Install
+# Clone
+git clone https://github.com/javierdejesusda/praxis-agent.git
+cd praxis-agent
+
+# Install Python dependencies
 pip install -e ".[dev]"
 
-# Run the unit tests
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your API keys
+
+# Run the tests
 pytest
 
-# Preflight: env, Kraken, Sepolia, ledger
+# Preflight check: env, Kraken, Sepolia, ledger
 python scripts/preflight.py
 
 # Start the trading agent
@@ -121,16 +142,6 @@ python scripts/final_report.py
 
 Dashboard at http://localhost:3000.
 
-## Environment
-
-```
-OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-5.2
-SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/...
-SEPOLIA_PRIVATE_KEY=0x...
-PRISM_API_KEY=prism_sk_...
-```
-
 ## Stack
 
 - Python 3.11+ with asyncio orchestration, plain async — no LangGraph (CVEs, complexity)
@@ -141,7 +152,7 @@ PRISM_API_KEY=prism_sk_...
 - Next.js 16 (Turbopack) + Tailwind v4 + Framer Motion + Recharts + SWR frontend
 - JSON state files with HMAC integrity checks
 
-## Project layout
+## Project Layout
 
 ```
 src/
@@ -151,16 +162,21 @@ src/
   artifacts/      # hasher.py (RFC 8785 canonical JSON)
   orchestrator.py # strategic + protective loops
   api.py          # FastAPI dashboard backend
-  backtester.py   # historical replay of the full pipeline
+  backtester.py   # time-synced multi-pair walk-forward backtester
 dashboard/        # Next.js 16 UI
 scripts/
+  final_report.py # IS/OOS backtest report with robustness analyses
   preflight.py    # pre-launch health check
-  final_report.py # backtest + JSON report writer
   force_trade.py  # end-to-end trade path verification
+  walk_forward.py # walk-forward cross-validation
   register_agent.py
 tests/            # pytest suite
 ```
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
+
 ## License
 
-MIT
+[MIT](LICENSE)
