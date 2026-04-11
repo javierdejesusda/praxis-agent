@@ -38,6 +38,7 @@ from src.config import RISK, STATE_DIR, STRATEGY
 
 
 OOS_SPLIT_DEFAULT = "2023-01-01"
+ESTIMATED_NUM_TRIALS = 3000  # Conservative estimate of total optimization trials run
 
 
 def _extract_metrics(result: dict) -> dict:
@@ -45,7 +46,8 @@ def _extract_metrics(result: dict) -> dict:
     keys = [
         "final_equity", "initial_equity", "total_pnl",
         "agent_return_pct", "cagr_pct",
-        "sharpe_annualized", "sortino_annualized", "calmar_ratio",
+        "sharpe_annualized", "smart_sharpe", "sortino_annualized", "calmar_ratio",
+        "psr", "dsr", "dsr_expected_max_sr", "monte_carlo_p_value",
         "max_drawdown_pct", "max_drawdown_usd",
         "total_trades", "wins", "losses", "win_rate_pct",
         "profit_factor", "expectancy_usd", "avg_bars_held",
@@ -131,8 +133,13 @@ def _print_metrics(label: str, m: dict) -> None:
     print(f"  Return:        {m.get('agent_return_pct', 0):+.2f}%")
     print(f"  CAGR:          {m.get('cagr_pct', 0):+.2f}%")
     print(f"  Sharpe:        {m.get('sharpe_annualized', 0):.3f}")
+    print(f"  Smart Sharpe:  {m.get('smart_sharpe', 0):.3f}")
     print(f"  Sortino:       {m.get('sortino_annualized', 0):.3f}")
     print(f"  Calmar:        {m.get('calmar_ratio')}")
+    print(f"  PSR:           {m.get('psr', 0):.4f}")
+    if m.get('dsr') is not None and m.get('dsr') != 0.0:
+        print(f"  DSR:           {m.get('dsr'):.4f} (expected max SR: {m.get('dsr_expected_max_sr', 0):.4f})")
+    print(f"  MC p-value:    {m.get('monte_carlo_p_value', 1.0):.4f}")
     print(f"  Max DD:        {m.get('max_drawdown_pct', 0):.2f}%  (${m.get('max_drawdown_usd', 0):,.2f})")
     print(f"  Trades:        {m.get('total_trades', 0)} ({m.get('wins', 0)}W / {m.get('losses', 0)}L)")
     print(f"  Win rate:      {m.get('win_rate_pct', 0):.1f}%")
@@ -185,7 +192,8 @@ async def main():
     print(f"\n{'='*72}")
     print("  FULL HISTORY")
     print(f"{'='*72}")
-    full_result = backtest_portfolio(full_frames, initial_equity=initial_equity, verbose=True)
+    full_result = backtest_portfolio(full_frames, initial_equity=initial_equity,
+                                     num_trials=ESTIMATED_NUM_TRIALS, verbose=True)
     full_metrics = _extract_metrics(full_result)
     full_per_pair = _per_pair_metrics(full_result, full_frames)
     _print_metrics("Full History", full_metrics)
@@ -196,7 +204,8 @@ async def main():
         print(f"\n{'='*72}")
         print(f"  IN-SAMPLE (before {oos_split})")
         print(f"{'='*72}")
-        is_result = backtest_portfolio(is_frames, initial_equity=initial_equity, verbose=False)
+        is_result = backtest_portfolio(is_frames, initial_equity=initial_equity,
+                                         num_trials=ESTIMATED_NUM_TRIALS, verbose=False)
         is_metrics = _extract_metrics(is_result)
         is_per_pair = _per_pair_metrics(is_result, is_frames)
         _print_metrics("In-Sample", is_metrics)
@@ -207,7 +216,8 @@ async def main():
         print(f"\n{'='*72}")
         print(f"  OUT-OF-SAMPLE (from {oos_split})")
         print(f"{'='*72}")
-        oos_result = backtest_portfolio(oos_frames, initial_equity=initial_equity, verbose=False)
+        oos_result = backtest_portfolio(oos_frames, initial_equity=initial_equity,
+                                         num_trials=1, verbose=False)
         oos_metrics = _extract_metrics(oos_result)
         oos_per_pair = _per_pair_metrics(oos_result, oos_frames)
         _print_metrics("Out-of-Sample", oos_metrics)
@@ -309,18 +319,21 @@ async def main():
         }
 
     # Pre-compute features once for sensitivity analyses
+    # Use IS frames for robustness checks to avoid contaminating OOS
+    sensitivity_frames = is_frames if has_is else full_frames
+    sensitivity_label = f"in-sample (before {oos_split})" if has_is else "full history"
     print(f"\n{'='*72}")
-    print("  ROBUSTNESS ANALYSES")
+    print(f"  ROBUSTNESS ANALYSES (on {sensitivity_label})")
     print(f"{'='*72}")
 
     bulks = {}
-    for pair, df in full_frames.items():
+    for pair, df in sensitivity_frames.items():
         if pair not in bulks:
             bulks[pair] = compute_features_bulk(df, pair)
 
     # Cost sensitivity
     print("\n  Running cost sensitivity (4 tiers)...")
-    cost_results = cost_sensitivity(full_frames, initial_equity=initial_equity,
+    cost_results = cost_sensitivity(sensitivity_frames, initial_equity=initial_equity,
                                     precomputed_features=bulks)
     report["cost_sensitivity"] = cost_results
     print("  | Round-trip cost | Return     | Sharpe | Max DD  | Trades |")
@@ -330,7 +343,7 @@ async def main():
 
     # Parameter sensitivity
     print("\n  Running parameter sensitivity (±10%)...")
-    param_results = parameter_sensitivity(full_frames, initial_equity=initial_equity,
+    param_results = parameter_sensitivity(sensitivity_frames, initial_equity=initial_equity,
                                           precomputed_features=bulks)
     report["parameter_sensitivity"] = param_results
     fragile_count = sum(1 for p in param_results if p.get("fragile"))
@@ -344,7 +357,8 @@ async def main():
 
     # Regime split
     print("\n  Analyzing regime-specific performance...")
-    regime_results = regime_split(full_result.get("trades", []), bulks, full_frames)
+    full_bulks = {pair: compute_features_bulk(df, pair) for pair, df in full_frames.items()}
+    regime_results = regime_split(full_result.get("trades", []), full_bulks, full_frames)
     report["regime_performance"] = regime_results
     for regime, rm in regime_results.items():
         print(f"  {regime:>12s}: {rm['trades']} trades, {rm['win_rate_pct']:.1f}% win, PnL=${rm['pnl_usd']:+,.2f}, PF={rm.get('profit_factor', 'N/A')}")
@@ -371,11 +385,14 @@ async def main():
         print("  VALIDATION SUMMARY")
         print(f"{'='*72}")
         print(f"  IS Sharpe:  {is_metrics.get('sharpe_annualized', 0):.3f}   |   OOS Sharpe:  {oos_metrics.get('sharpe_annualized', 0):.3f}")
+        print(f"  IS DSR:     {is_metrics.get('dsr', 'N/A')} (n={ESTIMATED_NUM_TRIALS})  |   OOS PSR:     {oos_metrics.get('psr', 0):.4f}")
         print(f"  IS Return:  {is_metrics.get('agent_return_pct', 0):+.2f}%  |   OOS Return:  {oos_metrics.get('agent_return_pct', 0):+.2f}%")
+        print(f"  IS CAGR:    {is_metrics.get('cagr_pct', 0):+.2f}%  |   OOS CAGR:    {oos_metrics.get('cagr_pct', 0):+.2f}%")
         print(f"  IS Max DD:  {is_metrics.get('max_drawdown_pct', 0):.2f}%   |   OOS Max DD:  {oos_metrics.get('max_drawdown_pct', 0):.2f}%")
         print(f"  IS Trades:  {is_metrics.get('total_trades', 0)}          |   OOS Trades:  {oos_metrics.get('total_trades', 0)}")
         print(f"  IS Win %:   {is_metrics.get('win_rate_pct', 0):.1f}%      |   OOS Win %:   {oos_metrics.get('win_rate_pct', 0):.1f}%")
         print(f"  IS PF:      {is_metrics.get('profit_factor')}       |   OOS PF:      {oos_metrics.get('profit_factor')}")
+        print(f"  IS MC p:    {is_metrics.get('monte_carlo_p_value', 'N/A')}      |   OOS MC p:    {oos_metrics.get('monte_carlo_p_value', 'N/A')}")
         fragile_params = [p["parameter"] for p in param_results if p.get("fragile")]
         if fragile_params:
             print(f"\n  FRAGILE PARAMETERS: {', '.join(fragile_params)}")

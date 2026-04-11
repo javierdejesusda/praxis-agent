@@ -79,10 +79,20 @@ def _save_state(portfolio: Portfolio) -> None:
 
 
 def _load_state() -> Portfolio:
-    """Load portfolio state from JSON, or return default."""
+    """Load portfolio state from JSON, or return default.
+
+    Handles migration from older state files that lack the
+    total_wins/total_losses fields by back-filling from trade_count
+    and consecutive_losses as a best-effort estimate.
+    """
     state_path = STATE_DIR / "portfolio.json"
     if state_path.exists():
         data = json.loads(state_path.read_text())
+        if "total_wins" not in data and "trade_count" in data:
+            tc = data.get("trade_count", 0)
+            cl = data.get("consecutive_losses", 0)
+            data["total_losses"] = min(cl, tc)
+            data["total_wins"] = max(0, tc - data["total_losses"])
         return Portfolio(**data)
     return Portfolio()
 
@@ -442,7 +452,8 @@ async def run_strategic_cycle(
                 val_score = _compute_validation_score(signals, risk_decision)
                 if router and router.enabled:
                     await _post_validation(router, artifact, score=val_score)
-                    win_rate = max(0.0, min(1.0, (portfolio.trade_count - portfolio.consecutive_losses) / max(1, portfolio.trade_count)))
+                    closed_trades = portfolio.total_wins + portfolio.total_losses
+                    win_rate = max(0.0, min(1.0, portfolio.total_wins / max(1, closed_trades)))
                     rep_score = _compute_reputation_score(False, portfolio, win_rate)
                     reason = ",".join(risk_decision.reason_codes)
                     await _post_reputation(router, artifact, rep_score, feedback_type=1, comment=f"risk:{reason}")
@@ -501,13 +512,15 @@ async def run_strategic_cycle(
 
             if router and router.enabled and intent.erc_eligible:
                 await _submit_onchain(router, intent, artifact)
-                win_rate = max(0.0, min(1.0, (portfolio.trade_count - portfolio.consecutive_losses) / max(1, portfolio.trade_count)))
+                closed_trades = portfolio.total_wins + portfolio.total_losses
+                win_rate = max(0.0, min(1.0, portfolio.total_wins / max(1, closed_trades)))
                 rep_score = _compute_reputation_score(True, portfolio, win_rate)
                 await _post_reputation(router, artifact, rep_score, feedback_type=0, comment="trade_executed")
             elif router and router.enabled:
                 val_score = _compute_validation_score(signals, risk_decision)
                 await _post_validation(router, artifact, score=val_score)
-                win_rate = max(0.0, min(1.0, (portfolio.trade_count - portfolio.consecutive_losses) / max(1, portfolio.trade_count)))
+                closed_trades = portfolio.total_wins + portfolio.total_losses
+                win_rate = max(0.0, min(1.0, portfolio.total_wins / max(1, closed_trades)))
                 rep_score = _compute_reputation_score(True, portfolio, win_rate)
                 await _post_reputation(router, artifact, rep_score, feedback_type=0, comment="paper_trade")
 
@@ -603,6 +616,12 @@ async def run_protective_check(
                     portfolio.cash += pnl_usd
                     portfolio.total_pnl += pnl_usd
                     portfolio.daily_pnl += pnl_usd
+                    if pnl_usd < 0:
+                        portfolio.consecutive_losses += 1
+                        portfolio.total_losses += 1
+                    else:
+                        portfolio.consecutive_losses = 0
+                        portfolio.total_wins += 1
                     logger.critical(
                         "EMERGENCY close %s: pnl=$%.2f equity=$%.2f",
                         pair, pnl_usd, portfolio.equity,
@@ -723,8 +742,10 @@ async def run_protective_check(
 
         if pnl_usd < 0:
             portfolio.consecutive_losses += 1
+            portfolio.total_losses += 1
         else:
             portfolio.consecutive_losses = 0
+            portfolio.total_wins += 1
 
         portfolio.peak_equity = max(portfolio.peak_equity, portfolio.equity)
         portfolio.drawdown_pct = (

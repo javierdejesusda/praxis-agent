@@ -29,7 +29,6 @@ import pandas as pd
 
 from src import config
 from src.backtester import (
-    backtest_pair,
     backtest_portfolio,
     load_csv,
     _resample,
@@ -40,6 +39,7 @@ logging.basicConfig(level=logging.WARNING)
 LOG_DIR = Path(__file__).resolve().parent.parent / "logs"
 LOG_DIR.mkdir(exist_ok=True)
 
+OOS_SPLIT = "2023-01-01"
 
 @dataclass(frozen=True)
 class SweepConfig:
@@ -450,7 +450,7 @@ def run_sweep(
                 if start:
                     df = df[df.index >= pd.Timestamp(start, tz="UTC")]
                 if end:
-                    df = df[df.index <= pd.Timestamp(end, tz="UTC")]
+                    df = df[df.index < pd.Timestamp(end, tz="UTC")]
                 if len(df) < 300:
                     continue
                 frame_cache[key] = df
@@ -529,7 +529,8 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--top", type=int, default=15)
     parser.add_argument("--start", type=str, default=None)
-    parser.add_argument("--end", type=str, default=None)
+    parser.add_argument("--end", type=str, default=OOS_SPLIT,
+                        help=f"End date for training data (default: {OOS_SPLIT} OOS cutoff)")
     parser.add_argument("--out", type=str, default=str(LOG_DIR / "sweep.json"))
     parser.add_argument("--stage", type=str, default="coarse",
                         choices=["coarse", "fine", "tf", "recent", "filter",

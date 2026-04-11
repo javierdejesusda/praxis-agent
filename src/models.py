@@ -70,6 +70,7 @@ class Features(BaseModel):
     rsi_2: float = 50.0       # 2-period RSI (ultra-sensitive mean-reversion)
     high_50: float = 0.0      # 50-bar rolling high
     low_50: float = 0.0       # 50-bar rolling low
+    close: float = 0.0        # raw close price at this bar
     bb_width: float = 0.0     # BB width as % of middle band
     bb_width_avg: float = 0.0 # 50-bar average BB width
 
@@ -150,5 +151,7 @@ class Portfolio(BaseModel):
     drawdown_pct: float = 0.0
     consecutive_losses: int = 0
     trade_count: int = 0
+    total_wins: int = 0
+    total_losses: int = 0
     daily_trade_count: int = 0
     last_trade_bar: int = 0

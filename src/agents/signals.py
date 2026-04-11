@@ -476,7 +476,7 @@ def breakout_signal(features: Features) -> SignalReport:
             evidence={"inactive": True},
         )
 
-    close = features.ema_9
+    close = features.close if features.close > 0 else features.ema_9
     proximity_hi = (close - features.high_50) / features.high_50 if features.high_50 > 0 else -1
     proximity_lo = (features.low_50 - close) / features.low_50 if features.low_50 > 0 else -1
 

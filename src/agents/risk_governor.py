@@ -71,9 +71,10 @@ def _compute_kelly(portfolio: Portfolio, signal_confidence: float) -> float:
     """
     win_prob = signal_confidence / 100.0
 
-    if portfolio.trade_count >= 10 and portfolio.equity > 0:
+    closed_trades = portfolio.total_wins + portfolio.total_losses
+    if closed_trades >= 10 and portfolio.equity > 0:
         historical_win_rate = max(0.3, min(0.8,
-            1.0 - (portfolio.consecutive_losses / max(1, portfolio.trade_count))
+            portfolio.total_wins / max(1, closed_trades)
         ))
         win_prob = 0.5 * win_prob + 0.5 * historical_win_rate
 

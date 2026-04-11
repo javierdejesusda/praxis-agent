@@ -1,37 +1,31 @@
-"""Backtester — full-pipeline walk-forward simulation.
+"""Backtester — time-synchronized multi-pair walk-forward simulation.
 
 Runs the SAME agent pipeline the live orchestrator runs:
   6 signal agents -> cross-pair boost -> deterministic analyst fallback
   -> risk governor -> ATR-based position management
 
-Costs are kept identical to the live Kraken paper adapter so the backtest
-final equity reflects what the hackathon submission would actually produce
-under the same market conditions.
+Execution model:
+  - Next-bar open fills (signal at bar i, fill at bar i+1)
+  - Kraken taker fees on both entry and exit
+  - Vol-scaled slippage (half-spread, scales with ATR/price)
+  - Cash validation before every entry
 
 Supports CSV data loading for extended backtests — prefers the FMP CSV
-(``{PAIR}_60m_fmp.csv``) which gives 10+ years of hourly data and matches
-the dashboard's primary price feed.
+(``{PAIR}_60m_fmp.csv``) which gives 10+ years of hourly data.
 
 Usage:
-    python -m src.backtester                       # default 1h CSV
-    python -m src.backtester --interval 240        # 4h aggregation
-    python -m src.backtester --start 2021-01-01    # windowed slice
-    python -m src.backtester --json results.json   # machine-readable
+    python scripts/final_report.py                 # full IS/OOS report
+    python scripts/final_report.py --interval 240  # 4h aggregation
 """
 
-import argparse
-import asyncio
-import json
 import logging
 import math
-from datetime import datetime, timezone
-
-import numpy as np
-from scipy import stats as sp_stats
 from pathlib import Path
 from typing import Optional
 
+import numpy as np
 import pandas as pd
+from scipy import stats as sp_stats
 
 from src.agents.llm_analyst import deterministic_fallback
 from src.agents.risk_governor import evaluate_risk
@@ -44,10 +38,9 @@ from src.agents.signals import (
     volatility_signal,
 )
 from src.config import RISK, STRATEGY
-from src.execution.kraken_adapter import KRAKEN_TAKER_FEE, get_ohlc_extended
+from src.execution.kraken_adapter import KRAKEN_TAKER_FEE
 from src.features.engine import compute_features_bulk, features_at
 from src.models import Direction, Portfolio, SignalReport
-from src.orchestrator import _parse_ohlc_to_dataframe
 
 logger = logging.getLogger(__name__)
 
@@ -187,362 +180,6 @@ def load_csv(pair: str, interval: int) -> pd.DataFrame:
     return df
 
 
-async def fetch_data(pair: str, interval: int, bars: int) -> pd.DataFrame:
-    """Fetch live OHLC data from Kraken (fallback when no CSV available)."""
-    raw = await get_ohlc_extended(pair, interval=interval, bars=bars)
-    return _parse_ohlc_to_dataframe(raw, pair)
-
-
-def backtest_pair(
-    df: pd.DataFrame,
-    pair: str,
-    initial_equity: float = 10000.0,
-    max_hold_bars: Optional[int] = None,
-    cooldown_bars: Optional[int] = None,
-    last_pair_signals: Optional[dict] = None,
-    stop_mult: Optional[float] = None,
-    target_mult_base: Optional[float] = None,
-    target_mult_mid: Optional[float] = None,
-    target_mult_hi: Optional[float] = None,
-    trail_mult: Optional[float] = None,
-    macro_filter: Optional[bool] = None,
-    reversal_exit: bool = False,
-    cross_pair_boost: bool = True,
-    precomputed_features: Optional[pd.DataFrame] = None,
-    verbose: bool = True,
-):
-    """Run walk-forward backtest using the full agent pipeline on a single pair.
-
-    Mirrors the live orchestrator: 6 signal agents -> cross-pair boost ->
-    deterministic analyst fallback -> risk governor consensus -> ATR-based
-    position management.
-
-    Args:
-        df: Full OHLCV DataFrame (must have 200+ rows).
-        pair: Trading pair name.
-        initial_equity: Starting equity.
-        max_hold_bars: Max bars before a time-based exit.
-        cooldown_bars: Bars to wait after kill criteria before resetting.
-        last_pair_signals: Optional shared dict used to apply the
-            cross-pair boost across multiple backtested pairs.
-        stop_mult: ATR multiplier for the initial hard stop.
-        target_mult_base: Target ATR multiplier when ADX < 25.
-        target_mult_mid: Target ATR multiplier when 25 <= ADX < 35.
-        target_mult_hi: Target ATR multiplier when ADX >= 35.
-        trail_mult: ATR multiplier for the trailing stop.
-        macro_filter: When True, only allow longs if ema_55 > ema_200 and
-            shorts if ema_55 < ema_200.
-        reversal_exit: When True, apply the RSI-based early reversal exit.
-        precomputed_features: Optional pre-computed bulk feature frame to
-            skip recomputation (useful for sweeps).
-        verbose: Print per-run progress messages.
-
-    Returns:
-        Dict with backtest results including equity curve.
-    """
-    if last_pair_signals is None:
-        last_pair_signals = {}
-
-    stop_mult = RISK.stop_mult if stop_mult is None else stop_mult
-    target_mult_base = RISK.target_mult_base if target_mult_base is None else target_mult_base
-    target_mult_mid = RISK.target_mult_mid if target_mult_mid is None else target_mult_mid
-    target_mult_hi = RISK.target_mult_hi if target_mult_hi is None else target_mult_hi
-    trail_mult = RISK.trail_mult if trail_mult is None else trail_mult
-    max_hold_bars = RISK.max_hold_bars if max_hold_bars is None else max_hold_bars
-    cooldown_bars = RISK.cooldown_bars if cooldown_bars is None else cooldown_bars
-    macro_filter = RISK.macro_filter if macro_filter is None else macro_filter
-
-    portfolio = Portfolio(equity=initial_equity, cash=initial_equity,
-                          peak_equity=initial_equity)
-    trades = []
-    rejections = {"NO_SIGNAL": 0, "NO_CONSENSUS": 0, "FALLBACK_NO_CONSENSUS": 0,
-                  "BELOW_THRESHOLD": 0, "INSUFFICIENT_ALIGNMENT": 0,
-                  "MAX_EXPOSURE": 0, "SHORT_BELOW_THRESHOLD": 0,
-                  "SHORTS_DISABLED": 0, "DOWNTREND_NO_LONG": 0,
-                  "UPTREND_NO_SHORT": 0, "VOLATILITY_SHOCK": 0,
-                  "MACRO_FILTER": 0, "KILL": 0}
-    warmup = 200
-    total_bars = len(df)
-
-    if total_bars < warmup + 10:
-        return {"error": f"Need {warmup + 10}+ bars, got {total_bars}"}
-
-    buy_hold_entry = float(df["close"].iloc[warmup])
-    position = None
-    pending_entry = None  # Deferred order: signal at bar[i], fill at bar[i+1]
-    bars_held = 0
-    prev_day = None
-    risk_cooldown = 0
-    equity_curve: list[tuple[pd.Timestamp, float]] = []
-
-    if precomputed_features is not None:
-        bulk = precomputed_features
-    else:
-        if verbose:
-            print(f"  Pre-computing features for {total_bars:,} bars...")
-        bulk = compute_features_bulk(df, pair)
-
-    for i in range(warmup, total_bars):
-        close_price = float(df["close"].iloc[i])
-        open_price = float(df["open"].iloc[i])
-
-        current_day = df.index[i].date()
-        if prev_day is not None and current_day != prev_day:
-            portfolio.daily_pnl = 0.0
-        prev_day = current_day
-
-        if risk_cooldown > 0:
-            risk_cooldown -= 1
-            if risk_cooldown == 0:
-                portfolio.consecutive_losses = 0
-
-        try:
-            features = features_at(bulk, i)
-        except Exception as e:
-            logger.debug("Feature computation failed at bar %d: %s", i, e)
-            continue
-
-        # Fill pending entry from PREVIOUS bar's signal at THIS bar's open.
-        if pending_entry is not None and position is None:
-            pe = pending_entry
-            pending_entry = None
-            entry_fill = _entry_fill_price(pe["side"], open_price,
-                                           atr=pe["atr"])
-            fees = pe["size_usd"] * FEE_RATE
-            portfolio.cash -= fees
-            portfolio.equity -= fees
-            portfolio.trade_count += 1
-
-            atr = pe["atr"]
-            adx = pe["adx"]
-            if adx >= 35:
-                t_mult = target_mult_hi
-            elif adx >= 25:
-                t_mult = target_mult_mid
-            else:
-                t_mult = target_mult_base
-
-            if pe["side"] == "long":
-                atr_stop = entry_fill - (atr * stop_mult)
-                atr_target = entry_fill + (atr * t_mult)
-            else:
-                atr_stop = entry_fill + (atr * stop_mult)
-                atr_target = entry_fill - (atr * t_mult)
-
-            position = {
-                "side": pe["side"],
-                "size_usd": pe["size_usd"],
-                "entry_price": entry_fill,
-                "atr_stop": atr_stop,
-                "atr_target": atr_target,
-                "atr_20": atr,
-                "peak_price": entry_fill,
-                "signal_score": pe["signal_score"],
-            }
-            portfolio.positions[pair] = {
-                "side": pe["side"],
-                "size_usd": pe["size_usd"],
-                "entry_price": entry_fill,
-            }
-            bars_held = 0
-
-        if position is not None:
-            bars_held += 1
-            entry = position["entry_price"]
-            side = position["side"]
-            atr = position.get("atr_20", features.atr_20)
-            atr_stop = position.get("atr_stop")
-            atr_target = position.get("atr_target")
-            peak = position.get("peak_price", entry)
-
-            close_trade = False
-            reason = ""
-
-            if side == "long":
-                peak = max(peak, close_price)
-                trail = peak - atr * trail_mult
-                if peak > entry * 1.005:
-                    trail = max(trail, entry)
-                if peak > entry * 1.015:
-                    trail = max(trail, entry * 1.005)
-
-                if atr_stop and close_price <= atr_stop:
-                    close_trade = True
-                    reason = "atr_stop"
-                elif atr_target and close_price >= atr_target:
-                    close_trade = True
-                    reason = "atr_target"
-                elif close_price <= trail and peak > entry * 1.005:
-                    close_trade = True
-                    reason = "trailing_stop"
-                elif (reversal_exit and features.rsi_14 < 45 and close_price < entry
-                        and bars_held >= 2):
-                    close_trade = True
-                    reason = "reversal_exit"
-            else:
-                peak = min(peak, close_price)
-                trail = peak + atr * trail_mult
-                if peak < entry * 0.995:
-                    trail = min(trail, entry)
-                if peak < entry * 0.985:
-                    trail = min(trail, entry * 0.995)
-
-                if atr_stop and close_price >= atr_stop:
-                    close_trade = True
-                    reason = "atr_stop"
-                elif atr_target and close_price <= atr_target:
-                    close_trade = True
-                    reason = "atr_target"
-                elif close_price >= trail and peak < entry * 0.995:
-                    close_trade = True
-                    reason = "trailing_stop"
-                elif (reversal_exit and features.rsi_14 > 55 and close_price > entry
-                        and bars_held >= 2):
-                    close_trade = True
-                    reason = "reversal_exit"
-
-            position["peak_price"] = peak
-
-            if not close_trade and bars_held >= max_hold_bars:
-                close_trade = True
-                reason = "time_exit"
-
-            if close_trade:
-                pnl_usd, pnl_pct = _simulate_close(position, close_price)
-                portfolio.equity += pnl_usd
-                portfolio.cash += pnl_usd
-                portfolio.total_pnl += pnl_usd
-                portfolio.daily_pnl += pnl_usd
-
-                if pnl_usd < 0:
-                    portfolio.consecutive_losses += 1
-                else:
-                    portfolio.consecutive_losses = 0
-
-                portfolio.peak_equity = max(portfolio.peak_equity, portfolio.equity)
-                portfolio.drawdown_pct = (
-                    (portfolio.peak_equity - portfolio.equity) / portfolio.peak_equity
-                    if portfolio.peak_equity > 0 else 0.0
-                )
-
-                if (portfolio.consecutive_losses >= RISK.max_consecutive_losses
-                        or portfolio.drawdown_pct > RISK.max_drawdown_pct):
-                    risk_cooldown = cooldown_bars
-
-                trades.append({
-                    "bar": i,
-                    "timestamp": str(df.index[i]),
-                    "pair": pair,
-                    "side": position["side"],
-                    "entry": position["entry_price"],
-                    "exit": close_price,
-                    "pnl_usd": round(pnl_usd, 2),
-                    "pnl_pct": round(pnl_pct * 100, 3),
-                    "reason": reason,
-                    "equity": round(portfolio.equity, 2),
-                    "signal_score": position.get("signal_score", 0),
-                    "bars_held": bars_held,
-                })
-                if pair in portfolio.positions:
-                    del portfolio.positions[pair]
-                position = None
-                bars_held = 0
-                equity_curve.append((df.index[i], portfolio.equity))
-                continue
-
-        equity_curve.append((df.index[i], portfolio.equity))
-
-        if position is not None or pending_entry is not None:
-            continue
-
-        signals = _run_signals(features)
-        if cross_pair_boost:
-            signals = _apply_cross_pair_boost_sync(signals, pair, last_pair_signals)
-        analyst = deterministic_fallback(signals, features)
-
-        risk_decision, intent = evaluate_risk(
-            signals=signals,
-            analyst=analyst,
-            features=features,
-            portfolio=portfolio,
-            snapshot_age_seconds=0.0,
-        )
-
-        if not risk_decision.approved:
-            for code in risk_decision.reason_codes:
-                if code in rejections:
-                    rejections[code] += 1
-                else:
-                    rejections["KILL"] = rejections.get("KILL", 0) + 1
-            continue
-
-        if macro_filter:
-            macro_up = features.ema_21 > features.ema_100
-            if intent.side == Direction.LONG and not macro_up:
-                rejections["MACRO_FILTER"] += 1
-                continue
-            if intent.side == Direction.SHORT and macro_up:
-                rejections["MACRO_FILTER"] += 1
-                continue
-
-        # Queue pending entry — will fill at NEXT bar's open.
-        pending_entry = {
-            "side": intent.side.value,
-            "size_usd": intent.size_usd,
-            "atr": features.atr_20,
-            "adx": features.adx_14,
-            "signal_score": round(intent.signal_score, 1),
-        }
-
-    if position is not None:
-        close_price = float(df["close"].iloc[-1])
-        pnl_usd, pnl_pct = _simulate_close(position, close_price)
-        portfolio.equity += pnl_usd
-        portfolio.total_pnl += pnl_usd
-        trades.append({
-            "bar": total_bars - 1,
-            "timestamp": str(df.index[-1]),
-            "pair": pair,
-            "side": position["side"],
-            "entry": position["entry_price"],
-            "exit": close_price,
-            "pnl_usd": round(pnl_usd, 2),
-            "pnl_pct": round(pnl_pct * 100, 3),
-            "reason": "end_of_data",
-            "equity": round(portfolio.equity, 2),
-            "signal_score": position.get("signal_score", 0),
-            "bars_held": bars_held,
-        })
-        equity_curve.append((df.index[-1], portfolio.equity))
-
-    metrics = compute_metrics(
-        trades=trades,
-        equity_curve=equity_curve,
-        initial_equity=initial_equity,
-        df=df,
-        warmup=warmup,
-    )
-    metrics["pair"] = pair
-    metrics["bars"] = total_bars
-    metrics["trading_bars"] = total_bars - warmup
-    metrics["period_start"] = str(df.index[warmup])
-    metrics["period_end"] = str(df.index[-1])
-    metrics["initial_equity"] = initial_equity
-    metrics["rejections"] = rejections
-    metrics["trades"] = trades
-
-    buy_hold_exit = float(df["close"].iloc[-1])
-    bh_final = initial_equity * (buy_hold_exit / buy_hold_entry)
-    metrics["buy_hold_final_equity"] = round(bh_final, 2)
-    metrics["buy_hold_return_pct"] = round(
-        (bh_final - initial_equity) / initial_equity * 100, 3
-    )
-    metrics["alpha_pct"] = round(
-        metrics["agent_return_pct"] - metrics["buy_hold_return_pct"], 3
-    )
-
-    return metrics
-
 
 def backtest_portfolio(
     pair_frames: dict[str, pd.DataFrame],
@@ -568,6 +205,7 @@ def backtest_portfolio(
     lock_value_pct: float = 0.0065,
     partial_tp_pct: float = 0.0,  # Fraction of position to close at atr_target (0=disabled, 0.5=half)
     precomputed_features: Optional[dict[str, pd.DataFrame]] = None,
+    num_trials: int = 1,
     verbose: bool = True,
 ) -> dict:
     """Time-synchronized multi-pair backtest matching live orchestrator flow.
@@ -714,9 +352,11 @@ def backtest_portfolio(
             # Fill pending entry from PREVIOUS bar's signal at THIS bar's open.
             if pair in pending_entries and pair not in positions:
                 pe = pending_entries.pop(pair)
+                fees = pe["size_usd"] * FEE_RATE
+                if portfolio.cash < pe["size_usd"] + fees:
+                    continue
                 entry_fill = _entry_fill_price(pe["side"], open_price,
                                                atr=pe["atr"])
-                fees = pe["size_usd"] * FEE_RATE
                 portfolio.cash -= fees
                 portfolio.equity -= fees
                 portfolio.trade_count += 1
@@ -852,8 +492,10 @@ def backtest_portfolio(
 
                     if pnl_usd < 0:
                         portfolio.consecutive_losses += 1
+                        portfolio.total_losses += 1
                     else:
                         portfolio.consecutive_losses = 0
+                        portfolio.total_wins += 1
 
                     portfolio.peak_equity = max(portfolio.peak_equity, portfolio.equity)
                     portfolio.drawdown_pct = (
@@ -1005,6 +647,7 @@ def backtest_portfolio(
         initial_equity=initial_equity,
         df=None,
         warmup=warmup,
+        num_trials=num_trials,
     )
     metrics["initial_equity"] = initial_equity
     metrics["pairs"] = list(pair_frames.keys())
@@ -1166,7 +809,7 @@ def compute_metrics(
     dsr = 0.0
     dsr_sr0 = 0.0
     if num_trials > 1 and len(rets_arr) > 1:
-        sr_var = 1.0 / (len(rets_arr) - 1)
+        sr_var = (1.0 + 0.5 * sr_per_bar ** 2) / (len(rets_arr) - 1)
         dsr, dsr_sr0 = _deflated_sharpe(sr_per_bar, num_trials, len(rets_arr),
                                          skew_val, kurt_val, sr_var)
 
@@ -1554,193 +1197,3 @@ def generate_tearsheet(equity_curve: list[tuple], output_path: str = "logs/tears
     qs.reports.html(returns, output=output_path, title=title, download_filename=output_path)
     return output_path
 
-
-async def run_backtest(
-    interval: int = 60,
-    bars: int = 2000,
-    use_csv: bool = True,
-    start: str | None = None,
-    end: str | None = None,
-    json_out: str | None = None,
-    quiet: bool = False,
-):
-    """Run backtest for all configured pairs.
-
-    Args:
-        interval: Candle interval in minutes (60=1h, 240=4h).
-        bars: Number of bars to fetch per pair (ignored when use_csv=True).
-        use_csv: Load data from CSV files instead of Kraken API.
-        start: Optional ISO start date for slicing the data.
-        end: Optional ISO end date for slicing the data.
-        json_out: Optional path to write machine-readable results.
-        quiet: Suppress per-trade log spam when True.
-    """
-    source = "CSV" if use_csv else f"Kraken API ({bars} bars)"
-    print(f"\n{'='*72}")
-    print(f"  PRAXIS AGENT — FULL PIPELINE BACKTEST")
-    print(f"  Interval: {interval}min | Source: {source}")
-    print(f"  Pairs: {', '.join(STRATEGY.pairs)}")
-    print(f"  Pipeline: 6 signals -> cross-pair boost -> deterministic fallback -> risk governor")
-    print(f"  Fees: {FEE_RATE*100:.3f}% per side | Slippage: {ENTRY_SLIPPAGE_BPS:.1f} bps entry / {EXIT_SLIPPAGE_BPS:.1f} bps exit")
-    print(f"  Thresholds: paper >= {RISK.min_signal_score_paper}, ERC >= {RISK.min_signal_score_erc}")
-    print(f"{'='*72}\n")
-
-    combined = {
-        "total_pnl": 0.0,
-        "total_trades": 0,
-        "wins": 0,
-    }
-    per_pair_results: dict[str, dict] = {}
-    last_pair_signals: dict[str, str] = {}
-
-    for pair in STRATEGY.pairs:
-        print(f"Loading {pair} data...")
-        try:
-            if use_csv:
-                df = load_csv(pair, 60)
-                if interval > 60:
-                    df = _resample(df, interval, 60)
-            else:
-                df = await fetch_data(pair, interval, bars)
-        except Exception as e:
-            print(f"  FAILED to load {pair}: {e}")
-            continue
-
-        if start:
-            df = df[df.index >= pd.Timestamp(start, tz="UTC")]
-        if end:
-            df = df[df.index <= pd.Timestamp(end, tz="UTC")]
-
-        print(f"  Got {len(df)} bars: {df.index[0]} to {df.index[-1]}")
-        print(f"  Running full-pipeline backtest...")
-
-        result = backtest_pair(df, pair, last_pair_signals=last_pair_signals)
-
-        if "error" in result:
-            print(f"  ERROR: {result['error']}")
-            continue
-
-        per_pair_results[pair] = result
-        combined["total_pnl"] += result["total_pnl"]
-        combined["total_trades"] += result["total_trades"]
-        combined["wins"] += result["wins"]
-
-        print(f"\n  --- {pair} Results ---")
-        print(f"  Period:        {result['period_start'][:10]} to {result['period_end'][:10]}")
-        print(f"  Trading bars:  {result['trading_bars']}")
-        print(f"  Final equity:  ${result['final_equity']:,.2f}")
-        print(f"  Total PnL:     ${result['total_pnl']:+,.2f}")
-        print(f"  Agent return:  {result['agent_return_pct']:+.3f}%")
-        print(f"  CAGR:          {result.get('cagr_pct', 0):+.3f}%")
-        print(f"  Sharpe:        {result.get('sharpe_annualized', 0):.3f}")
-        print(f"  Sortino:       {result.get('sortino_annualized', 0):.3f}")
-        print(f"  Calmar:        {result.get('calmar_ratio')}")
-        print(f"  Buy & Hold:    {result['buy_hold_return_pct']:+.3f}%")
-        print(f"  Alpha:         {result['alpha_pct']:+.3f}%")
-        print(f"  Trades:        {result['total_trades']} ({result['wins']}W / {result['losses']}L)")
-        print(f"  Win rate:      {result['win_rate_pct']:.1f}%")
-        print(f"  Profit factor: {result.get('profit_factor')}")
-        print(f"  Expectancy:    ${result.get('expectancy_usd', 0):.2f}/trade")
-        print(f"  Max drawdown:  {result['max_drawdown_pct']:.3f}%  (${result.get('max_drawdown_usd',0):,.2f})")
-        if result["wins"]:
-            print(f"  Avg win:       {result['avg_win_pct']:+.3f}%")
-        if result["losses"]:
-            print(f"  Avg loss:      {result['avg_loss_pct']:+.3f}%")
-        print(f"  Avg bars held: {result.get('avg_bars_held', 0):.1f}")
-
-        rej = result["rejections"]
-        total_rej = sum(rej.values())
-        print(f"\n  Rejections ({total_rej} total):")
-        for code, count in sorted(rej.items(), key=lambda x: -x[1]):
-            if count > 0:
-                print(f"    {code:30s} {count:5d}")
-
-        if not quiet:
-            print(f"\n  Trade Log (last 20):")
-            for t in result["trades"][-20:]:
-                marker = "+" if t["pnl_usd"] > 0 else "-"
-                erc = "*" if t.get("signal_score", 0) >= RISK.min_signal_score_erc else " "
-                print(f"    [{marker}]{erc} {t['timestamp'][:16]} {t['side'].upper():5s} "
-                      f"entry={t['entry']:.2f} exit={t['exit']:.2f} "
-                      f"pnl=${t['pnl_usd']:+.2f} ({t['pnl_pct']:+.3f}%) "
-                      f"score={t.get('signal_score', 0):.0f} "
-                      f"[{t['reason']}] eq=${t['equity']:.2f}")
-        print()
-
-    combined_wr = (combined["wins"] / combined["total_trades"] * 100) if combined["total_trades"] else 0
-    print(f"{'='*72}")
-    print(f"  COMBINED RESULTS")
-    print(f"  Total PnL:     ${combined['total_pnl']:+,.2f}")
-    print(f"  Total trades:  {combined['total_trades']} ({combined['wins']}W / {combined['total_trades'] - combined['wins']}L)")
-    print(f"  Win rate:      {combined_wr:.1f}%")
-    print(f"{'='*72}\n")
-
-    if json_out:
-        payload = {
-            "generated_at": datetime.now(timezone.utc).isoformat(),
-            "interval_minutes": interval,
-            "source": source,
-            "fee_rate_per_side": FEE_RATE,
-            "entry_slippage_bps": ENTRY_SLIPPAGE_BPS,
-            "exit_slippage_bps": EXIT_SLIPPAGE_BPS,
-            "risk_params": {
-                "min_signal_score_paper": RISK.min_signal_score_paper,
-                "min_signal_score_erc": RISK.min_signal_score_erc,
-                "min_signal_score_short": RISK.min_signal_score_short,
-                "shorts_enabled": RISK.shorts_enabled,
-                "risk_per_trade_pct": RISK.risk_per_trade_pct,
-                "max_position_pct": RISK.max_position_pct,
-                "max_daily_loss_pct": RISK.max_daily_loss_pct,
-                "max_drawdown_pct": RISK.max_drawdown_pct,
-                "max_consecutive_losses": RISK.max_consecutive_losses,
-            },
-            "pairs": {
-                pair: {k: v for k, v in r.items() if k != "trades"}
-                for pair, r in per_pair_results.items()
-            },
-            "combined": combined,
-        }
-        Path(json_out).write_text(json.dumps(payload, indent=2, default=str))
-        print(f"  JSON report written to {json_out}")
-
-    return per_pair_results
-
-
-if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.WARNING,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    )
-
-    parser = argparse.ArgumentParser(description="Praxis Agent Backtester")
-    parser.add_argument(
-        "--csv", action="store_true", default=True,
-        help="Load data from CSV files (default: true).",
-    )
-    parser.add_argument(
-        "--no-csv", action="store_false", dest="csv",
-        help="Disable CSV loading and fetch from Kraken instead.",
-    )
-    parser.add_argument(
-        "--interval", type=int, default=60,
-        help="Candle interval in minutes (default: 60)",
-    )
-    parser.add_argument(
-        "--bars", type=int, default=2000,
-        help="Number of bars to fetch from Kraken (ignored with --csv)",
-    )
-    parser.add_argument("--start", type=str, default=None)
-    parser.add_argument("--end", type=str, default=None)
-    parser.add_argument("--json", type=str, default=None, dest="json_out")
-    parser.add_argument("--quiet", action="store_true")
-    args = parser.parse_args()
-
-    asyncio.run(run_backtest(
-        interval=args.interval,
-        bars=args.bars,
-        use_csv=args.csv,
-        start=args.start,
-        end=args.end,
-        json_out=args.json_out,
-        quiet=args.quiet,
-    ))

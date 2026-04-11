@@ -35,19 +35,19 @@ LOG_DIR = Path(__file__).resolve().parent.parent / "logs"
 
 
 def build_lean_grid() -> list[SweepConfig]:
-    """Tight grid for walk-forward — ~15 configs, fast per fold.
+    """Independent grid for walk-forward — broad enough to falsify overfitting.
 
-    Uses the iter6 production config as the core anchor and only varies
-    the most-sensitive params so each fold's "best train" reflects the
-    same strategy family the live agent uses.
+    Spans a wide range around plausible values rather than anchoring on
+    any single optimized config. This ensures the walk-forward can
+    genuinely test whether the strategy generalizes.
     """
     intervals = [240]
-    min_scores = [85]
-    max_holds = [80]
-    stop_mults = [3.0, 3.1]
-    target_bases = [3.0]
-    trail_mults = [2.1, 2.25]
-    dd_factors = [0.3, 0.5]
+    min_scores = [70, 85]
+    max_holds = [60, 80, 120]
+    stop_mults = [2.5, 3.0, 3.5, 4.0]
+    target_bases = [2.5, 3.0, 3.5]
+    trail_mults = [1.5, 2.0, 2.5, 3.0]
+    dd_factors = [0.1, 0.3, 0.5]
     macros = [True]
     cfgs = []
     for iv, ms, mh, st, tb, tr, df_, mf in product(
@@ -69,7 +69,7 @@ def build_lean_grid() -> list[SweepConfig]:
             cooldown_bars=6,
             dd_scale_threshold=0.97,
             dd_scale_factor=df_,
-            atr_pct_max=100.0,  # iter8: disabled (sweep showed filter hurts Sharpe)
+            atr_pct_max=100.0,
             risk_per_trade_pct=0.015,
             max_position_pct=0.40,
         ))
@@ -117,6 +117,8 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--folds", type=int, default=3)
     parser.add_argument("--interval", type=int, default=240)
+    parser.add_argument("--limit", type=int, default=None,
+                        help="Limit grid to first N configs (for quick dev runs)")
     parser.add_argument("--out", default=str(LOG_DIR / "walk_forward.json"))
     args = parser.parse_args()
 
@@ -130,6 +132,8 @@ def main() -> None:
         print(f"  {i}: {s.date()} -> {e.date()}")
 
     cfgs = build_lean_grid()
+    if args.limit:
+        cfgs = cfgs[:args.limit]
     print(f"\nGrid: {len(cfgs)} configs per fold")
 
     folds_out = []

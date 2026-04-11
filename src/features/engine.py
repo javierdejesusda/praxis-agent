@@ -100,7 +100,7 @@ def compute_features_bulk(df: pd.DataFrame, pair: str) -> pd.DataFrame:
     feat["ema_100"] = ta.ema(close, length=100)
     feat["ema_200"] = ta.ema(close, length=200)
 
-    feat["rsi_14"] = ta.rsi(close, length=15)
+    feat["rsi_14"] = ta.rsi(close, length=14)
     feat["rsi_2"] = ta.rsi(close, length=2)
 
     macd_df = ta.macd(close, fast=12, slow=26, signal=9)
@@ -228,6 +228,7 @@ def features_at(bulk: pd.DataFrame, idx: int) -> Features:
     return Features(
         pair=row["pair"],
         timestamp=bulk.index[idx],
+        close=float(row["close"]) if not pd.isna(row.get("close", 0)) else 0.0,
         ema_9=float(row["ema_9"]),
         ema_21=float(row["ema_21"]),
         ema_34=float(row["ema_34"]) if "ema_34" in row.index else 0.0,
@@ -290,7 +291,7 @@ def compute_features(df: pd.DataFrame, pair: str) -> Features:
     ema_100 = ta.ema(close, length=100)
     ema_200 = ta.ema(close, length=200)
 
-    rsi = ta.rsi(close, length=15)
+    rsi = ta.rsi(close, length=14)
 
     macd_df = ta.macd(close, fast=12, slow=26, signal=9)
     macd_col = macd_df.columns[0]
@@ -361,6 +362,7 @@ def compute_features(df: pd.DataFrame, pair: str) -> Features:
     return Features(
         pair=pair,
         timestamp=df.index[latest],
+        close=latest_close,
         ema_9=float(ema_9.iloc[latest]),
         ema_21=float(ema_21.iloc[latest]),
         ema_34=float(ema_34.iloc[latest]),
