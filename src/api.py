@@ -197,6 +197,8 @@ async def backtest_report():
     """Return the most recent saved backtest report."""
     path = STATE_DIR / "backtest_report.json"
     if not path.exists():
+        path = Path("data") / "backtest_report.json"
+    if not path.exists():
         return {"available": False}
     try:
         data = json.loads(path.read_text())

@@ -33,7 +33,6 @@ NEXT_PHASE.md
 # Runtime data (root-level only, not src/artifacts/ Python module)
 /artifacts/
 /state/
-/data/
 
 # OS
 .DS_Store
