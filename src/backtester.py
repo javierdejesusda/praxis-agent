@@ -274,8 +274,6 @@ def backtest_pair(
             risk_cooldown -= 1
             if risk_cooldown == 0:
                 portfolio.consecutive_losses = 0
-                portfolio.peak_equity = portfolio.equity
-                portfolio.drawdown_pct = 0.0
 
         try:
             features = features_at(bulk, i)
@@ -501,8 +499,10 @@ def backtest_pair(
     metrics["trades"] = trades
 
     buy_hold_exit = float(df["close"].iloc[-1])
+    bh_final = initial_equity * (buy_hold_exit / buy_hold_entry)
+    metrics["buy_hold_final_equity"] = round(bh_final, 2)
     metrics["buy_hold_return_pct"] = round(
-        (buy_hold_exit - buy_hold_entry) / buy_hold_entry * 100, 3
+        (bh_final - initial_equity) / initial_equity * 100, 3
     )
     metrics["alpha_pct"] = round(
         metrics["agent_return_pct"] - metrics["buy_hold_return_pct"], 3
@@ -655,8 +655,6 @@ def backtest_portfolio(
             risk_cooldown -= 1
             if risk_cooldown == 0:
                 portfolio.consecutive_losses = 0
-                portfolio.peak_equity = portfolio.equity
-                portfolio.drawdown_pct = 0.0
 
         for pair in pair_order:
             df = pair_frames[pair]
@@ -968,15 +966,16 @@ def backtest_portfolio(
     metrics["period_start"] = str(all_timestamps[0]) if all_timestamps else None
     metrics["period_end"] = str(all_timestamps[-1]) if all_timestamps else None
 
-    buy_hold_exits = {
-        p: float(df["close"].iloc[-1]) for p, df in pair_frames.items()
-    }
-    bh_returns = [
-        (buy_hold_exits[p] - buy_hold_start[p]) / buy_hold_start[p]
-        for p in pair_frames
-    ]
+    n_pairs = len(pair_frames)
+    bh_alloc = initial_equity / n_pairs
+    bh_final = 0.0
+    for p, df in pair_frames.items():
+        start_price = buy_hold_start[p]
+        end_price = float(df["close"].iloc[-1])
+        bh_final += bh_alloc * (end_price / start_price)
+    metrics["buy_hold_final_equity"] = round(bh_final, 2)
     metrics["buy_hold_return_pct"] = round(
-        sum(bh_returns) / len(bh_returns) * 100, 3
+        (bh_final - initial_equity) / initial_equity * 100, 3
     )
     metrics["alpha_pct"] = round(
         metrics["agent_return_pct"] - metrics["buy_hold_return_pct"], 3

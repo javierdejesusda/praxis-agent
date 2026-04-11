@@ -28,28 +28,28 @@ class RiskParams:
     execution_mode: str = "paper"
 
     # ATR multipliers (shared by backtester, risk governor, orchestrator)
-    stop_mult: float = 3.1  # iter8: 3.1 beats 3.0 with trail=2.1 — Sharpe 1.246 vs 1.235
-    target_mult_base: float = 2.85  # iter20: 2.85/3.5/6.25 — Sharpe 1.513 (peak)
-    target_mult_mid: float = 3.5  # iter20
-    target_mult_hi: float = 6.25  # iter20: 6.25 (was 6.0) — Sharpe 1.513 vs 1.506
-    trail_mult: float = 2.1  # iter8: 2.1 dominates 2.25 with dd_scale=0.3 — Sharpe 1.235 vs 1.200, DD 8.66% vs 8.94%
+    stop_mult: float = 3.1
+    target_mult_base: float = 2.85
+    target_mult_mid: float = 3.5
+    target_mult_hi: float = 6.25
+    trail_mult: float = 2.1
     adx_mid_threshold: float = 25.0
     adx_hi_threshold: float = 35.0
 
     # Position management
-    max_hold_bars: int = 80  # iter8: 80 dominates 120 on Sharpe (1.198 vs 1.180) and return (+14%)
+    max_hold_bars: int = 80
     cooldown_bars: int = 6
     macro_filter: bool = True
 
     # Entry quality filters
-    min_adx_for_entry: float = 0.0  # 0 = disabled; sweep found 0 best (trend signal already gates on ADX>22)
-    dd_scale_threshold: float = 0.97  # Reduce size after 3% drawdown
-    dd_scale_factor: float = 0.001  # iter21b: 0.001 — Sharpe 1.514, DD 7.27%, ret 730.6%
-    atr_pct_max: float = 999.0  # iter6: disabled — sweeping showed filter hurts Sharpe without helping OOS DD
-    strict_macro: bool = False  # 3-way EMA alignment; redundant when trend_signal already enforces it
-    mtf_daily_filter: bool = True  # Require daily EMA alignment for longs (big Sharpe boost)
-    mtf_daily_fast: int = 55  # fast EMA length on daily chart
-    mtf_daily_slow: int = 220  # iter9: 220 beats 200 — Sharpe 1.272 vs 1.246 at same DD
+    min_adx_for_entry: float = 0.0
+    dd_scale_threshold: float = 0.97
+    dd_scale_factor: float = 0.5
+    atr_pct_max: float = 999.0
+    strict_macro: bool = False
+    mtf_daily_filter: bool = True
+    mtf_daily_fast: int = 55
+    mtf_daily_slow: int = 220
 
 
 @dataclass(frozen=True)
@@ -74,7 +74,26 @@ class ContractAddresses:
     eip712_domain_version: str = "1"
 
 
-RISK = RiskParams()
+COMPETITION_MODE = os.getenv("COMPETITION_MODE", "").lower() in ("1", "true", "yes")
+
+if COMPETITION_MODE:
+    RISK = RiskParams(
+        min_signal_score_paper=75,
+        min_signal_score_erc=85,
+        min_signal_score_short=80,
+        shorts_enabled=True,
+        max_consecutive_losses=5,
+        stop_mult=2.5,
+        trail_mult=2.5,
+        target_mult_base=2.85,
+        target_mult_mid=3.5,
+        target_mult_hi=6.25,
+        dd_scale_factor=0.001,
+        mtf_daily_filter=True,
+    )
+else:
+    RISK = RiskParams()
+
 STRATEGY = StrategyParams()
 CONTRACTS = ContractAddresses()
 

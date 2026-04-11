@@ -227,6 +227,9 @@ export interface BacktestReport {
     profit_factor?: number;
     expectancy_usd?: number;
     avg_bars_held?: number;
+    buy_hold_return_pct?: number;
+    buy_hold_final_equity?: number;
+    alpha_pct?: number;
   };
   per_pair?: Array<{
     pair: string;
@@ -251,6 +254,36 @@ export interface BacktestReport {
     pnl_usd: number;
     profit_factor: number;
   } | null;
+  oos_split?: string;
+  in_sample?: BacktestSplitMetrics | null;
+  out_of_sample?: BacktestSplitMetrics | null;
+}
+
+export interface BacktestSplitMetrics {
+  period_start?: string;
+  period_end?: string;
+  final_equity?: number;
+  total_pnl_usd?: number;
+  portfolio_return_pct?: number;
+  cagr_pct?: number;
+  sharpe?: number;
+  sortino?: number;
+  calmar?: number;
+  max_drawdown_pct?: number;
+  max_drawdown_usd?: number;
+  total_trades?: number;
+  wins?: number;
+  losses?: number;
+  win_rate_pct?: number;
+  profit_factor?: number;
+  expectancy_usd?: number;
+  per_pair?: Array<{
+    pair: string;
+    trades: number;
+    win_rate_pct: number;
+    return_pct: number;
+    profit_factor?: number;
+  }>;
 }
 
 export interface PriceCandle {
