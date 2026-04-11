@@ -8,9 +8,9 @@ export function SectionHeader({
   rightSlot?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-baseline justify-between pb-2 mb-3 border-b border-[color:var(--color-rule)]">
+    <div className="flex items-baseline justify-between pb-2.5 mb-3.5 border-b border-[color:var(--color-rule)]">
       <div className="flex items-baseline gap-2">
-        <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[color:var(--color-muted)]">
+        <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--color-muted)]">
           {title}
         </h3>
         {count !== undefined && (

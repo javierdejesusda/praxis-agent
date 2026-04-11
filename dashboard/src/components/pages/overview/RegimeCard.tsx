@@ -10,9 +10,10 @@ import { StatusPill } from "@/components/ui/StatusPill";
 export function RegimeCard() {
   const { data } = useRegime();
   const label = data?.regime?.toUpperCase() || "UNKNOWN";
+  const regimeTone = label === "TRENDING" ? "ok" : label === "RANGING" ? "info" : "neutral";
   return (
     <HairlineCard>
-      <SectionHeader title="Market Regime" rightSlot={<StatusPill tone="neutral" label={label} />} />
+      <SectionHeader title="Market Regime" rightSlot={<StatusPill tone={regimeTone} label={label} />} />
       <KeyValueGrid
         items={[
           { k: "Pair", v: data?.pair || "—" },

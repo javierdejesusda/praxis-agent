@@ -22,20 +22,19 @@ function ScoreBar({
 }) {
   const pct = Math.max(0, Math.min(100, (score / max) * 100));
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-[10px] uppercase tracking-[0.08em] text-[color:var(--color-muted)] w-10">
+    <div className="flex items-center gap-2.5">
+      <span className="text-[10px] uppercase tracking-[0.08em] text-[color:var(--color-muted)] w-10 font-medium">
         {label}
       </span>
       <div
-        className="flex-1 h-1.5 bg-[color:var(--color-paper)] border border-[color:var(--color-rule)]"
-        style={{ borderRadius: 1 }}
+        className="flex-1 h-2 bg-[color:var(--color-paper)] border border-[color:var(--color-rule)] rounded-full"
       >
         <div
-          className="h-full"
+          className="h-full rounded-full"
           style={{ width: `${pct}%`, backgroundColor: color }}
         />
       </div>
-      <span className="num text-[11px] text-[color:var(--color-ink)] w-6 text-right">
+      <span className="num text-[11px] text-[color:var(--color-ink)] w-6 text-right font-medium">
         {score}
       </span>
     </div>
@@ -63,11 +62,11 @@ function PrismCard({ symbol }: { symbol: string }) {
       {!sig ? (
         <EmptyState label={`No Prism data for ${symbol}.`} />
       ) : (
-        <div className="space-y-4">
-          <div className="num text-[22px] text-[color:var(--color-ink)]">
+        <div className="space-y-5">
+          <div className="num text-[24px] font-semibold text-[color:var(--color-ink)] tracking-[-0.02em]">
             <NumericValue value={sig.current_price} kind="usd" />
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <ScoreBar label="Bull" score={sig.bullish_score} color={colors.gain} />
             <ScoreBar label="Bear" score={sig.bearish_score} color={colors.loss} />
           </div>
@@ -193,7 +192,7 @@ function PrismCard({ symbol }: { symbol: string }) {
 
 export function PrismRow() {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <PrismCard symbol="BTC" />
       <PrismCard symbol="ETH" />
     </div>

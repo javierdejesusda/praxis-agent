@@ -1,11 +1,11 @@
 export type PillTone = "ok" | "warn" | "crit" | "neutral" | "info";
 
-const TONES: Record<PillTone, { bg: string; fg: string; border: string; dot: string }> = {
-  ok:      { bg: "bg-[color:var(--color-gain-soft)]",   fg: "text-[color:var(--color-gain)]",   border: "border-[color:var(--color-gain)]/30",   dot: "bg-[color:var(--color-gain)]" },
-  warn:    { bg: "bg-[color:var(--color-warn-soft)]",   fg: "text-[color:var(--color-warn)]",   border: "border-[color:var(--color-warn)]/30",   dot: "bg-[color:var(--color-warn)]" },
-  crit:    { bg: "bg-[color:var(--color-loss-soft)]",   fg: "text-[color:var(--color-loss)]",   border: "border-[color:var(--color-loss)]/30",   dot: "bg-[color:var(--color-loss)]" },
-  neutral: { bg: "bg-[color:var(--color-paper)]",       fg: "text-[color:var(--color-muted)]",  border: "border-[color:var(--color-rule)]",      dot: "bg-[color:var(--color-muted)]" },
-  info:    { bg: "bg-[color:var(--color-accent-soft)]", fg: "text-[color:var(--color-accent)]", border: "border-[color:var(--color-accent)]/30", dot: "bg-[color:var(--color-accent)]" },
+const TONES: Record<PillTone, { bg: string; fg: string; dot: string }> = {
+  ok:      { bg: "#00C853",           fg: "text-white",                        dot: "bg-white" },
+  warn:    { bg: "#FF9100",           fg: "text-white",                        dot: "bg-white" },
+  crit:    { bg: "#FF1744",           fg: "text-white",                        dot: "bg-white" },
+  neutral: { bg: "rgba(0, 0, 0, 0.06)", fg: "text-[color:var(--color-muted)]", dot: "bg-[color:var(--color-muted)]" },
+  info:    { bg: "#2979FF",           fg: "text-white",                        dot: "bg-white" },
 };
 
 export function StatusPill({
@@ -19,8 +19,14 @@ export function StatusPill({
 }) {
   const t = TONES[tone];
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] uppercase tracking-[0.08em] border ${t.bg} ${t.fg} ${t.border}`} style={{ borderRadius: 2 }}>
-      {dot && <span className={`inline-block w-1.5 h-1.5 ${t.dot}`} style={{ borderRadius: 1 }} />}
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.04em] rounded-full ${t.fg}`}
+      style={{
+        background: t.bg,
+        transition: "opacity 200ms cubic-bezier(0.25, 0.1, 0.25, 1)",
+      }}
+    >
+      {dot && <span className={`inline-block w-1.5 h-1.5 rounded-full ${t.dot}`} />}
       {label}
     </span>
   );

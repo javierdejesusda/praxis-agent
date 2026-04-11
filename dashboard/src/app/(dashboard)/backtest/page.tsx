@@ -7,6 +7,7 @@ import { BacktestConfigBlock } from "@/components/pages/backtest/BacktestConfigB
 import { HairlineCard } from "@/components/ui/HairlineCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { fmtTimestamp } from "@/lib/format";
 
 export default function BacktestPage() {
   const { data } = useBacktestReport();
@@ -20,11 +21,11 @@ export default function BacktestPage() {
   }
   return (
     <>
-      <PageHeader eyebrow="Historical" title="Backtest" description={`Generated ${data.generated_at}`} />
-      <div className="space-y-5">
+      <PageHeader eyebrow="Historical" title="Backtest" description={`Generated ${fmtTimestamp(data.generated_at)}`} />
+      <div className="space-y-6">
         <BacktestCombinedStrip />
         <HairlineCard padded={false}>
-          <div className="px-4 pt-3"><SectionHeader title="Per-Pair Breakdown" /></div>
+          <div className="px-5 pt-4"><SectionHeader title="Per-Pair Breakdown" /></div>
           <PerPairTable />
         </HairlineCard>
         <HairlineCard>

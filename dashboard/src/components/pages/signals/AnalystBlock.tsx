@@ -34,14 +34,14 @@ export function AnalystBlock() {
               <NumericValue
                 value={analyst.conviction}
                 kind="int"
-                className="text-[14px] text-[color:var(--color-ink)]"
+                className="text-[14px] text-[color:var(--color-ink)] font-semibold"
               />
-              <span className="text-[10px] uppercase tracking-[0.08em] text-[color:var(--color-muted)]">
+              <span className="text-[10px] uppercase tracking-[0.08em] text-[color:var(--color-muted)] font-medium">
                 conv
               </span>
             </span>
             {analyst.regime_assessment && (
-              <span className="text-[10px] uppercase tracking-[0.08em] text-[color:var(--color-muted)]">
+              <span className="text-[10px] uppercase tracking-[0.08em] text-[color:var(--color-muted)] font-medium">
                 {analyst.regime_assessment}
               </span>
             )}
@@ -51,8 +51,7 @@ export function AnalystBlock() {
           </p>
           {analyst.key_risks && analyst.key_risks.length > 0 && (
             <div
-              className="bg-[color:var(--color-loss-soft)] px-3 py-2 border border-[color:var(--color-loss)]/20"
-              style={{ borderRadius: 2 }}
+              className="bg-[color:var(--color-loss-soft)] px-4 py-3 border border-[color:var(--color-loss)]/15 rounded-lg"
             >
               <SectionHeader title="Key Risks" />
               <ul

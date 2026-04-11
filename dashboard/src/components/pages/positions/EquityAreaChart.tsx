@@ -106,18 +106,21 @@ export function EquityAreaChart() {
           />
           <Tooltip
             contentStyle={{
-              background: colors.bone,
-              border: `1px solid ${colors.ruleStrong}`,
-              borderRadius: 2,
-              fontSize: 11,
+              background: "rgba(255, 255, 255, 0.82)",
+              backdropFilter: "saturate(180%) blur(20px)",
+              WebkitBackdropFilter: "saturate(180%) blur(20px)",
+              border: "1px solid rgba(0, 0, 0, 0.06)",
+              borderRadius: 12,
+              fontSize: 12,
               color: colors.ink,
               fontFamily: "var(--font-mono)",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
             }}
             formatter={(value) => [fmtUsd(Number(value)), "Equity"]}
             labelFormatter={(label) => `Step ${String(label)}`}
           />
           <Area
-            type="linear"
+            type="monotone"
             dataKey="equity"
             stroke={stroke}
             strokeWidth={1.5}

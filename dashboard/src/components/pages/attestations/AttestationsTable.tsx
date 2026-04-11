@@ -21,7 +21,7 @@ const ETHERSCAN_TX = "https://sepolia.etherscan.io/tx/";
 
 function truncate(text: string, max = 40): string {
   if (text.length <= max) return text;
-  return `${text.slice(0, max - 1)}…`;
+  return `${text.slice(0, max - 1)}\u2026`;
 }
 
 export function AttestationsTable() {
@@ -55,7 +55,7 @@ export function AttestationsTable() {
       id: "pair",
       header: "Pair",
       accessor: (r) => (
-        <span className="num text-[color:var(--color-ink)]">{r.pair || "—"}</span>
+        <span className="num text-[color:var(--color-ink)]">{r.pair || "\u2014"}</span>
       ),
     },
     {
@@ -63,7 +63,7 @@ export function AttestationsTable() {
       header: "Artifact Type",
       accessor: (r) => (
         <span className="uppercase tracking-[0.06em] text-[11px] text-[color:var(--color-ink-soft)]">
-          {r.artifact_type || "—"}
+          {r.artifact_type || "\u2014"}
         </span>
       ),
     },
@@ -75,7 +75,7 @@ export function AttestationsTable() {
         r.score != null ? (
           <NumericValue value={r.score} kind="int" />
         ) : (
-          <span className="text-[color:var(--color-muted)]">—</span>
+          <span className="text-[color:var(--color-muted)]">{"\u2014"}</span>
         ),
     },
     {
@@ -87,7 +87,7 @@ export function AttestationsTable() {
           style={{ maxWidth: 280 }}
           title={r.comment ?? ""}
         >
-          {r.comment ? truncate(r.comment, 40) : "—"}
+          {r.comment ? truncate(r.comment, 40) : "\u2014"}
         </span>
       ),
     },
@@ -110,10 +110,10 @@ export function AttestationsTable() {
 
   return (
     <div>
-      <div className="flex items-center gap-2 px-4 pb-2">
+      <div className="flex items-center gap-3 px-5 pb-3">
         <label
           htmlFor="attestations-kind-filter"
-          className="text-[10px] uppercase tracking-[0.1em] text-[color:var(--color-muted)]"
+          className="text-[10px] uppercase tracking-[0.1em] text-[color:var(--color-muted)] font-medium"
           style={{ fontFamily: "var(--font-mono)" }}
         >
           Kind
@@ -122,15 +122,15 @@ export function AttestationsTable() {
           id="attestations-kind-filter"
           value={kind}
           onChange={(e) => setKind(e.target.value as KindFilter)}
-          className="text-[11px] uppercase tracking-[0.06em] text-[color:var(--color-ink)] bg-[color:var(--color-bone)] border border-[color:var(--color-rule-strong)] px-2 py-1 focus:outline-none focus:border-[color:var(--color-accent)]"
-          style={{ borderRadius: 2, fontFamily: "var(--font-mono)" }}
+          className="text-[11px] uppercase tracking-[0.06em] text-[color:var(--color-ink)] bg-white border border-[color:var(--color-rule)] px-3 py-1.5 rounded-lg cursor-pointer focus-visible:outline-none focus-visible:border-[color:var(--color-accent)] focus-visible:ring-2 focus-visible:ring-[color:var(--color-accent)]/30"
+          style={{ fontFamily: "var(--font-mono)" }}
         >
           <option value="all">All</option>
           <option value="validation">Validation</option>
           <option value="reputation">Reputation</option>
           <option value="trade_intent">Trade Intent</option>
         </select>
-        <span className="num text-[10px] text-[color:var(--color-muted-soft)] ml-auto">
+        <span className="num text-[10px] text-[color:var(--color-muted-soft)] ml-auto font-medium">
           {filtered.length} / {records.length}
         </span>
       </div>

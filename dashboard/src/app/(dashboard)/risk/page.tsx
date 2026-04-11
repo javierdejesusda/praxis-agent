@@ -9,7 +9,7 @@ export default function RiskPage() {
     <>
       <PageHeader eyebrow="Governor" title="Risk & Kill Criteria" description="Seven deterministic gates enforced before any trade." />
       <HairlineCard padded={false}>
-        <div className="px-4 pt-3"><SectionHeader title="Kill Criteria" /></div>
+        <div className="px-5 pt-4"><SectionHeader title="Kill Criteria" /></div>
         <KillCriteriaTable />
       </HairlineCard>
     </>

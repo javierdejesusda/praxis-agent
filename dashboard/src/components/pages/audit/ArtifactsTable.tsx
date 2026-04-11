@@ -39,22 +39,22 @@ function ExpansionDetail({ artifact }: { artifact: Artifact }) {
   const source = payload.source;
 
   const items: Array<{ k: string; v: React.ReactNode }> = [
-    { k: "Source", v: source ?? "—" },
-    { k: "Analyst Direction", v: analyst?.direction?.toUpperCase() ?? "—" },
+    { k: "Source", v: source ?? "\u2014" },
+    { k: "Analyst Direction", v: analyst?.direction?.toUpperCase() ?? "\u2014" },
     {
       k: "Analyst Conviction",
       v:
         analyst && typeof analyst.conviction === "number" ? (
           <NumericValue value={analyst.conviction} kind="int" />
         ) : (
-          "—"
+          "\u2014"
         ),
     },
-    { k: "Regime Assessment", v: analyst?.regime_assessment ?? "—" },
+    { k: "Regime Assessment", v: analyst?.regime_assessment ?? "\u2014" },
     { k: "Risk Approved", v: risk?.approved ? "YES" : "NO" },
     {
       k: "Reason Codes",
-      v: risk?.reason_codes && risk.reason_codes.length > 0 ? risk.reason_codes.join(", ") : "—",
+      v: risk?.reason_codes && risk.reason_codes.length > 0 ? risk.reason_codes.join(", ") : "\u2014",
     },
     {
       k: "Final Size USD",
@@ -64,14 +64,14 @@ function ExpansionDetail({ artifact }: { artifact: Artifact }) {
       k: "Fill Price",
       v: <NumericValue value={receipt?.fill_price ?? 0} kind="usd" />,
     },
-    { k: "Order Status", v: receipt?.status ?? "—" },
-    { k: "Order ID", v: receipt?.order_id ?? "—" },
+    { k: "Order Status", v: receipt?.status ?? "\u2014" },
+    { k: "Order ID", v: receipt?.order_id ?? "\u2014" },
   ];
 
   return (
-    <div className="space-y-3 px-3 py-4 bg-[color:var(--color-bone)]">
+    <div className="space-y-3 px-4 py-5 bg-[color:var(--color-paper)]">
       <KeyValueGrid columns={2} items={items} />
-      <pre className="text-[10px] font-mono bg-[color:var(--color-paper)] p-3 border border-[color:var(--color-rule)] max-h-80 overflow-auto whitespace-pre-wrap">
+      <pre className="text-[10px] font-mono bg-white p-4 border border-[color:var(--color-rule)] max-h-80 overflow-auto whitespace-pre-wrap rounded-lg">
         {JSON.stringify(artifact, null, 2)}
       </pre>
     </div>
@@ -96,21 +96,20 @@ export function ArtifactsTable() {
 
   return (
     <div>
-      <div className="flex items-center gap-3 px-4 pb-3">
+      <div className="flex items-center gap-3 px-5 pb-4">
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Filter by hash prefix…"
-          className="num text-[12px] bg-[color:var(--color-paper)] border border-[color:var(--color-rule)] px-2 py-1 w-72 focus:outline-none focus:border-[color:var(--color-accent)]"
-          style={{ borderRadius: 2 }}
+          placeholder="Filter by hash prefix\u2026"
+          className="num text-[12px] bg-white border border-[color:var(--color-rule)] px-3 py-2 w-72 rounded-lg focus-visible:outline-none focus-visible:border-[color:var(--color-accent)] focus-visible:ring-2 focus-visible:ring-[color:var(--color-accent)]/30"
         />
-        <span className="text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-muted)]">
+        <span className="text-[10px] uppercase tracking-[0.06em] text-[color:var(--color-muted)] font-medium">
           {filtered.length} / {artifacts.length} artifacts
         </span>
       </div>
       {filtered.length === 0 ? (
-        <div className="py-10 text-center text-[12px] text-[color:var(--color-muted)]">
+        <div className="py-12 text-center text-[13px] text-[color:var(--color-muted)]">
           No artifacts match.
         </div>
       ) : (
@@ -131,15 +130,15 @@ export function ArtifactsTable() {
                 const side =
                   payload.intent?.side ??
                   payload.risk_decision?.final_side ??
-                  "—";
-                const pair = payload.pair ?? "—";
+                  "\u2014";
+                const pair = payload.pair ?? "\u2014";
                 const sizeUsd = payload.intent?.size_usd ?? 0;
                 const isOpen = expanded === artifact.hash;
                 return (
                   <Fragment key={artifact.hash}>
                     <tr
                       onClick={() => toggle(artifact.hash)}
-                      style={{ cursor: "pointer" }}
+                      className="cursor-pointer"
                     >
                       <td>
                         <StatusPill

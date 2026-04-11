@@ -48,7 +48,7 @@ export function DataTable<Row>({
 
   if (rows.length === 0) {
     return (
-      <div className="py-10 text-center text-[12px] text-[color:var(--color-muted)]">
+      <div className="py-12 text-center text-[13px] text-[color:var(--color-muted)]">
         {emptyLabel}
       </div>
     );
@@ -62,7 +62,7 @@ export function DataTable<Row>({
             {columns.map((c) => (
               <th
                 key={c.id}
-                className={c.align === "right" ? "num" : ""}
+                className={`${c.align === "right" ? "num" : ""} ${c.sortable ? "cursor-pointer" : ""}`}
                 style={c.width ? { width: c.width } : undefined}
                 onClick={() => {
                   if (!c.sortable) return;
@@ -76,7 +76,7 @@ export function DataTable<Row>({
                 <span className={c.sortable ? "cursor-pointer select-none" : ""}>
                   {c.header}
                   {c.sortable && sort?.id === c.id && (
-                    <span className="ml-1">{sort.dir === "asc" ? "▲" : "▼"}</span>
+                    <span className="ml-1 text-[color:var(--color-accent)]">{sort.dir === "asc" ? "\u25B2" : "\u25BC"}</span>
                   )}
                 </span>
               </th>
@@ -88,7 +88,7 @@ export function DataTable<Row>({
             <tr
               key={rowKey(r)}
               onClick={onRowClick ? () => onRowClick(r) : undefined}
-              style={onRowClick ? { cursor: "pointer" } : undefined}
+              className={onRowClick ? "cursor-pointer" : ""}
             >
               {columns.map((c) => (
                 <td key={c.id} className={c.align === "right" ? "num" : ""}>

@@ -14,7 +14,7 @@ export default function AuditPage() {
         description="All artifacts emitted by the agent, searchable by hash."
       />
       <HairlineCard padded={false}>
-        <div className="px-4 pt-3">
+        <div className="px-5 pt-4">
           <SectionHeader title="Artifacts" />
         </div>
         <ArtifactsTable />

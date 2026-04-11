@@ -1,24 +1,24 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-bone: #FAFAF7;
-  --color-paper: #F3F2EC;
-  --color-rule: #D8D6CE;
-  --color-rule-strong: #B8B5A8;
+  --color-bone: #FFFFFF;
+  --color-paper: #F5F5F7;
+  --color-rule: rgba(0, 0, 0, 0.06);
+  --color-rule-strong: rgba(0, 0, 0, 0.12);
 
-  --color-ink: #0A0A0A;
-  --color-ink-soft: #2B2B28;
-  --color-muted: #6B6B66;
-  --color-muted-soft: #9A978D;
+  --color-ink: #1D1D1F;
+  --color-ink-soft: #424245;
+  --color-muted: #86868B;
+  --color-muted-soft: #AEAEB2;
 
-  --color-gain: #1F5130;
-  --color-gain-soft: #E4EBE4;
-  --color-loss: #8B1A1A;
-  --color-loss-soft: #F1E3E1;
-  --color-warn: #B8860B;
-  --color-warn-soft: #F4EBD4;
-  --color-accent: #1B3A5C;
-  --color-accent-soft: #E4E8EE;
+  --color-gain: #00C853;
+  --color-gain-soft: rgba(0, 200, 83, 0.18);
+  --color-loss: #FF1744;
+  --color-loss-soft: rgba(255, 23, 68, 0.14);
+  --color-warn: #FF9100;
+  --color-warn-soft: rgba(255, 145, 0, 0.16);
+  --color-accent: #2979FF;
+  --color-accent-soft: rgba(41, 121, 255, 0.14);
 
   --color-background: var(--color-bone);
   --color-foreground: var(--color-ink);
@@ -30,32 +30,55 @@
   --text-2xs: 10px;
   --text-xs: 11px;
   --text-sm: 12px;
-  --text-base: 13px;
-  --text-md: 14px;
-  --text-lg: 16px;
-  --text-xl: 18px;
-  --text-2xl: 22px;
-  --text-3xl: 28px;
+  --text-base: 14px;
+  --text-md: 15px;
+  --text-lg: 17px;
+  --text-xl: 20px;
+  --text-2xl: 28px;
+  --text-3xl: 34px;
 
   --spacing: 4px;
 
-  --radius-sm: 1px;
-  --radius-md: 2px;
-  --radius-lg: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  --animate-aurora: aurora 60s linear infinite;
+}
+
+@keyframes aurora {
+  from { background-position: 50% 50%, 50% 50%; }
+  to   { background-position: 350% 50%, 350% 50%; }
+}
+
+:root {
+  --white: #fff;
+  --black: #000;
+  --transparent: transparent;
+  --blue-500: #3b82f6;
+  --blue-400: #60a5fa;
+  --blue-300: #93c5fd;
+  --indigo-300: #a5b4fc;
+  --violet-200: #ddd6fe;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
 
+html {
+  color-scheme: light only;
+}
+
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--color-bone);
+  background: #FFFFFF;
   color: var(--color-ink);
-  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   font-size: var(--text-base);
-  line-height: 1.45;
+  line-height: 1.47;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  letter-spacing: -0.016em;
 }
 
 .num, .font-mono, code, kbd, samp, pre,
@@ -83,41 +106,64 @@ table.data-table thead th {
   letter-spacing: 0.06em;
   font-size: var(--text-2xs);
   color: var(--color-muted);
-  padding: 6px 10px;
+  padding: 10px 16px;
   border-bottom: 1px solid var(--color-rule-strong);
-  background: var(--color-bone);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
   position: sticky;
   top: 0;
   text-align: left;
 }
 table.data-table tbody td {
-  padding: 6px 10px;
+  padding: 10px 16px;
   border-bottom: 1px solid var(--color-rule);
   vertical-align: middle;
 }
-table.data-table tbody tr:nth-child(even) td { background: var(--color-paper); }
-table.data-table tbody tr:hover td { background: var(--color-accent-soft); }
+table.data-table tbody tr {
+  transition: background-color 200ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+table.data-table tbody tr:hover td {
+  background: rgba(0, 0, 0, 0.02);
+}
 table.data-table td.num, table.data-table th.num {
   text-align: right;
   white-space: nowrap;
 }
 
 :where(a, button, [role="button"], input, select):focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 1px;
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: var(--color-bone); }
-::-webkit-scrollbar-thumb { background: var(--color-rule-strong); border-radius: 0; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
+
+@keyframes page-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: page-fade-up 350ms cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
 
 @keyframes live-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(1.2); }
 }
 
 .live-dot {
-  animation: live-pulse 1.4s ease-in-out infinite;
+  animation: live-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -125,7 +171,7 @@ table.data-table td.num, table.data-table th.num {
 }
 
 .recharts-cartesian-grid line { stroke: var(--color-rule); stroke-dasharray: 0; }
-.recharts-cartesian-axis-line { stroke: var(--color-rule-strong); }
+.recharts-cartesian-axis-line { stroke: var(--color-rule); }
 .recharts-cartesian-axis-tick-value {
   fill: var(--color-muted);
   font-size: var(--text-2xs);
@@ -134,8 +180,14 @@ table.data-table td.num, table.data-table th.num {
 .recharts-tooltip-wrapper { filter: none !important; }
 
 @media (prefers-reduced-motion: no-preference) {
-  a, button, [role="button"], tr {
-    transition: background-color 120ms linear, color 120ms linear, border-color 120ms linear;
+  a, button, [role="button"] {
+    transition:
+      background-color 200ms cubic-bezier(0.25, 0.1, 0.25, 1),
+      color 200ms cubic-bezier(0.25, 0.1, 0.25, 1),
+      border-color 200ms cubic-bezier(0.25, 0.1, 0.25, 1),
+      box-shadow 300ms cubic-bezier(0.25, 0.1, 0.25, 1),
+      transform 300ms cubic-bezier(0.25, 0.1, 0.25, 1),
+      opacity 200ms cubic-bezier(0.25, 0.1, 0.25, 1);
   }
 }
 @media (prefers-reduced-motion: reduce) {

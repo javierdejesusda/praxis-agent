@@ -19,6 +19,10 @@ export function NumericValue({
   color = "none",
   className = "",
 }: NumericValueProps) {
+  if (value == null || typeof value !== "number" || isNaN(value)) {
+    return <span className={`num text-[color:var(--color-muted)] ${className}`}>—</span>;
+  }
+
   let text: string;
   switch (kind) {
     case "usd":

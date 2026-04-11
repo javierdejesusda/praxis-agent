@@ -11,7 +11,7 @@ export default function PositionsPage() {
   return (
     <>
       <PageHeader eyebrow="Book" title="Positions & P&L" description="Open exposure, equity curve, trade history." />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="lg:col-span-2">
           <HairlineCard>
             <SectionHeader title="Equity Curve" />
@@ -23,14 +23,14 @@ export default function PositionsPage() {
           <DrawdownBar />
         </HairlineCard>
       </div>
-      <HairlineCard padded={false} className="mb-5">
-        <div className="px-4 pt-3">
+      <HairlineCard padded={false} className="mb-6">
+        <div className="px-5 pt-4">
           <SectionHeader title="Open Positions" />
         </div>
         <PositionsTable />
       </HairlineCard>
       <HairlineCard padded={false}>
-        <div className="px-4 pt-3">
+        <div className="px-5 pt-4">
           <SectionHeader title="Trade History" />
         </div>
         <TradesTable />

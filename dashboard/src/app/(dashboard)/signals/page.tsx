@@ -11,12 +11,12 @@ export default function SignalsPage() {
   return (
     <>
       <PageHeader eyebrow="Pipeline" title="Signals & Analysis" description="Agent outputs, LLM analyst, and risk decision for the latest cycle." />
-      <div className="space-y-5">
+      <div className="space-y-6">
         <HairlineCard padded={false}>
-          <div className="px-4 pt-3"><SectionHeader title="Agent Signals" /></div>
+          <div className="px-5 pt-4"><SectionHeader title="Agent Signals" /></div>
           <SignalGrid />
         </HairlineCard>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <AnalystBlock />
           <RiskDecisionBlock />
         </div>

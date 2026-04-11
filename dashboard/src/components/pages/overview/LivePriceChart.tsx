@@ -15,6 +15,7 @@ import {
 import { HairlineCard } from "@/components/ui/HairlineCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { StatusPill, type PillTone } from "@/components/ui/StatusPill";
+import { CryptoIcon } from "@/components/ui/CryptoIcon";
 import { usePrices, useQuote, useTrades } from "@/lib/hooks";
 import { fmtUsd, fmtRelative } from "@/lib/format";
 import { colors } from "@/lib/tokens";
@@ -65,7 +66,7 @@ function buildMarkers(trades: Artifact[], pair: string): TradeMarker[] {
     if (Number.isNaN(ts)) continue;
     const price = p.receipt?.fill_price ?? 0;
     const tone = toneFor(side, kind);
-    const head = side.toUpperCase().replace("CLOSE_", "×");
+    const head = side.toUpperCase().replace("CLOSE_", "\u00D7");
     markers.push({
       key: a.hash || `${a.timestamp}-${side}`,
       t: Math.floor(ts / 1000),
@@ -104,17 +105,12 @@ export function LivePriceChart({
   const quoteError = quote?.error;
   const quoteFresh = quotePrice != null && !quoteError;
 
-  // Force re-render every second so the relative "last tick" clock ticks
-  // visibly even between the 3s quote polls.
   const [, forceTick] = useState(0);
   useEffect(() => {
     const id = setInterval(() => forceTick((n) => n + 1), 1000);
     return () => clearInterval(id);
   }, []);
 
-  // Stitch the live quote into the chart as a synthetic "now" point so the
-  // area extends to the right edge and visibly moves on every quote tick.
-  // Without this, the chart only changes when a new 1h bar closes.
   const chartData = useMemo(() => {
     if (candles.length === 0) return candles;
     if (!quoteFresh || quotePrice == null || !quoteTsRaw) return candles;
@@ -134,7 +130,8 @@ export function LivePriceChart({
     ];
   }, [candles, quotePrice, quoteTsRaw, quoteFresh]);
 
-  const label = display ?? pair.replace("USD", "");
+  const base = display ?? pair.replace("USD", "");
+  const label = `${base}/USD`;
   const first = chartData[0]?.c;
   const lastBar = candles[candles.length - 1]?.c;
   const livePrice = quotePrice ?? lastBar;
@@ -143,56 +140,60 @@ export function LivePriceChart({
   const tone: PillTone = change > 0 ? "ok" : change < 0 ? "crit" : "neutral";
   const stroke = change >= 0 ? colors.gain : colors.loss;
   const fill = change >= 0 ? colors.gainSoft : colors.lossSoft;
-  const lastTickLabel = quoteTsRaw ? fmtRelative(quoteTsRaw) : "—";
+  const lastTickLabel = quoteTsRaw ? fmtRelative(quoteTsRaw) : "\u2014";
 
   return (
     <HairlineCard padded={false}>
-      <div className="px-4 pt-3 pb-2 flex items-baseline justify-between gap-3">
-        <div className="flex items-baseline gap-3">
-          <h3 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[color:var(--color-ink)]">
-            {label}USD
+      <div className="px-5 pt-4 pb-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <CryptoIcon symbol={pair} size={24} />
+          <h3
+            className="text-[14px] font-semibold uppercase tracking-[0.08em] text-[color:var(--color-ink)]"
+          >
+            {label}
           </h3>
-          <span className="num text-[20px] font-medium text-[color:var(--color-ink)] leading-none">
-            {livePrice ? fmtUsd(livePrice, { decimals: 2 }) : "—"}
+          <span className="num text-[22px] font-semibold text-[color:var(--color-ink)] leading-none tracking-[-0.02em]">
+            {livePrice ? fmtUsd(livePrice, { decimals: 2 }) : "\u2014"}
           </span>
           <StatusPill
             tone={tone}
             label={
               candles.length > 1
                 ? `${change >= 0 ? "+" : ""}${(change * 100).toFixed(2)}%`
-                : "—"
+                : "\u2014"
             }
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <span className="flex items-center gap-1.5">
             <span
-              className={`inline-block w-1.5 h-1.5 ${quoteFresh ? "live-dot" : ""}`}
+              className={`inline-block w-2 h-2 rounded-full ${quoteFresh ? "live-dot" : ""}`}
               style={{
                 background: quoteFresh ? colors.gain : colors.muted,
-                borderRadius: 1,
               }}
             />
             <span
-              className="text-[9px] uppercase tracking-[0.12em]"
+              className="text-[9px] uppercase tracking-[0.12em] font-medium"
               style={{ color: quoteFresh ? colors.gain : colors.muted }}
             >
               {quoteFresh ? "LIVE" : "STALE"}
             </span>
           </span>
           <span className="text-[9px] uppercase tracking-[0.12em] text-[color:var(--color-muted)]">
-            {lastTickLabel} · 1h bars{source ? ` · ${source}` : ""}
+            {lastTickLabel}{" \u00B7 "}1h bars{source ? ` \u00B7 ${source}` : ""}
           </span>
         </div>
       </div>
-      <SectionHeader title="Price" count={markers.length || undefined} />
-      <div className="px-2 pb-3" style={{ height: 220 }}>
+      <div className="px-5">
+        <SectionHeader title="Price" count={markers.length || undefined} />
+      </div>
+      <div className="px-3 pb-4" style={{ height: 240 }}>
         {candles.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center gap-1 text-center px-4">
-            <span className="text-[11px] text-[color:var(--color-muted)]">
+          <div className="h-full flex flex-col items-center justify-center gap-1.5 text-center px-4">
+            <span className="text-[12px] text-[color:var(--color-muted)]">
               No price data yet.
             </span>
-            <span className="text-[10px] text-[color:var(--color-muted-soft)]">
+            <span className="text-[11px] text-[color:var(--color-muted-soft)]">
               {series?.error
                 ? series.error
                 : "Set FMP_API_KEY in .env and restart the backend."}
@@ -202,7 +203,7 @@ export function LivePriceChart({
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={chartData}
-              margin={{ top: 6, right: 12, bottom: 0, left: 0 }}
+              margin={{ top: 8, right: 14, bottom: 0, left: 0 }}
             >
               <XAxis
                 dataKey="t"
@@ -212,7 +213,7 @@ export function LivePriceChart({
                 tickFormatter={formatClock}
                 axisLine
                 tickLine={false}
-                tick={{ fontSize: 9 }}
+                tick={{ fontSize: 10 }}
                 minTickGap={36}
               />
               <YAxis
@@ -220,18 +221,21 @@ export function LivePriceChart({
                 domain={["auto", "auto"]}
                 axisLine
                 tickLine={false}
-                tick={{ fontSize: 9 }}
-                width={60}
+                tick={{ fontSize: 10 }}
+                width={64}
                 tickFormatter={(v: number) => fmtUsd(v, { decimals: 0 })}
               />
               <Tooltip
                 contentStyle={{
-                  background: colors.bone,
-                  border: `1px solid ${colors.ruleStrong}`,
-                  borderRadius: 2,
-                  fontSize: 11,
+                  background: "rgba(255, 255, 255, 0.82)",
+                  backdropFilter: "saturate(180%) blur(20px)",
+                  WebkitBackdropFilter: "saturate(180%) blur(20px)",
+                  border: "1px solid rgba(0, 0, 0, 0.06)",
+                  borderRadius: 12,
+                  fontSize: 12,
                   color: colors.ink,
                   fontFamily: "var(--font-mono)",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
                 }}
                 labelFormatter={(t) =>
                   new Date(Number(t) * 1000).toLocaleString()
@@ -239,22 +243,22 @@ export function LivePriceChart({
                 formatter={(value) => [fmtUsd(Number(value)), "Close"]}
               />
               <Area
-                type="linear"
+                type="monotone"
                 dataKey="c"
                 stroke={stroke}
-                strokeWidth={1.25}
+                strokeWidth={1.5}
                 fill={fill}
-                fillOpacity={0.45}
+                fillOpacity={0.5}
                 isAnimationActive={false}
               />
               {quoteFresh && lastChartPoint && (
                 <ReferenceDot
                   x={lastChartPoint.t}
                   y={lastChartPoint.c}
-                  r={3}
+                  r={4}
                   fill={stroke}
-                  stroke={colors.bone}
-                  strokeWidth={1.5}
+                  stroke="#FFFFFF"
+                  strokeWidth={2}
                 />
               )}
               {markers.map((m) => {
@@ -281,22 +285,22 @@ export function LivePriceChart({
         )}
       </div>
       {markers.length > 0 && (
-        <div className="px-4 pb-3 flex items-center gap-4 text-[9px] uppercase tracking-[0.1em] text-[color:var(--color-muted)]">
-          <span className="flex items-center gap-1.5">
+        <div className="px-5 pb-4 flex items-center gap-5 text-[9px] uppercase tracking-[0.1em] text-[color:var(--color-muted)] font-medium">
+          <span className="flex items-center gap-2">
             <span
-              className="inline-block w-3 h-[2px]"
+              className="inline-block w-3 h-[2px] rounded-full"
               style={{ background: colors.gain }}
             />
             Long entry
           </span>
-          <span className="flex items-center gap-1.5">
+          <span className="flex items-center gap-2">
             <span
-              className="inline-block w-3 h-[2px]"
+              className="inline-block w-3 h-[2px] rounded-full"
               style={{ background: colors.loss }}
             />
             Short entry
           </span>
-          <span className="flex items-center gap-1.5">
+          <span className="flex items-center gap-2">
             <span
               className="inline-block w-3 h-[2px] border-t border-dashed"
               style={{ borderColor: colors.muted }}

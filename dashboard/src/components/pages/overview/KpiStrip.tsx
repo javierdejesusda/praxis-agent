@@ -12,7 +12,7 @@ export function KpiStrip() {
   if (!portfolio || !stats) return null;
   return (
     <HairlineCard>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
         <div>
           <MetricCell
             label="Equity"
@@ -20,7 +20,7 @@ export function KpiStrip() {
             value={<NumericValue value={portfolio.equity} kind="usd" />}
             delta={{ value: portfolio.total_pnl, unit: "usd" }}
           />
-          <div className="mt-2">
+          <div className="mt-3">
             <Sparkline data={[portfolio.peak_equity, portfolio.equity]} tone="auto" />
           </div>
         </div>

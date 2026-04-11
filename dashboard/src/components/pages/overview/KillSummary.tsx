@@ -9,7 +9,7 @@ const CRITERIA: Array<{ k: keyof import("@/lib/api").KillCriteria; label: string
   { k: "stale_data", label: "Data freshness" },
   { k: "malformed_output", label: "Output integrity" },
   { k: "ledger_mismatch", label: "Ledger reconciliation" },
-  { k: "spread_too_wide", label: "Spread ≤ 20 bps" },
+  { k: "spread_too_wide", label: "Spread \u2264 20 bps" },
   { k: "daily_loss_breached", label: "Daily loss cap" },
   { k: "max_drawdown_breached", label: "Max drawdown" },
   { k: "kill_switch", label: "Kill switch" },
@@ -31,18 +31,18 @@ export function KillSummary() {
           />
         }
       />
-      <ul className="text-[11px] space-y-0.5">
+      <ul className="text-[12px] space-y-1">
         {CRITERIA.map((c) => {
           const bad = data[c.k] === true;
           return (
             <li
               key={c.k}
-              className={`flex items-center justify-between px-1.5 py-0.5 ${
-                bad ? "bg-[color:var(--color-loss-soft)] text-[color:var(--color-loss)]" : "text-[color:var(--color-ink-soft)]"
+              className={`flex items-center justify-between px-3 py-2 rounded-[10px] cursor-default ${
+                bad ? "bg-[color:var(--color-loss-soft)] text-[color:var(--color-loss)]" : "text-[color:var(--color-ink-soft)] hover:bg-black/[0.03]"
               }`}
             >
               <span>{c.label}</span>
-              <span className="num uppercase tracking-wider text-[9px]">
+              <span className="num uppercase tracking-wider text-[9px] font-medium">
                 {bad ? "TRIP" : "OK"}
               </span>
             </li>

@@ -5,7 +5,7 @@ import "./globals.css";
 const plexSans = IBM_Plex_Sans({
   variable: "--font-plex-sans",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["300", "400", "500", "600"],
 });
 const plexMono = IBM_Plex_Mono({
   variable: "--font-plex-mono",
@@ -15,11 +15,11 @@ const plexMono = IBM_Plex_Mono({
 const plexSerif = IBM_Plex_Serif({
   variable: "--font-plex-serif",
   subsets: ["latin"],
-  weight: ["500", "600"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
-  title: "Aegis — Trading Operations",
+  title: "Aegis \u2014 Trading Operations",
   description: "Regime-adaptive trading agent with on-chain validation.",
 };
 

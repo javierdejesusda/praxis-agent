@@ -78,7 +78,7 @@ async def artifacts(limit: int = 50):
 @app.get("/api/trades")
 async def trades():
     all_artifacts = _load_artifacts(200)
-    return [a for a in all_artifacts if a.get("type") == "trade-execution"]
+    return [a for a in all_artifacts if a.get("type") in ("trade-execution", "position-close")]
 
 
 @app.get("/api/rejections")

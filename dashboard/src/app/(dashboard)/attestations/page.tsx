@@ -18,9 +18,9 @@ export default function AttestationsPage() {
         title="Attestations"
         description="ERC-8004 validation and reputation records anchored on Sepolia."
       />
-      <div className="space-y-5">
+      <div className="space-y-6">
         <HairlineCard>
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-3 gap-8">
             <MetricCell
               label="Validations"
               emphasis="strong"
@@ -39,7 +39,7 @@ export default function AttestationsPage() {
           </div>
         </HairlineCard>
         <HairlineCard padded={false}>
-          <div className="px-4 pt-3">
+          <div className="px-5 pt-4">
             <SectionHeader title="Attestation Log" />
           </div>
           <AttestationsTable />
