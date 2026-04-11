@@ -24,7 +24,7 @@ build/
 .venv/
 venv/
 
-# Research files (not for repo)
+# Research files (private, not for repo)
 lablab-ai-trading-agents.md
 sota-red-team-research.md
 sota-sources-comprehensive.md
@@ -58,13 +58,9 @@ data/BTCUSD_60m_fmp.csv
 data/ETHUSD_60m.csv
 data/ETHUSD_60m_fmp.csv
 
-# LaTeX build artifacts
-docs/*.aux
-docs/*.bbl
-docs/*.blg
-docs/*.log
-docs/*.out
-docs/*.synctex.gz
+# Docs — only publish the final PDF
+docs/*
+!docs/Backtest Technical Report.pdf
 
 # Snapshot files
 snapshot-*.md
