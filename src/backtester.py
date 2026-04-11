@@ -563,9 +563,9 @@ def backtest_portfolio(
     mtf_daily_filter: Optional[bool] = None,
     reversal_exit: bool = False,
     cross_pair_boost: bool = True,
-    be_trigger_pct: float = 0.0059,
+    be_trigger_pct: float = 0.006,
     lock_trigger_pct: float = 0.012,
-    lock_value_pct: float = 0.0067,
+    lock_value_pct: float = 0.0065,
     partial_tp_pct: float = 0.0,  # Fraction of position to close at atr_target (0=disabled, 0.5=half)
     precomputed_features: Optional[dict[str, pd.DataFrame]] = None,
     verbose: bool = True,

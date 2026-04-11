@@ -41,6 +41,11 @@ class RiskParams:
     cooldown_bars: int = 6
     macro_filter: bool = True
 
+    # Exit management (shared by backtester and orchestrator)
+    be_trigger_pct: float = 0.006
+    lock_trigger_pct: float = 0.012
+    lock_value_pct: float = 0.0065
+
     # Entry quality filters
     min_adx_for_entry: float = 0.0
     dd_scale_threshold: float = 0.97

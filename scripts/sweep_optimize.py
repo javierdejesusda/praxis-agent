@@ -63,20 +63,21 @@ class SweepConfig:
     strict_macro: bool = False
     risk_per_trade_pct: float = 0.01
     max_position_pct: float = 0.22
+    be_trigger_pct: float = 0.006
+    lock_trigger_pct: float = 0.012
+    lock_value_pct: float = 0.0065
+    partial_tp_pct: float = 0.0
+    mtf_daily_filter: bool = True
 
 
-def score_result(metrics: dict) -> float:
-    """Composite score matching the ERC-8004 leaderboard emphasis.
+def score_result(metrics: dict, mode: str = "default") -> float:
+    """Composite score for ranking sweep results.
 
-    The hackathon's Surge 'Best Risk-Adjusted Return' prize and ERC-8004
-    leaderboard weight Sharpe ratio, drawdown control, and PnL. The score
-    rewards all three with a soft drawdown penalty:
-
-        score = sharpe_eff * max(0, 1 - dd/0.30) * return_pct_scaled
-
-    where sharpe_eff blends Sharpe and Sortino (Sortino rewarded more for
-    penalising only downside volatility), and return_pct_scaled rewards
-    up to +500% then saturates via log.
+    Args:
+        metrics: Backtest result metrics dict.
+        mode: Scoring mode.
+            "default" — balanced (Sharpe × DD penalty × log return).
+            "sharpe_dd" — maximize Sharpe, minimize drawdown.
     """
     ret_pct = metrics.get("agent_return_pct", 0.0)
     sharpe = metrics.get("sharpe_annualized", 0.0) or 0.0
@@ -85,6 +86,12 @@ def score_result(metrics: dict) -> float:
 
     if ret_pct <= 0 or sharpe <= 0:
         return 0.0
+
+    if mode == "sharpe_dd":
+        dd_penalty = max(0.0, 1.0 - dd / 0.08)
+        if dd_penalty <= 0:
+            return 0.0
+        return sharpe * dd_penalty * (1.0 + math.log1p(ret_pct / 100.0))
 
     dd_component = max(0.0, 1.0 - dd / 0.30)
     if dd_component <= 0:
@@ -103,6 +110,7 @@ def apply_config(cfg: SweepConfig) -> None:
     object.__setattr__(config.RISK, "shorts_enabled", cfg.shorts_enabled)
     object.__setattr__(config.RISK, "risk_per_trade_pct", cfg.risk_per_trade_pct)
     object.__setattr__(config.RISK, "max_position_pct", cfg.max_position_pct)
+    object.__setattr__(config.RISK, "mtf_daily_filter", cfg.mtf_daily_filter)
 
 
 def build_grid(stage: str = "coarse") -> list[SweepConfig]:
@@ -218,6 +226,33 @@ def build_grid(stage: str = "coarse") -> list[SweepConfig]:
         target_bases = [3.0, 3.25]
         trail_mults = [2.15, 2.25, 2.35]
         macro_filters = [True]
+    elif stage == "sharpe_dd":
+        intervals = [240]
+        min_scores = [85]
+        shorts = [False]
+        max_holds = [60, 80, 100]
+        stop_mults = [2.8, 3.0, 3.1, 3.3]
+        target_bases = [2.5, 2.85, 3.2]
+        trail_mults = [1.7, 1.9, 2.1, 2.3]
+        macro_filters = [True]
+    elif stage == "sharpe_dd_pos":
+        intervals = [240]
+        min_scores = [85]
+        shorts = [False]
+        max_holds = [80]
+        stop_mults = [3.1]
+        target_bases = [2.85]
+        trail_mults = [2.1]
+        macro_filters = [True]
+    elif stage == "sharpe_dd_fine":
+        intervals = [240]
+        min_scores = [85]
+        shorts = [False]
+        max_holds = [80]
+        stop_mults = [3.1]
+        target_bases = [2.85]
+        trail_mults = [2.1]
+        macro_filters = [True]
     else:
         raise ValueError(f"unknown stage {stage}")
 
@@ -295,6 +330,24 @@ def build_grid(stage: str = "coarse") -> list[SweepConfig]:
             (0.020, 0.50),
             (0.025, 0.50),
         ]
+    elif stage == "sharpe_dd":
+        min_adx_values = [0.0]
+        dd_configs = [(0.97, 0.001), (0.97, 0.01), (0.97, 0.1)]
+        atr_max_values = [999.0]
+        strict_macros = [False]
+        sizing_configs = [(0.015, 0.40)]
+    elif stage == "sharpe_dd_pos":
+        min_adx_values = [0.0]
+        dd_configs = [(0.97, 0.001)]
+        atr_max_values = [999.0]
+        strict_macros = [False]
+        sizing_configs = [(0.015, 0.40)]
+    elif stage == "sharpe_dd_fine":
+        min_adx_values = [0.0]
+        dd_configs = [(0.97, 0.001)]
+        atr_max_values = [999.0]
+        strict_macros = [False]
+        sizing_configs = [(0.015, 0.40)]
     else:
         min_adx_values = [0.0]
         dd_configs = [(1.0, 1.0)]
@@ -302,11 +355,43 @@ def build_grid(stage: str = "coarse") -> list[SweepConfig]:
         strict_macros = [False]
         sizing_configs = [(0.01, 0.22)]
 
+    be_configs = [(0.006, 0.012, 0.0065)]
+    partial_tp_values = [0.0]
+    mtf_daily_values = [True]
+
+    if stage == "sharpe_dd_pos":
+        be_configs = [
+            (0.003, 0.008, 0.004),
+            (0.004, 0.010, 0.005),
+            (0.005, 0.010, 0.006),
+            (0.006, 0.012, 0.0065),
+            (0.007, 0.014, 0.008),
+            (0.008, 0.016, 0.010),
+        ]
+        partial_tp_values = [0.0]
+        dd_configs = [
+            (0.97, 0.001), (0.97, 0.01), (0.97, 0.05),
+            (0.97, 0.1), (0.97, 0.3), (0.97, 0.5),
+        ]
+    elif stage == "sharpe_dd_fine":
+        be_configs = [(0.0059, 0.012, 0.0067)]
+        partial_tp_values = [0.0]
+        dd_configs = [(0.97, 0.001)]
+        max_holds = [60, 70, 80, 90, 100]
+        stop_mults = [2.9, 3.0, 3.1, 3.2]
+        trail_mults = [1.9, 2.0, 2.1, 2.2]
+        target_bases = [2.7, 2.85, 3.0]
+        sizing_configs = [
+            (0.010, 0.35), (0.015, 0.40), (0.015, 0.35),
+            (0.020, 0.40), (0.010, 0.40),
+        ]
+
     cfgs = []
-    for iv, ms, sh, mh, st, tb, tr, mf, adx, (dt, df), amx, sm, (rp, mp) in product(
+    for iv, ms, sh, mh, st, tb, tr, mf, adx, (dt, df), amx, sm, (rp, mp), (be, lk, lv), ptp, mtfd in product(
         intervals, min_scores, shorts, max_holds, stop_mults, target_bases,
         trail_mults, macro_filters, min_adx_values, dd_configs,
         atr_max_values, strict_macros, sizing_configs,
+        be_configs, partial_tp_values, mtf_daily_values,
     ):
         cfgs.append(SweepConfig(
             interval=iv,
@@ -329,6 +414,11 @@ def build_grid(stage: str = "coarse") -> list[SweepConfig]:
             strict_macro=sm,
             risk_per_trade_pct=rp,
             max_position_pct=mp,
+            be_trigger_pct=be,
+            lock_trigger_pct=lk,
+            lock_value_pct=lv,
+            partial_tp_pct=ptp,
+            mtf_daily_filter=mtfd,
         ))
     return cfgs
 
@@ -339,6 +429,7 @@ def run_sweep(
     top_n: int,
     start: str | None = None,
     end: str | None = None,
+    score_mode: str = "default",
 ) -> list[dict]:
     frame_cache: dict[tuple[str, int], pd.DataFrame] = {}
     feature_cache: dict[tuple[str, int], pd.DataFrame] = {}
@@ -388,6 +479,11 @@ def run_sweep(
             strict_macro=cfg.strict_macro,
             reversal_exit=cfg.reversal_exit,
             cross_pair_boost=True,
+            be_trigger_pct=cfg.be_trigger_pct,
+            lock_trigger_pct=cfg.lock_trigger_pct,
+            lock_value_pct=cfg.lock_value_pct,
+            partial_tp_pct=cfg.partial_tp_pct,
+            mtf_daily_filter=cfg.mtf_daily_filter,
             precomputed_features=pair_features,
             verbose=False,
         )
@@ -405,7 +501,7 @@ def run_sweep(
             "profit_factor": r.get("profit_factor"),
             "win_rate_pct": r.get("win_rate_pct"),
         }
-        score = score_result(combined)
+        score = score_result(combined, mode=score_mode)
 
         results.append({
             "score": round(score, 4),
@@ -437,7 +533,8 @@ def main() -> None:
     parser.add_argument("--out", type=str, default=str(LOG_DIR / "sweep.json"))
     parser.add_argument("--stage", type=str, default="coarse",
                         choices=["coarse", "fine", "tf", "recent", "filter",
-                                 "vol_filter", "vol_fine", "joint", "sizing", "trail", "ultra", "iter8"])
+                                 "vol_filter", "vol_fine", "joint", "sizing", "trail", "ultra", "iter8",
+                                 "sharpe_dd", "sharpe_dd_pos", "sharpe_dd_fine"])
     parser.add_argument("--limit", type=int, default=None,
                         help="Limit number of configs (for quick dev runs)")
     args = parser.parse_args()
@@ -449,7 +546,8 @@ def main() -> None:
     pairs = ["BTCUSD", "ETHUSD"]
     print(f"Running sweep: {len(cfgs)} configs, {len(pairs)} pairs")
     t0 = time.time()
-    results = run_sweep(pairs, cfgs, args.top, start=args.start, end=args.end)
+    score_mode = "sharpe_dd" if args.stage.startswith("sharpe_dd") else "default"
+    results = run_sweep(pairs, cfgs, args.top, start=args.start, end=args.end, score_mode=score_mode)
     print(f"\nSweep done in {(time.time()-t0)/60:.1f} min, {len(results)} results")
 
     Path(args.out).write_text(json.dumps({

@@ -20,7 +20,7 @@ from src.agents.signals import (
 )
 from src.artifacts.attestations import record_attestation_async
 from src.artifacts.hasher import artifact_hash, build_artifact, canonical_json
-from src.config import ARTIFACTS_DIR, RISK, STATE_DIR, STRATEGY
+from src.config import ARTIFACTS_DIR, COMPETITION_MODE, RISK, STATE_DIR, STRATEGY
 from src.execution.kraken_adapter import (
     close_paper_position,
     execute_paper_trade,
@@ -645,15 +645,15 @@ async def run_protective_check(
                 peak = max(peak, current_price)
                 atr = pos.get("atr_20", abs(entry_price - atr_stop) / 3.0 if atr_stop else (entry_price * 0.02))
                 trail = peak - atr * RISK.trail_mult
-                if peak > entry_price * 1.006:  # iter18: 1.006 — re-optimal with tgt=2.85/3.5
+                if peak > entry_price * (1.0 + RISK.be_trigger_pct):
                     trail = max(trail, entry_price)
-                if peak > entry_price * 1.012:  # iter10: 1.012 (was 1.015) — sweep-optimal lock trigger
-                    trail = max(trail, entry_price * 1.0065)  # iter19: 1.0065 (was 1.005) — sweep-optimal lock value
+                if peak > entry_price * (1.0 + RISK.lock_trigger_pct):
+                    trail = max(trail, entry_price * (1.0 + RISK.lock_value_pct))
                 if atr_stop and current_price <= atr_stop:
                     logger.warning("ATR stop hit for %s LONG @ %.2f (stop=%.2f)", pair, current_price, atr_stop)
                     closed_pairs.append(pair)
                     close_prices[pair] = current_price
-                elif current_price <= trail and peak > entry_price * 1.005:
+                elif current_price <= trail and peak > entry_price * (1.0 + RISK.be_trigger_pct):
                     logger.info("Trailing stop hit for %s LONG @ %.2f (trail=%.2f)", pair, current_price, trail)
                     closed_pairs.append(pair)
                     close_prices[pair] = current_price
@@ -665,15 +665,15 @@ async def run_protective_check(
                 peak = min(peak, current_price)
                 atr = pos.get("atr_20", abs(atr_stop - entry_price) / 3.0 if atr_stop else (entry_price * 0.02))
                 trail = peak + atr * RISK.trail_mult
-                if peak < entry_price * 0.994:  # iter18: 0.994 — re-optimal with tgt=2.85/3.5
+                if peak < entry_price * (1.0 - RISK.be_trigger_pct):
                     trail = min(trail, entry_price)
-                if peak < entry_price * 0.988:  # iter10: 0.988 (was 0.985) — sweep-optimal lock trigger
-                    trail = min(trail, entry_price * 0.9935)  # iter19: 0.9935 (was 0.995) — sweep-optimal lock value
+                if peak < entry_price * (1.0 - RISK.lock_trigger_pct):
+                    trail = min(trail, entry_price * (1.0 - RISK.lock_value_pct))
                 if atr_stop and current_price >= atr_stop:
                     logger.warning("ATR stop hit for %s SHORT @ %.2f (stop=%.2f)", pair, current_price, atr_stop)
                     closed_pairs.append(pair)
                     close_prices[pair] = current_price
-                elif current_price >= trail and peak < entry_price * 0.995:
+                elif current_price >= trail and peak < entry_price * (1.0 - RISK.be_trigger_pct):
                     logger.info("Trailing stop hit for %s SHORT @ %.2f (trail=%.2f)", pair, current_price, trail)
                     closed_pairs.append(pair)
                     close_prices[pair] = current_price
@@ -768,12 +768,24 @@ async def run_protective_check(
 
 async def main_loop() -> None:
     """Main entry point — runs strategic + protective loops."""
+    log_dir = Path("logs")
+    log_dir.mkdir(exist_ok=True)
+    log_file = log_dir / f"agent_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.log"
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        handlers=[
+            logging.StreamHandler(),
+            logging.FileHandler(str(log_file)),
+        ],
     )
 
-    logger.info("Aegis Agent starting...")
+    mode = "COMPETITION" if COMPETITION_MODE else "DEFAULT"
+    logger.info("Aegis Agent starting in %s mode (log: %s)", mode, log_file)
+    logger.info("Risk params: paper>=%d shorts=%s consec=%d stop=%.1f trail=%.1f dd_sf=%.3f",
+                RISK.min_signal_score_paper, RISK.shorts_enabled,
+                RISK.max_consecutive_losses, RISK.stop_mult, RISK.trail_mult,
+                RISK.dd_scale_factor)
 
     try:
         await init_paper(balance=10000.0)
