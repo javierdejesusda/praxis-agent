@@ -29,7 +29,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pandas as pd
 
-from src.backtester import backtest_portfolio, load_csv, _resample, compute_features_bulk
+from src.backtester import (
+    backtest_portfolio, load_csv, _resample, compute_features_bulk,
+    cost_sensitivity, parameter_sensitivity, regime_split,
+    generate_tearsheet,
+)
 from src.config import RISK, STATE_DIR, STRATEGY
 
 
@@ -304,11 +308,64 @@ async def main():
             "per_pair": oos_per_pair,
         }
 
+    # Pre-compute features once for sensitivity analyses
+    print(f"\n{'='*72}")
+    print("  ROBUSTNESS ANALYSES")
+    print(f"{'='*72}")
+
+    bulks = {}
+    for pair, df in full_frames.items():
+        if pair not in bulks:
+            bulks[pair] = compute_features_bulk(df, pair)
+
+    # Cost sensitivity
+    print("\n  Running cost sensitivity (4 tiers)...")
+    cost_results = cost_sensitivity(full_frames, initial_equity=initial_equity,
+                                    precomputed_features=bulks)
+    report["cost_sensitivity"] = cost_results
+    print("  | Round-trip cost | Return     | Sharpe | Max DD  | Trades |")
+    print("  |-----------------|------------|--------|---------|--------|")
+    for cr in cost_results:
+        print(f"  | {cr['round_trip_cost_bps']:>13.0f} bps | {cr['return_pct']:>+9.2f}% | {cr['sharpe']:>6.3f} | {cr['max_dd_pct']:>6.2f}% | {cr['trades']:>6} |")
+
+    # Parameter sensitivity
+    print("\n  Running parameter sensitivity (±10%)...")
+    param_results = parameter_sensitivity(full_frames, initial_equity=initial_equity,
+                                          precomputed_features=bulks)
+    report["parameter_sensitivity"] = param_results
+    fragile_count = sum(1 for p in param_results if p.get("fragile"))
+    print(f"  Tested {len(param_results) - 1} perturbations, {fragile_count} flagged fragile (>30% Sharpe change)")
+    for pr in param_results:
+        flag = " ** FRAGILE" if pr.get("fragile") else ""
+        if pr["parameter"] == "baseline":
+            print(f"  BASELINE: Sharpe={pr['sharpe']:.3f} Return={pr['return_pct']:+.2f}%")
+        else:
+            print(f"  {pr['parameter']} {pr['direction']}: val={pr['value']}  Sharpe={pr['sharpe']:.3f}  delta={pr.get('sharpe_delta_pct', 0):+.1f}%{flag}")
+
+    # Regime split
+    print("\n  Analyzing regime-specific performance...")
+    regime_results = regime_split(full_result.get("trades", []), bulks, full_frames)
+    report["regime_performance"] = regime_results
+    for regime, rm in regime_results.items():
+        print(f"  {regime:>12s}: {rm['trades']} trades, {rm['win_rate_pct']:.1f}% win, PnL=${rm['pnl_usd']:+,.2f}, PF={rm.get('profit_factor', 'N/A')}")
+
+    # QuantStats tearsheet
+    eq_curve = full_result.get("equity_curve") or []
+    if not eq_curve:
+        eq_data = [(pd.Timestamp(t["timestamp"]), t["equity"]) for t in full_result.get("trades", [])]
+        if eq_data:
+            eq_curve = eq_data
+    tearsheet_path = generate_tearsheet(eq_curve, output_path="logs/tearsheet.html")
+    if tearsheet_path:
+        print(f"\n  Wrote QuantStats tearsheet to {tearsheet_path}")
+
+    # Write report
     STATE_DIR.mkdir(exist_ok=True)
     out_path = STATE_DIR / "backtest_report.json"
     out_path.write_text(json.dumps(report, indent=2, default=str))
     print(f"\nWrote {out_path}")
 
+    # Validation summary
     if oos_metrics:
         print(f"\n{'='*72}")
         print("  VALIDATION SUMMARY")
@@ -319,6 +376,11 @@ async def main():
         print(f"  IS Trades:  {is_metrics.get('total_trades', 0)}          |   OOS Trades:  {oos_metrics.get('total_trades', 0)}")
         print(f"  IS Win %:   {is_metrics.get('win_rate_pct', 0):.1f}%      |   OOS Win %:   {oos_metrics.get('win_rate_pct', 0):.1f}%")
         print(f"  IS PF:      {is_metrics.get('profit_factor')}       |   OOS PF:      {oos_metrics.get('profit_factor')}")
+        fragile_params = [p["parameter"] for p in param_results if p.get("fragile")]
+        if fragile_params:
+            print(f"\n  FRAGILE PARAMETERS: {', '.join(fragile_params)}")
+        else:
+            print(f"\n  No fragile parameters detected (all stable within ±10%)")
         print(f"{'='*72}")
 
 

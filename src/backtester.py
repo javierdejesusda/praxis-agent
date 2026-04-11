@@ -1010,6 +1010,7 @@ def backtest_portfolio(
     metrics["pairs"] = list(pair_frames.keys())
     metrics["rejections"] = rejections
     metrics["trades"] = all_trades
+    metrics["equity_curve"] = equity_curve
     metrics["per_pair_trade_counts"] = {p: len(t) for p, t in per_pair_trades.items()}
     metrics["period_start"] = str(all_timestamps[0]) if all_timestamps else None
     metrics["period_end"] = str(all_timestamps[-1]) if all_timestamps else None
@@ -1327,6 +1328,231 @@ def _resample(df: pd.DataFrame, target_minutes: int, source_minutes: int = 60) -
         "volume": "sum",
     }).dropna()
     return resampled
+
+
+def cost_sensitivity(
+    pair_frames: dict[str, pd.DataFrame],
+    fee_rates: list[float] | None = None,
+    spread_bps_list: list[float] | None = None,
+    initial_equity: float = 10000.0,
+    precomputed_features: dict[str, pd.DataFrame] | None = None,
+    verbose: bool = False,
+) -> list[dict]:
+    """Run the backtest at multiple cost tiers and report metric degradation.
+
+    Args:
+        pair_frames: Dict of {pair: OHLCV DataFrame}.
+        fee_rates: List of per-side fee rates to test (e.g. [0.001, 0.002, 0.003]).
+        spread_bps_list: List of typical spreads in bps to test.
+        initial_equity: Starting equity.
+        precomputed_features: Pre-computed feature frames to avoid recomputation.
+
+    Returns:
+        List of dicts with fee_rate, spread_bps, and key metrics.
+    """
+    global FEE_RATE, TYPICAL_SPREAD_BPS, ENTRY_SLIPPAGE_BPS, EXIT_SLIPPAGE_BPS
+
+    if fee_rates is None:
+        fee_rates = [0.0010, 0.0026, 0.0040, 0.0060]
+    if spread_bps_list is None:
+        spread_bps_list = [4.0, 8.0, 12.0, 16.0]
+
+    original_fee = FEE_RATE
+    original_spread = TYPICAL_SPREAD_BPS
+    original_entry = ENTRY_SLIPPAGE_BPS
+    original_exit = EXIT_SLIPPAGE_BPS
+
+    results = []
+    for fee, spread in zip(fee_rates, spread_bps_list):
+        FEE_RATE = fee
+        TYPICAL_SPREAD_BPS = spread
+        ENTRY_SLIPPAGE_BPS = spread / 2.0
+        EXIT_SLIPPAGE_BPS = spread / 2.0
+
+        r = backtest_portfolio(pair_frames, initial_equity=initial_equity,
+                               precomputed_features=precomputed_features,
+                               verbose=False)
+        rt_cost_bps = round((fee * 2 + spread) * 100, 1)
+        results.append({
+            "fee_rate_pct": round(fee * 100, 3),
+            "spread_bps": spread,
+            "round_trip_cost_bps": rt_cost_bps,
+            "return_pct": r.get("agent_return_pct", 0),
+            "sharpe": r.get("sharpe_annualized", 0),
+            "max_dd_pct": r.get("max_drawdown_pct", 0),
+            "trades": r.get("total_trades", 0),
+            "win_rate_pct": r.get("win_rate_pct", 0),
+            "profit_factor": r.get("profit_factor"),
+        })
+
+    FEE_RATE = original_fee
+    TYPICAL_SPREAD_BPS = original_spread
+    ENTRY_SLIPPAGE_BPS = original_entry
+    EXIT_SLIPPAGE_BPS = original_exit
+    return results
+
+
+def parameter_sensitivity(
+    pair_frames: dict[str, pd.DataFrame],
+    initial_equity: float = 10000.0,
+    perturbation: float = 0.10,
+    precomputed_features: dict[str, pd.DataFrame] | None = None,
+) -> list[dict]:
+    """Perturb each key parameter by ±perturbation and measure metric change.
+
+    Tests fragility: if Sharpe drops >30% on a 10% parameter change,
+    the strategy is fragile/overfit to that parameter.
+
+    Args:
+        pair_frames: Dict of {pair: OHLCV DataFrame}.
+        initial_equity: Starting equity.
+        perturbation: Fraction to perturb (0.10 = ±10%).
+        precomputed_features: Pre-computed feature frames.
+
+    Returns:
+        List of dicts with parameter name, direction, value, and metrics.
+    """
+    params_to_test = {
+        "stop_mult": RISK.stop_mult,
+        "trail_mult": RISK.trail_mult,
+        "target_mult_base": RISK.target_mult_base,
+        "target_mult_mid": RISK.target_mult_mid,
+        "target_mult_hi": RISK.target_mult_hi,
+        "max_hold_bars": RISK.max_hold_bars,
+    }
+
+    baseline = backtest_portfolio(pair_frames, initial_equity=initial_equity,
+                                  precomputed_features=precomputed_features,
+                                  verbose=False)
+    base_sharpe = baseline.get("sharpe_annualized", 0)
+    base_return = baseline.get("agent_return_pct", 0)
+
+    results = [{
+        "parameter": "baseline",
+        "direction": "base",
+        "value": None,
+        "return_pct": base_return,
+        "sharpe": base_sharpe,
+        "max_dd_pct": baseline.get("max_drawdown_pct", 0),
+        "trades": baseline.get("total_trades", 0),
+        "fragile": False,
+    }]
+
+    for param_name, base_val in params_to_test.items():
+        for direction, mult in [("-10%", 1 - perturbation), ("+10%", 1 + perturbation)]:
+            perturbed = base_val * mult
+            if param_name == "max_hold_bars":
+                perturbed = int(round(perturbed))
+
+            kwargs = {param_name: perturbed}
+            r = backtest_portfolio(pair_frames, initial_equity=initial_equity,
+                                   precomputed_features=precomputed_features,
+                                   verbose=False, **kwargs)
+            r_sharpe = r.get("sharpe_annualized", 0)
+            sharpe_delta = 0.0
+            if base_sharpe != 0:
+                sharpe_delta = (r_sharpe - base_sharpe) / abs(base_sharpe)
+            fragile = abs(sharpe_delta) > 0.30
+
+            results.append({
+                "parameter": param_name,
+                "direction": direction,
+                "value": round(perturbed, 3),
+                "return_pct": r.get("agent_return_pct", 0),
+                "sharpe": r_sharpe,
+                "sharpe_delta_pct": round(sharpe_delta * 100, 1),
+                "max_dd_pct": r.get("max_drawdown_pct", 0),
+                "trades": r.get("total_trades", 0),
+                "fragile": fragile,
+            })
+
+    return results
+
+
+def regime_split(trades: list[dict], features_bulk: dict[str, pd.DataFrame],
+                 pair_frames: dict[str, pd.DataFrame]) -> dict:
+    """Split trades by market regime and report per-regime performance.
+
+    Uses the ADX-based regime classification from the feature engine.
+
+    Args:
+        trades: List of trade dicts (must have 'pair', 'bar', 'pnl_usd').
+        features_bulk: Pre-computed feature DataFrames per pair.
+        pair_frames: Source OHLCV DataFrames (for index mapping).
+
+    Returns:
+        Dict with per-regime metrics (trending, ranging, transition).
+    """
+    regime_trades: dict[str, list[dict]] = {
+        "trending": [], "ranging": [], "transition": [],
+    }
+
+    for t in trades:
+        pair = t.get("pair")
+        bar = t.get("bar", 0)
+        if pair not in features_bulk:
+            regime_trades["transition"].append(t)
+            continue
+        bulk = features_bulk[pair]
+        if bar < len(bulk):
+            regime = bulk.iloc[bar].get("regime", "transition")
+        else:
+            regime = "transition"
+        if regime not in regime_trades:
+            regime = "transition"
+        regime_trades[regime].append(t)
+
+    result = {}
+    for regime, rtrades in regime_trades.items():
+        if not rtrades:
+            result[regime] = {
+                "trades": 0, "win_rate_pct": 0, "pnl_usd": 0,
+                "profit_factor": None, "expectancy_usd": 0,
+            }
+            continue
+        wins = [t for t in rtrades if t["pnl_usd"] > 0]
+        gp = sum(t["pnl_usd"] for t in wins)
+        gl = abs(sum(t["pnl_usd"] for t in rtrades if t["pnl_usd"] <= 0))
+        pf = gp / gl if gl > 0 else None
+        result[regime] = {
+            "trades": len(rtrades),
+            "wins": len(wins),
+            "losses": len(rtrades) - len(wins),
+            "win_rate_pct": round(len(wins) / len(rtrades) * 100, 1),
+            "pnl_usd": round(sum(t["pnl_usd"] for t in rtrades), 2),
+            "profit_factor": round(pf, 2) if pf and math.isfinite(pf) else None,
+            "expectancy_usd": round(sum(t["pnl_usd"] for t in rtrades) / len(rtrades), 2),
+        }
+    return result
+
+
+def generate_tearsheet(equity_curve: list[tuple], output_path: str = "logs/tearsheet.html",
+                       title: str = "Aegis Agent") -> str | None:
+    """Generate a QuantStats HTML tearsheet from the equity curve.
+
+    Args:
+        equity_curve: List of (timestamp, equity) tuples.
+        output_path: Path to save the HTML file.
+        title: Title for the tearsheet.
+
+    Returns:
+        Output path on success, None on failure.
+    """
+    try:
+        import quantstats as qs
+    except ImportError:
+        logger.warning("quantstats not installed — skipping tearsheet")
+        return None
+
+    eq = pd.Series(
+        {ts: float(v) for ts, v in equity_curve}
+    ).sort_index()
+    returns = eq.pct_change().dropna()
+    returns.index = pd.to_datetime(returns.index, utc=True)
+
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    qs.reports.html(returns, output=output_path, title=title, download_filename=output_path)
+    return output_path
 
 
 async def run_backtest(
