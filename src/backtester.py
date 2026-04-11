@@ -25,6 +25,9 @@ import json
 import logging
 import math
 from datetime import datetime, timezone
+
+import numpy as np
+from scipy import stats as sp_stats
 from pathlib import Path
 from typing import Optional
 
@@ -52,6 +55,7 @@ FEE_RATE = KRAKEN_TAKER_FEE
 TYPICAL_SPREAD_BPS = 8.0
 ENTRY_SLIPPAGE_BPS = TYPICAL_SPREAD_BPS / 2.0
 EXIT_SLIPPAGE_BPS = TYPICAL_SPREAD_BPS / 2.0
+BASELINE_ATR_PCT = 0.025  # 2.5% — median BTC ATR/price ratio for vol-scaling
 
 
 def _run_signals(features):
@@ -108,14 +112,15 @@ def _simulate_close(position, close_price):
     """Compute PnL for closing a position at given price.
 
     Matches live Kraken paper adapter: taker fees on exit notional plus
-    half-spread exit slippage baked into the effective exit price.
+    volatility-scaled half-spread exit slippage.
     """
     side = position["side"]
     entry = position["entry_price"]
     size = position["size_usd"]
     fees = size * FEE_RATE
 
-    slip = EXIT_SLIPPAGE_BPS / 10000.0
+    atr = position.get("atr_20", 0.0)
+    slip = _vol_scaled_slip(EXIT_SLIPPAGE_BPS, atr, close_price)
     effective_exit = close_price * (1 - slip) if side == "long" else close_price * (1 + slip)
 
     if side == "long":
@@ -127,12 +132,26 @@ def _simulate_close(position, close_price):
     return pnl_usd, pnl_pct
 
 
-def _entry_fill_price(side: str, close_price: float) -> float:
-    """Apply half-spread entry slippage, mirroring live fills at ask/bid."""
-    slip = ENTRY_SLIPPAGE_BPS / 10000.0
+def _vol_scaled_slip(base_bps: float, atr: float, price: float) -> float:
+    """Scale slippage by current volatility relative to baseline.
+
+    During high-vol regimes (ATR/price >> baseline), spreads widen.
+    Returns the slip as a fraction (not bps).
+    """
+    if price <= 0:
+        return base_bps / 10000.0
+    atr_pct = atr / price
+    vol_mult = max(1.0, atr_pct / BASELINE_ATR_PCT)
+    return (base_bps * vol_mult) / 10000.0
+
+
+def _entry_fill_price(side: str, price: float,
+                      atr: float = 0.0) -> float:
+    """Apply volatility-scaled half-spread entry slippage."""
+    slip = _vol_scaled_slip(ENTRY_SLIPPAGE_BPS, atr, price)
     if side == "long":
-        return close_price * (1 + slip)
-    return close_price * (1 - slip)
+        return price * (1 + slip)
+    return price * (1 - slip)
 
 
 def load_csv(pair: str, interval: int) -> pd.DataFrame:
@@ -250,6 +269,7 @@ def backtest_pair(
 
     buy_hold_entry = float(df["close"].iloc[warmup])
     position = None
+    pending_entry = None  # Deferred order: signal at bar[i], fill at bar[i+1]
     bars_held = 0
     prev_day = None
     risk_cooldown = 0
@@ -264,6 +284,7 @@ def backtest_pair(
 
     for i in range(warmup, total_bars):
         close_price = float(df["close"].iloc[i])
+        open_price = float(df["open"].iloc[i])
 
         current_day = df.index[i].date()
         if prev_day is not None and current_day != prev_day:
@@ -280,6 +301,50 @@ def backtest_pair(
         except Exception as e:
             logger.debug("Feature computation failed at bar %d: %s", i, e)
             continue
+
+        # Fill pending entry from PREVIOUS bar's signal at THIS bar's open.
+        if pending_entry is not None and position is None:
+            pe = pending_entry
+            pending_entry = None
+            entry_fill = _entry_fill_price(pe["side"], open_price,
+                                           atr=pe["atr"])
+            fees = pe["size_usd"] * FEE_RATE
+            portfolio.cash -= fees
+            portfolio.equity -= fees
+            portfolio.trade_count += 1
+
+            atr = pe["atr"]
+            adx = pe["adx"]
+            if adx >= 35:
+                t_mult = target_mult_hi
+            elif adx >= 25:
+                t_mult = target_mult_mid
+            else:
+                t_mult = target_mult_base
+
+            if pe["side"] == "long":
+                atr_stop = entry_fill - (atr * stop_mult)
+                atr_target = entry_fill + (atr * t_mult)
+            else:
+                atr_stop = entry_fill + (atr * stop_mult)
+                atr_target = entry_fill - (atr * t_mult)
+
+            position = {
+                "side": pe["side"],
+                "size_usd": pe["size_usd"],
+                "entry_price": entry_fill,
+                "atr_stop": atr_stop,
+                "atr_target": atr_target,
+                "atr_20": atr,
+                "peak_price": entry_fill,
+                "signal_score": pe["signal_score"],
+            }
+            portfolio.positions[pair] = {
+                "side": pe["side"],
+                "size_usd": pe["size_usd"],
+                "entry_price": entry_fill,
+            }
+            bars_held = 0
 
         if position is not None:
             bars_held += 1
@@ -387,7 +452,7 @@ def backtest_pair(
 
         equity_curve.append((df.index[i], portfolio.equity))
 
-        if position is not None:
+        if position is not None or pending_entry is not None:
             continue
 
         signals = _run_signals(features)
@@ -420,46 +485,14 @@ def backtest_pair(
                 rejections["MACRO_FILTER"] += 1
                 continue
 
-        side = intent.side.value
-        size_usd = intent.size_usd
-        fees = size_usd * FEE_RATE
-        portfolio.cash -= fees
-        portfolio.equity -= fees
-        portfolio.trade_count += 1
-
-        entry_fill = _entry_fill_price(side, close_price)
-
-        atr = features.atr_20
-        if features.adx_14 >= 35:
-            target_mult = target_mult_hi
-        elif features.adx_14 >= 25:
-            target_mult = target_mult_mid
-        else:
-            target_mult = target_mult_base
-
-        if side == "long":
-            atr_stop = entry_fill - (atr * stop_mult)
-            atr_target = entry_fill + (atr * target_mult)
-        else:
-            atr_stop = entry_fill + (atr * stop_mult)
-            atr_target = entry_fill - (atr * target_mult)
-
-        position = {
-            "side": side,
-            "size_usd": size_usd,
-            "entry_price": entry_fill,
-            "atr_stop": atr_stop,
-            "atr_target": atr_target,
-            "atr_20": atr,
-            "peak_price": entry_fill,
+        # Queue pending entry — will fill at NEXT bar's open.
+        pending_entry = {
+            "side": intent.side.value,
+            "size_usd": intent.size_usd,
+            "atr": features.atr_20,
+            "adx": features.adx_14,
             "signal_score": round(intent.signal_score, 1),
         }
-        portfolio.positions[pair] = {
-            "side": side,
-            "size_usd": size_usd,
-            "entry_price": entry_fill,
-        }
-        bars_held = 0
 
     if position is not None:
         close_price = float(df["close"].iloc[-1])
@@ -635,6 +668,7 @@ def backtest_portfolio(
     )
 
     positions: dict[str, dict] = {}
+    pending_entries: dict[str, dict] = {}
     bars_held: dict[str, int] = {}
     prev_day = None
     risk_cooldown = 0
@@ -669,12 +703,56 @@ def backtest_portfolio(
                 i = i.start
 
             close_price = float(df["close"].iloc[i])
+            open_price = float(df["open"].iloc[i])
 
             try:
                 features = features_at(bulk, i)
             except Exception as e:
                 logger.debug("features_at failed for %s at %s: %s", pair, ts, e)
                 continue
+
+            # Fill pending entry from PREVIOUS bar's signal at THIS bar's open.
+            if pair in pending_entries and pair not in positions:
+                pe = pending_entries.pop(pair)
+                entry_fill = _entry_fill_price(pe["side"], open_price,
+                                               atr=pe["atr"])
+                fees = pe["size_usd"] * FEE_RATE
+                portfolio.cash -= fees
+                portfolio.equity -= fees
+                portfolio.trade_count += 1
+
+                atr = pe["atr"]
+                adx = pe["adx"]
+                if adx >= 35:
+                    t_mult = target_mult_hi
+                elif adx >= 25:
+                    t_mult = target_mult_mid
+                else:
+                    t_mult = target_mult_base
+
+                if pe["side"] == "long":
+                    atr_stop = entry_fill - (atr * stop_mult)
+                    atr_target = entry_fill + (atr * t_mult)
+                else:
+                    atr_stop = entry_fill + (atr * stop_mult)
+                    atr_target = entry_fill - (atr * t_mult)
+
+                positions[pair] = {
+                    "side": pe["side"],
+                    "size_usd": pe["size_usd"],
+                    "entry_price": entry_fill,
+                    "atr_stop": atr_stop,
+                    "atr_target": atr_target,
+                    "atr_20": atr,
+                    "peak_price": entry_fill,
+                    "signal_score": pe["signal_score"],
+                }
+                portfolio.positions[pair] = {
+                    "side": pe["side"],
+                    "size_usd": pe["size_usd"],
+                    "entry_price": entry_fill,
+                }
+                bars_held[pair] = 0
 
             if pair in positions:
                 position = positions[pair]
@@ -810,7 +888,7 @@ def backtest_portfolio(
                     bars_held[pair] = 0
                     continue
 
-            if pair in positions:
+            if pair in positions or pair in pending_entries:
                 continue
 
             signals = _run_signals(features)
@@ -880,47 +958,17 @@ def backtest_portfolio(
                         rejections[pair]["MACRO_FILTER"] += 1
                         continue
 
-            side = intent.side.value
+            # Queue pending entry — will fill at NEXT bar's open.
             size_usd = intent.size_usd
             if dd_scale_threshold < 1.0 and portfolio.drawdown_pct > (1.0 - dd_scale_threshold):
                 size_usd = size_usd * dd_scale_factor
-            fees = size_usd * FEE_RATE
-            portfolio.cash -= fees
-            portfolio.equity -= fees
-            portfolio.trade_count += 1
-
-            entry_fill = _entry_fill_price(side, close_price)
-            atr = features.atr_20
-            if features.adx_14 >= 35:
-                target_mult = target_mult_hi
-            elif features.adx_14 >= 25:
-                target_mult = target_mult_mid
-            else:
-                target_mult = target_mult_base
-
-            if side == "long":
-                atr_stop = entry_fill - (atr * stop_mult)
-                atr_target = entry_fill + (atr * target_mult)
-            else:
-                atr_stop = entry_fill + (atr * stop_mult)
-                atr_target = entry_fill - (atr * target_mult)
-
-            positions[pair] = {
-                "side": side,
+            pending_entries[pair] = {
+                "side": intent.side.value,
                 "size_usd": size_usd,
-                "entry_price": entry_fill,
-                "atr_stop": atr_stop,
-                "atr_target": atr_target,
-                "atr_20": atr,
-                "peak_price": entry_fill,
+                "atr": features.atr_20,
+                "adx": features.adx_14,
                 "signal_score": round(intent.signal_score, 1),
             }
-            portfolio.positions[pair] = {
-                "side": side,
-                "size_usd": size_usd,
-                "entry_price": entry_fill,
-            }
-            bars_held[pair] = 0
 
         equity_curve.append((ts, portfolio.equity))
 
@@ -983,17 +1031,83 @@ def backtest_portfolio(
     return metrics
 
 
+def _probabilistic_sharpe(sr: float, sr_benchmark: float,
+                          n: int, skew: float, kurt: float) -> float:
+    """Probabilistic Sharpe Ratio (PSR) — probability that true SR > benchmark.
+
+    Bailey & Lopez de Prado (2012). Returns the CDF probability.
+    """
+    if n < 2:
+        return 0.0
+    sr_std = math.sqrt(
+        (1 - skew * sr + (kurt - 1) / 4 * sr ** 2) / (n - 1)
+    )
+    if sr_std <= 0:
+        return 0.0
+    z = (sr - sr_benchmark) / sr_std
+    return float(sp_stats.norm.cdf(z))
+
+
+def _deflated_sharpe(sr_observed: float, num_trials: int,
+                     n: int, skew: float, kurt: float,
+                     sr_variance: float) -> tuple[float, float]:
+    """Deflated Sharpe Ratio — adjusts for number of trials.
+
+    Bailey & Lopez de Prado (2014). Returns (DSR probability, expected max SR).
+    """
+    if num_trials < 2 or n < 2:
+        return 0.0, 0.0
+    gamma = 0.5772156649
+    e = math.e
+    sr0 = math.sqrt(sr_variance) * (
+        (1 - gamma) * sp_stats.norm.ppf(1 - 1 / num_trials)
+        + gamma * sp_stats.norm.ppf(1 - 1 / (num_trials * e))
+    )
+    return _probabilistic_sharpe(sr_observed, sr0, n, skew, kurt), sr0
+
+
+def _monte_carlo_pvalue(trade_pnls: list[float], observed_total: float,
+                        n_sims: int = 10000) -> float:
+    """Monte Carlo permutation test.
+
+    Shuffles trade PnLs and counts how often the shuffled total beats
+    the observed total. Returns p-value (lower = more significant).
+    """
+    if len(trade_pnls) < 5:
+        return 1.0
+    arr = np.array(trade_pnls)
+    rng = np.random.default_rng(42)
+    beat_count = 0
+    for _ in range(n_sims):
+        rng.shuffle(arr)
+        signs = rng.choice([-1, 1], size=len(arr))
+        shuffled_total = float(np.sum(arr * signs))
+        if shuffled_total >= observed_total:
+            beat_count += 1
+    return beat_count / n_sims
+
+
 def compute_metrics(
     trades: list[dict],
     equity_curve: list[tuple],
     initial_equity: float,
     df: pd.DataFrame,
     warmup: int,
+    num_trials: int = 1,
 ) -> dict:
-    """Compute risk/return metrics from a trade list and equity curve.
+    """Compute institutional-grade risk/return metrics.
 
-    Returns Sharpe, Sortino, Calmar, MAR, profit factor, expectancy, and
-    return/drawdown summary.
+    Includes Sharpe, Sortino, Calmar, PSR, DSR, Monte Carlo p-value,
+    VaR, CVaR, tail ratio, drawdown duration, recovery factor,
+    exposure %, skewness, kurtosis, and streak analysis.
+
+    Args:
+        trades: List of trade dicts with pnl_usd, pnl_pct, bars_held.
+        equity_curve: List of (timestamp, equity) tuples.
+        initial_equity: Starting equity.
+        df: Source OHLCV DataFrame (may be None for portfolio mode).
+        warmup: Number of warmup bars skipped.
+        num_trials: Number of parameter combos tested (for DSR).
     """
     if not equity_curve:
         return {"agent_return_pct": 0.0, "final_equity": initial_equity}
@@ -1002,16 +1116,16 @@ def compute_metrics(
         {ts: float(v) for ts, v in equity_curve}
     ).sort_index()
     rets = eq.pct_change().dropna()
+    rets_arr = rets.values
 
-    bars_per_year = 24 * 365
+    freq_bars_per_year = 24 * 365
     try:
-        freq_bars_per_year = bars_per_year
         if len(eq) > 1:
             total_span_days = (eq.index[-1] - eq.index[0]).total_seconds() / 86400
             if total_span_days > 0:
                 freq_bars_per_year = len(eq) / (total_span_days / 365.25)
     except Exception:
-        freq_bars_per_year = bars_per_year
+        pass
 
     final_equity = float(eq.iloc[-1])
     agent_return = (final_equity - initial_equity) / initial_equity
@@ -1022,27 +1136,87 @@ def compute_metrics(
     years = span_days / 365.25
     cagr = (final_equity / initial_equity) ** (1 / years) - 1 if years > 0 else 0.0
 
+    # Sharpe and Sortino
     sharpe = 0.0
     sortino = 0.0
-    if len(rets) > 1 and rets.std() > 0:
-        sharpe = float(rets.mean() / rets.std() * math.sqrt(freq_bars_per_year))
-        neg = rets[rets < 0]
-        if len(neg) > 1 and neg.std() > 0:
-            sortino = float(rets.mean() / neg.std() * math.sqrt(freq_bars_per_year))
+    if len(rets_arr) > 1 and np.std(rets_arr) > 0:
+        sharpe = float(np.mean(rets_arr) / np.std(rets_arr, ddof=1) * math.sqrt(freq_bars_per_year))
+        neg = rets_arr[rets_arr < 0]
+        if len(neg) > 1 and np.std(neg) > 0:
+            sortino = float(np.mean(rets_arr) / np.std(neg, ddof=1) * math.sqrt(freq_bars_per_year))
 
+    # Smart Sharpe (autocorrelation-corrected)
+    smart_sharpe = sharpe
+    if len(rets_arr) > 2:
+        rho = float(np.corrcoef(rets_arr[:-1], rets_arr[1:])[0, 1])
+        if not math.isnan(rho):
+            penalty = math.sqrt(1 + 2 * rho) if rho > 0 else 1.0
+            smart_sharpe = sharpe / penalty
+
+    # Skewness, Kurtosis
+    skew_val = float(sp_stats.skew(rets_arr)) if len(rets_arr) > 3 else 0.0
+    kurt_val = float(sp_stats.kurtosis(rets_arr, fisher=False)) if len(rets_arr) > 3 else 3.0
+
+    # PSR (probability Sharpe > 0)
+    sr_per_bar = float(np.mean(rets_arr) / np.std(rets_arr, ddof=1)) if len(rets_arr) > 1 and np.std(rets_arr) > 0 else 0.0
+    psr = _probabilistic_sharpe(sr_per_bar, 0.0, len(rets_arr), skew_val, kurt_val)
+
+    # DSR (deflated for multiple trials)
+    dsr = 0.0
+    dsr_sr0 = 0.0
+    if num_trials > 1 and len(rets_arr) > 1:
+        sr_var = 1.0 / (len(rets_arr) - 1)
+        dsr, dsr_sr0 = _deflated_sharpe(sr_per_bar, num_trials, len(rets_arr),
+                                         skew_val, kurt_val, sr_var)
+
+    # Drawdown analysis
     peak = initial_equity
     max_dd = 0.0
     max_dd_abs = 0.0
-    for val in eq.values:
-        peak = max(peak, val)
+    dd_start = None
+    max_dd_duration_bars = 0
+    current_dd_bars = 0
+    time_underwater_bars = 0
+
+    for idx, val in enumerate(eq.values):
+        if val >= peak:
+            peak = val
+            if current_dd_bars > max_dd_duration_bars:
+                max_dd_duration_bars = current_dd_bars
+            current_dd_bars = 0
+        else:
+            current_dd_bars += 1
+            time_underwater_bars += 1
         dd = (peak - val) / peak if peak > 0 else 0.0
         if dd > max_dd:
             max_dd = dd
             max_dd_abs = peak - val
+    if current_dd_bars > max_dd_duration_bars:
+        max_dd_duration_bars = current_dd_bars
 
     calmar = (cagr / max_dd) if max_dd > 0 else float("inf") if cagr > 0 else 0.0
-    mar = calmar
+    recovery_factor = agent_return / max_dd if max_dd > 0 else 0.0
 
+    # Exposure
+    total_bars_held = sum(t.get("bars_held", 0) for t in trades)
+    total_bars = len(eq)
+    exposure_pct = total_bars_held / total_bars * 100 if total_bars > 0 else 0.0
+
+    # VaR and CVaR
+    var_95 = float(np.percentile(rets_arr, 5)) if len(rets_arr) > 20 else 0.0
+    cvar_95 = float(np.mean(rets_arr[rets_arr <= var_95])) if len(rets_arr[rets_arr <= var_95]) > 0 else var_95
+
+    # Tail ratio
+    upper_tail = float(np.percentile(rets_arr, 95)) if len(rets_arr) > 20 else 0.0
+    lower_tail = abs(float(np.percentile(rets_arr, 5))) if len(rets_arr) > 20 else 1.0
+    tail_ratio = upper_tail / lower_tail if lower_tail > 0 else 0.0
+
+    # Omega ratio (threshold = 0)
+    gains = rets_arr[rets_arr > 0]
+    losses_arr = rets_arr[rets_arr < 0]
+    omega = float(np.sum(gains) / abs(np.sum(losses_arr))) if len(losses_arr) > 0 and np.sum(losses_arr) != 0 else 0.0
+
+    # Trade-level stats
     wins = [t for t in trades if t["pnl_usd"] > 0]
     losses = [t for t in trades if t["pnl_usd"] <= 0]
     win_rate = len(wins) / len(trades) if trades else 0.0
@@ -1056,31 +1230,87 @@ def compute_metrics(
     expectancy_usd = (
         (sum(t["pnl_usd"] for t in trades) / len(trades)) if trades else 0.0
     )
-
     avg_bars_held = (
         sum(t.get("bars_held", 0) for t in trades) / len(trades) if trades else 0.0
     )
+
+    # Streak analysis
+    max_consec_wins = 0
+    max_consec_losses = 0
+    cw = 0
+    cl = 0
+    for t in trades:
+        if t["pnl_usd"] > 0:
+            cw += 1
+            cl = 0
+        else:
+            cl += 1
+            cw = 0
+        max_consec_wins = max(max_consec_wins, cw)
+        max_consec_losses = max(max_consec_losses, cl)
+
+    # Payoff ratio
+    avg_win = (sum(t["pnl_usd"] for t in wins) / len(wins)) if wins else 0.0
+    avg_loss_abs = (abs(sum(t["pnl_usd"] for t in losses)) / len(losses)) if losses else 1.0
+    payoff_ratio = avg_win / avg_loss_abs if avg_loss_abs > 0 else 0.0
+
+    # Monte Carlo p-value
+    trade_pnls = [t["pnl_usd"] for t in trades]
+    mc_pvalue = _monte_carlo_pvalue(trade_pnls, sum(trade_pnls)) if trades else 1.0
+
+    # Estimated DD duration in days
+    try:
+        bars_per_day = freq_bars_per_year / 365.25
+        max_dd_duration_days = round(max_dd_duration_bars / bars_per_day, 1) if bars_per_day > 0 else 0
+        time_underwater_days = round(time_underwater_bars / bars_per_day, 1) if bars_per_day > 0 else 0
+    except Exception:
+        max_dd_duration_days = 0
+        time_underwater_days = 0
 
     return {
         "final_equity": round(final_equity, 2),
         "total_pnl": round(final_equity - initial_equity, 2),
         "agent_return_pct": round(agent_return * 100, 3),
         "cagr_pct": round(cagr * 100, 3),
+        # Risk-adjusted ratios
         "sharpe_annualized": round(sharpe, 3),
+        "smart_sharpe": round(smart_sharpe, 3),
         "sortino_annualized": round(sortino, 3),
         "calmar_ratio": round(calmar, 3) if math.isfinite(calmar) else None,
-        "mar_ratio": round(mar, 3) if math.isfinite(mar) else None,
+        "omega_ratio": round(omega, 3),
+        # Probabilistic validation
+        "psr": round(psr, 4),
+        "dsr": round(dsr, 4) if num_trials > 1 else None,
+        "dsr_expected_max_sr": round(dsr_sr0, 4) if num_trials > 1 else None,
+        "monte_carlo_p_value": round(mc_pvalue, 4),
+        # Distribution
+        "skewness": round(skew_val, 3),
+        "kurtosis": round(kurt_val, 3),
+        # Drawdown
         "max_drawdown_pct": round(max_dd * 100, 3),
         "max_drawdown_usd": round(max_dd_abs, 2),
+        "max_dd_duration_bars": max_dd_duration_bars,
+        "max_dd_duration_days": max_dd_duration_days,
+        "time_underwater_days": time_underwater_days,
+        "recovery_factor": round(recovery_factor, 3),
+        # Tail risk
+        "var_95_pct": round(var_95 * 100, 3),
+        "cvar_95_pct": round(cvar_95 * 100, 3),
+        "tail_ratio": round(tail_ratio, 3),
+        # Trade stats
         "total_trades": len(trades),
         "wins": len(wins),
         "losses": len(losses),
         "win_rate_pct": round(win_rate * 100, 1),
         "profit_factor": round(profit_factor, 3) if math.isfinite(profit_factor) else None,
+        "payoff_ratio": round(payoff_ratio, 3),
         "expectancy_usd": round(expectancy_usd, 2),
         "avg_bars_held": round(avg_bars_held, 2),
         "avg_win_pct": round(sum(t["pnl_pct"] for t in wins) / len(wins), 3) if wins else 0,
         "avg_loss_pct": round(sum(t["pnl_pct"] for t in losses) / len(losses), 3) if losses else 0,
+        "max_consec_wins": max_consec_wins,
+        "max_consec_losses": max_consec_losses,
+        "exposure_pct": round(exposure_pct, 1),
     }
 
 
