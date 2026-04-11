@@ -24,12 +24,6 @@ build/
 .venv/
 venv/
 
-# Research files (private, not for repo)
-lablab-ai-trading-agents.md
-sota-red-team-research.md
-sota-sources-comprehensive.md
-NEXT_PHASE.md
-
 # Backup files
 *_original.py
 
