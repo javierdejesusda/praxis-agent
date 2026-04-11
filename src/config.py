@@ -25,7 +25,7 @@ class RiskParams:
     min_signal_score_paper: int = 70
     min_signal_score_short: int = 88
     shorts_enabled: bool = False
-    execution_mode: str = "paper"
+    execution_mode: str = os.getenv("EXECUTION_MODE", "paper")
 
     # ATR multipliers (shared by backtester, risk governor, orchestrator)
     stop_mult: float = 4.0
@@ -108,6 +108,8 @@ SEPOLIA_RPC_URL = os.getenv("SEPOLIA_RPC_URL", "")
 SEPOLIA_PRIVATE_KEY = os.getenv("SEPOLIA_PRIVATE_KEY", "")
 PRISM_API_KEY = os.getenv("PRISM_API_KEY", "")
 FMP_API_KEY = os.getenv("FMP_API_KEY", "")
+KRAKEN_API_KEY = os.getenv("KRAKEN_API_KEY", "")
+KRAKEN_API_SECRET = os.getenv("KRAKEN_API_SECRET", "")
 
 STATE_DIR = Path("state")
 ARTIFACTS_DIR = Path("artifacts")

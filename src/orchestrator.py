@@ -29,6 +29,7 @@ from src.execution.kraken_adapter import (
     init_paper,
     paper_status,
 )
+from src.execution import kraken_cli
 from src.execution.risk_router import RiskRouterAdapter
 from src.features.engine import compute_features
 from src.features.prism import enrich_features
@@ -459,7 +460,10 @@ async def run_strategic_cycle(
                     await _post_reputation(router, artifact, rep_score, feedback_type=1, comment=f"risk:{reason}")
                 continue
 
-            receipt = await execute_paper_trade(intent)
+            if RISK.execution_mode == "live":
+                receipt = await kraken_cli.execute_trade(intent)
+            else:
+                receipt = await execute_paper_trade(intent)
 
             artifact_data["intent"] = intent.model_dump()
             artifact_data["receipt"] = receipt.model_dump()
@@ -609,9 +613,12 @@ async def run_protective_check(
                 else:
                     exit_price = portfolio.positions[pair].get("entry_price", 0)
 
-                close_result = await close_paper_position(pair, exit_price, reason=reason)
+                if RISK.execution_mode == "live":
+                    close_result = await kraken_cli.close_position(pair, pos.get("side", "long"), pos.get("size_usd", 0))
+                else:
+                    close_result = await close_paper_position(pair, exit_price, reason=reason)
                 if close_result.get("status") == "closed":
-                    pnl_usd = float(close_result["pnl_usd"])
+                    pnl_usd = float(close_result.get("pnl_usd", 0))
                     portfolio.equity += pnl_usd
                     portfolio.cash += pnl_usd
                     portfolio.total_pnl += pnl_usd
@@ -718,11 +725,14 @@ async def run_protective_check(
         exit_price = close_prices.get(pair, entry)
 
         try:
-            close_result = await close_paper_position(
-                pair, exit_price, reason="protective_stop",
-            )
+            if RISK.execution_mode == "live":
+                close_result = await kraken_cli.close_position(pair, side, size_usd)
+            else:
+                close_result = await close_paper_position(
+                    pair, exit_price, reason="protective_stop",
+                )
         except Exception as e:
-            logger.error("Paper ledger close raised for %s: %s", pair, e)
+            logger.error("Position close raised for %s: %s", pair, e)
             continue
 
         if close_result.get("status") != "closed":
@@ -802,11 +812,19 @@ async def main_loop() -> None:
     )
 
     mode = "COMPETITION" if COMPETITION_MODE else "DEFAULT"
-    logger.info("Praxis Agent starting in %s mode (log: %s)", mode, log_file)
+    exec_mode = RISK.execution_mode
+    logger.info("Praxis Agent starting in %s mode, execution=%s (log: %s)", mode, exec_mode, log_file)
     logger.info("Risk params: paper>=%d shorts=%s consec=%d stop=%.1f trail=%.1f dd_sf=%.3f",
                 RISK.min_signal_score_paper, RISK.shorts_enabled,
                 RISK.max_consecutive_losses, RISK.stop_mult, RISK.trail_mult,
                 RISK.dd_scale_factor)
+
+    if exec_mode == "live":
+        auth = await kraken_cli.verify_auth()
+        if auth.get("status") == "ok":
+            logger.info("Kraken CLI auth verified — LIVE execution active")
+        else:
+            logger.error("Kraken CLI auth FAILED: %s — falling back to paper", auth.get("error"))
 
     try:
         await init_paper(balance=10000.0)
