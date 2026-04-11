@@ -371,13 +371,13 @@ async def run_strategic_cycle(
             if risk_decision.approved and RISK.macro_filter:
                 if RISK.strict_macro:
                     macro_up = (
-                        features.ema_9 > features.ema_21 > features.ema_55 > features.ema_200
+                        features.ema_9 > features.ema_21 > features.ema_55 > features.ema_100
                     )
                     macro_down = (
-                        features.ema_9 < features.ema_21 < features.ema_55 < features.ema_200
+                        features.ema_9 < features.ema_21 < features.ema_55 < features.ema_100
                     )
                 else:
-                    macro_up = features.ema_55 > features.ema_200
+                    macro_up = features.ema_55 > features.ema_100
                     macro_down = not macro_up
                 if intent.side.value == "long" and not macro_up:
                     risk_decision.approved = False

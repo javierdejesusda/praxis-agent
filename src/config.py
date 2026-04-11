@@ -14,7 +14,7 @@ class RiskParams:
     """Deterministic risk governor parameters."""
 
     risk_per_trade_pct: float = 0.015
-    max_position_pct: float = 0.40
+    max_position_pct: float = 0.60
     max_daily_loss_pct: float = 0.03
     max_drawdown_pct: float = 0.08
     max_consecutive_losses: int = 3
@@ -22,23 +22,23 @@ class RiskParams:
     real_cost_bps: float = 55.0
     required_edge_multiplier: float = 1.1
     min_signal_score_erc: int = 85
-    min_signal_score_paper: int = 85
+    min_signal_score_paper: int = 70
     min_signal_score_short: int = 88
     shorts_enabled: bool = False
     execution_mode: str = "paper"
 
     # ATR multipliers (shared by backtester, risk governor, orchestrator)
-    stop_mult: float = 3.1
+    stop_mult: float = 4.0
     target_mult_base: float = 2.85
     target_mult_mid: float = 3.5
-    target_mult_hi: float = 6.25
-    trail_mult: float = 2.1
+    target_mult_hi: float = 8.0
+    trail_mult: float = 3.0
     adx_mid_threshold: float = 25.0
     adx_hi_threshold: float = 35.0
 
     # Position management
-    max_hold_bars: int = 80
-    cooldown_bars: int = 6
+    max_hold_bars: int = 120
+    cooldown_bars: int = 2
     macro_filter: bool = True
 
     # Exit management (shared by backtester and orchestrator)

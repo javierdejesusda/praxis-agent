@@ -41,7 +41,10 @@ class Features(BaseModel):
     timestamp: datetime
     ema_9: float
     ema_21: float
+    ema_34: float = 0.0
     ema_55: float
+    ema_80: float = 0.0
+    ema_100: float = 0.0
     ema_200: float
     rsi_14: float
     macd: float
@@ -65,6 +68,10 @@ class Features(BaseModel):
     ema_spread: float = 0.0   # EMA fan spread: abs(ema9 - ema55) / ema21
     engulfing: int = 0        # -1 = bearish engulfing, 0 = none, 1 = bullish engulfing
     rsi_2: float = 50.0       # 2-period RSI (ultra-sensitive mean-reversion)
+    high_50: float = 0.0      # 50-bar rolling high
+    low_50: float = 0.0       # 50-bar rolling low
+    bb_width: float = 0.0     # BB width as % of middle band
+    bb_width_avg: float = 0.0 # 50-bar average BB width
 
 
 class SignalReport(BaseModel):

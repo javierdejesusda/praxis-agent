@@ -20,10 +20,10 @@ def trend_signal(features: Features) -> SignalReport:
     direction = Direction.HOLD
 
     full_bull = (
-        features.ema_9 > features.ema_21 > features.ema_55 > features.ema_200
+        features.ema_9 > features.ema_21 > features.ema_55 > features.ema_100
     )
     full_bear = (
-        features.ema_9 < features.ema_21 < features.ema_55 < features.ema_200
+        features.ema_9 < features.ema_21 < features.ema_55 < features.ema_100
     )
     partial_bull = (
         features.ema_9 > features.ema_21 > features.ema_55
@@ -86,11 +86,11 @@ def trend_signal(features: Features) -> SignalReport:
         confidence += 10
         evidence["bearish_engulfing"] = True
 
-    if direction == Direction.LONG and features.rsi_14 > 78:
-        confidence *= 0.4
+    if direction == Direction.LONG and features.rsi_14 > 85:
+        confidence *= 0.65
         evidence["exhaustion"] = True
-    elif direction == Direction.SHORT and features.rsi_14 < 22:
-        confidence *= 0.4
+    elif direction == Direction.SHORT and features.rsi_14 < 15:
+        confidence *= 0.65
         evidence["exhaustion"] = True
 
     confidence = min(100.0, confidence)
@@ -368,10 +368,10 @@ def momentum_signal(features: Features) -> SignalReport:
         confidence += 10
         evidence["very_strong_trend"] = True
 
-    if direction == Direction.LONG and features.rsi_14 > 78:
-        confidence *= 0.4
-    elif direction == Direction.SHORT and features.rsi_14 < 22:
-        confidence *= 0.4
+    if direction == Direction.LONG and features.rsi_14 > 85:
+        confidence *= 0.65
+    elif direction == Direction.SHORT and features.rsi_14 < 15:
+        confidence *= 0.65
 
     confidence = min(100.0, confidence)
 
@@ -401,8 +401,8 @@ def swing_structure_signal(features: Features) -> SignalReport:
     evidence = {}
     direction = Direction.HOLD
 
-    ema_bull = features.ema_9 > features.ema_21 > features.ema_55 > features.ema_200
-    ema_bear = features.ema_9 < features.ema_21 < features.ema_55 < features.ema_200
+    ema_bull = features.ema_9 > features.ema_21 > features.ema_55 > features.ema_100
+    ema_bear = features.ema_9 < features.ema_21 < features.ema_55 < features.ema_100
 
     if ema_bull and features.returns_5bar > 0 and features.returns_20bar > 0:
         direction = Direction.LONG
@@ -430,10 +430,10 @@ def swing_structure_signal(features: Features) -> SignalReport:
         if features.volume_ratio > 1.2:
             confidence += 10
 
-    if direction == Direction.LONG and features.rsi_14 > 80:
-        confidence *= 0.3
-    elif direction == Direction.SHORT and features.rsi_14 < 20:
-        confidence *= 0.3
+    if direction == Direction.LONG and features.rsi_14 > 85:
+        confidence *= 0.65
+    elif direction == Direction.SHORT and features.rsi_14 < 15:
+        confidence *= 0.65
 
     confidence = min(100.0, confidence)
 
@@ -442,6 +442,105 @@ def swing_structure_signal(features: Features) -> SignalReport:
 
     return SignalReport(
         agent_name="swing",
+        pair=features.pair,
+        timestamp=features.timestamp,
+        direction=direction,
+        confidence=confidence,
+        evidence=evidence,
+    )
+
+
+def breakout_signal(features: Features) -> SignalReport:
+    """Breakout signal agent — fires on N-bar high/low crossings.
+
+    Captures trend initiation before EMAs fully align. Complementary
+    to the trend/momentum agents which capture trend continuation.
+
+    Args:
+        features: Computed technical features for a single bar.
+
+    Returns:
+        SignalReport with direction and confidence.
+    """
+    confidence = 0.0
+    evidence = {}
+    direction = Direction.HOLD
+
+    if features.high_50 <= 0 or features.low_50 <= 0:
+        return SignalReport(
+            agent_name="breakout",
+            pair=features.pair,
+            timestamp=features.timestamp,
+            direction=Direction.HOLD,
+            confidence=0.0,
+            evidence={"inactive": True},
+        )
+
+    close = features.ema_9
+    proximity_hi = (close - features.high_50) / features.high_50 if features.high_50 > 0 else -1
+    proximity_lo = (features.low_50 - close) / features.low_50 if features.low_50 > 0 else -1
+
+    if proximity_hi >= -0.005:
+        direction = Direction.LONG
+        if proximity_hi >= 0:
+            confidence += 45
+            evidence["new_high"] = True
+        else:
+            confidence += 30
+            evidence["near_high"] = True
+
+        if features.adx_14 > 25:
+            confidence += 15
+            evidence["strong_trend"] = True
+        elif features.adx_14 > 20:
+            confidence += 8
+
+        if features.volume_ratio > 1.3:
+            confidence += 10
+            evidence["volume_confirmed"] = True
+
+        if features.macd_histogram > 0:
+            confidence += 10
+            evidence["macd_confirms"] = True
+
+        if features.rsi_14 > 85:
+            confidence *= 0.7
+            evidence["extreme_rsi"] = True
+
+    elif proximity_lo >= -0.005:
+        direction = Direction.SHORT
+        if proximity_lo >= 0:
+            confidence += 45
+            evidence["new_low"] = True
+        else:
+            confidence += 30
+            evidence["near_low"] = True
+
+        if features.adx_14 > 25:
+            confidence += 15
+            evidence["strong_trend"] = True
+        elif features.adx_14 > 20:
+            confidence += 8
+
+        if features.volume_ratio > 1.3:
+            confidence += 10
+            evidence["volume_confirmed"] = True
+
+        if features.macd_histogram < 0:
+            confidence += 10
+            evidence["macd_confirms"] = True
+
+        if features.rsi_14 < 15:
+            confidence *= 0.7
+            evidence["extreme_rsi"] = True
+
+    confidence = min(100.0, confidence)
+
+    if confidence < 25:
+        direction = Direction.HOLD
+
+    return SignalReport(
+        agent_name="breakout",
         pair=features.pair,
         timestamp=features.timestamp,
         direction=direction,

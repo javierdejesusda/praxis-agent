@@ -181,7 +181,7 @@ def evaluate_risk(
     if not aligned_signals:
         aligned_signals = [s for s in signals if s.direction != Direction.HOLD]
 
-    if len(aligned_signals) < 3:
+    if len(aligned_signals) < 2:
         decision = RiskDecision(
             approved=False,
             reason_codes=["INSUFFICIENT_ALIGNMENT"],
@@ -200,6 +200,8 @@ def evaluate_risk(
         avg_confidence *= 1.15
     elif len(aligned_signals) >= 3:
         avg_confidence *= 1.08
+    elif len(aligned_signals) >= 2:
+        avg_confidence *= 1.07
     avg_confidence = min(100.0, avg_confidence)
 
     erc_eligible = avg_confidence >= RISK.min_signal_score_erc
@@ -233,7 +235,7 @@ def evaluate_risk(
             return decision, None
 
     if consensus_direction == Direction.LONG:
-        if features.ema_21 < features.ema_200:
+        if features.ema_21 < features.ema_100:
             decision = RiskDecision(
                 approved=False,
                 reason_codes=["DOWNTREND_NO_LONG"],
@@ -242,7 +244,7 @@ def evaluate_risk(
             )
             return decision, None
     else:
-        if features.ema_21 > features.ema_200:
+        if features.ema_21 > features.ema_100:
             decision = RiskDecision(
                 approved=False,
                 reason_codes=["UPTREND_NO_SHORT"],

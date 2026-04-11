@@ -94,10 +94,13 @@ def compute_features_bulk(df: pd.DataFrame, pair: str) -> pd.DataFrame:
 
     feat["ema_9"] = ta.ema(close, length=9)
     feat["ema_21"] = ta.ema(close, length=21)
+    feat["ema_34"] = ta.ema(close, length=34)
     feat["ema_55"] = ta.ema(close, length=55)
+    feat["ema_80"] = ta.ema(close, length=80)
+    feat["ema_100"] = ta.ema(close, length=100)
     feat["ema_200"] = ta.ema(close, length=200)
 
-    feat["rsi_14"] = ta.rsi(close, length=14)
+    feat["rsi_14"] = ta.rsi(close, length=15)
     feat["rsi_2"] = ta.rsi(close, length=2)
 
     macd_df = ta.macd(close, fast=12, slow=26, signal=9)
@@ -121,6 +124,9 @@ def compute_features_bulk(df: pd.DataFrame, pair: str) -> pd.DataFrame:
     bb_range = feat["bb_upper"] - feat["bb_lower"]
     bb_range = bb_range.replace(0, 1e-10)
     feat["bb_position"] = (close - feat["bb_lower"]) / bb_range
+    bb_width_pct = bb_range / feat["bb_middle"]
+    feat["bb_width"] = bb_width_pct
+    feat["bb_width_avg"] = bb_width_pct.rolling(50).mean()
 
     vol_avg = volume.rolling(20).mean()
     feat["volume_ratio"] = (volume / vol_avg).fillna(0)
@@ -196,6 +202,9 @@ def compute_features_bulk(df: pd.DataFrame, pair: str) -> pd.DataFrame:
             elif p_high_now > p_high_prev and h_high_now < h_high_prev:
                 feat.iloc[i, feat.columns.get_loc("macd_divergence")] = -1
 
+    feat["high_50"] = high.rolling(50).max()
+    feat["low_50"] = low.rolling(50).min()
+
     feat["pair"] = pair
     return feat
 
@@ -221,7 +230,10 @@ def features_at(bulk: pd.DataFrame, idx: int) -> Features:
         timestamp=bulk.index[idx],
         ema_9=float(row["ema_9"]),
         ema_21=float(row["ema_21"]),
+        ema_34=float(row["ema_34"]) if "ema_34" in row.index else 0.0,
         ema_55=float(row["ema_55"]),
+        ema_80=float(row["ema_80"]) if "ema_80" in row.index else 0.0,
+        ema_100=float(row["ema_100"]),
         ema_200=float(row["ema_200"]),
         rsi_14=float(row["rsi_14"]),
         macd=float(row["macd"]),
@@ -244,6 +256,10 @@ def features_at(bulk: pd.DataFrame, idx: int) -> Features:
         ema_spread=float(row["ema_spread"]),
         engulfing=int(row["engulfing"]),
         rsi_2=float(row["rsi_2"]) if not pd.isna(row.get("rsi_2", 50)) else 50.0,
+        high_50=float(row["high_50"]) if not pd.isna(row.get("high_50", 0)) else 0.0,
+        low_50=float(row["low_50"]) if not pd.isna(row.get("low_50", 0)) else 0.0,
+        bb_width=float(row["bb_width"]) if not pd.isna(row.get("bb_width", 0)) else 0.0,
+        bb_width_avg=float(row["bb_width_avg"]) if not pd.isna(row.get("bb_width_avg", 0)) else 0.0,
     )
 
 
@@ -268,10 +284,13 @@ def compute_features(df: pd.DataFrame, pair: str) -> Features:
 
     ema_9 = ta.ema(close, length=9)
     ema_21 = ta.ema(close, length=21)
+    ema_34 = ta.ema(close, length=34)
     ema_55 = ta.ema(close, length=55)
+    ema_80 = ta.ema(close, length=80)
+    ema_100 = ta.ema(close, length=100)
     ema_200 = ta.ema(close, length=200)
 
-    rsi = ta.rsi(close, length=14)
+    rsi = ta.rsi(close, length=15)
 
     macd_df = ta.macd(close, fast=12, slow=26, signal=9)
     macd_col = macd_df.columns[0]
@@ -299,6 +318,10 @@ def compute_features(df: pd.DataFrame, pair: str) -> Features:
     bb_u = float(bb_df[bbu_col].iloc[latest])
     bb_range = bb_u - bb_l if bb_u != bb_l else 1e-10
     bb_pos = (latest_close - bb_l) / bb_range
+    bb_m = float(bb_df[bbm_col].iloc[latest])
+    bb_width_pct = bb_range / bb_m if bb_m > 0 else 0.0
+    bb_width_series = (bb_df[bbu_col] - bb_df[bbl_col]) / bb_df[bbm_col]
+    bb_width_avg_val = float(bb_width_series.rolling(50).mean().iloc[latest]) if latest >= 50 else bb_width_pct
 
     adx_val = float(adx_df[adx_col].iloc[latest])
     if adx_val > STRATEGY.adx_trending_threshold:
@@ -340,7 +363,10 @@ def compute_features(df: pd.DataFrame, pair: str) -> Features:
         timestamp=df.index[latest],
         ema_9=float(ema_9.iloc[latest]),
         ema_21=float(ema_21.iloc[latest]),
+        ema_34=float(ema_34.iloc[latest]),
         ema_55=float(ema_55.iloc[latest]),
+        ema_80=float(ema_80.iloc[latest]),
+        ema_100=float(ema_100.iloc[latest]),
         ema_200=float(ema_200.iloc[latest]),
         rsi_14=float(rsi.iloc[latest]),
         macd=float(macd_df[macd_col].iloc[latest]),
@@ -364,4 +390,8 @@ def compute_features(df: pd.DataFrame, pair: str) -> Features:
         macd_slope=macd_slope_val,
         ema_spread=ema_spread_val,
         engulfing=engulfing_val,
+        high_50=float(high.rolling(50).max().iloc[latest]),
+        low_50=float(low.rolling(50).min().iloc[latest]),
+        bb_width=bb_width_pct,
+        bb_width_avg=bb_width_avg_val,
     )

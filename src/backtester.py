@@ -477,7 +477,7 @@ def backtest_pair(
             continue
 
         if macro_filter:
-            macro_up = features.ema_55 > features.ema_200
+            macro_up = features.ema_21 > features.ema_100
             if intent.side == Direction.LONG and not macro_up:
                 rejections["MACRO_FILTER"] += 1
                 continue
@@ -917,13 +917,13 @@ def backtest_portfolio(
             if macro_filter:
                 if strict_macro:
                     macro_up = (
-                        features.ema_9 > features.ema_21 > features.ema_55 > features.ema_200
+                        features.ema_9 > features.ema_21 > features.ema_55 > features.ema_100
                     )
                     macro_down = (
-                        features.ema_9 < features.ema_21 < features.ema_55 < features.ema_200
+                        features.ema_9 < features.ema_21 < features.ema_55 < features.ema_100
                     )
                 else:
-                    macro_up = features.ema_55 > features.ema_200
+                    macro_up = features.ema_55 > features.ema_100
                     macro_down = not macro_up
                 if intent.side == Direction.LONG and not macro_up:
                     rejections[pair]["MACRO_FILTER"] += 1
