@@ -52,56 +52,62 @@ Most trading-agent designs give an LLM authority over order size, retries, tool 
 
 ## Architecture
 
-```
-                        ┌─────────────────────────────┐
-                        │   Kraken REST API            │
-                        │   OHLC · Ticker · Bid/Ask    │
-                        └──────────────┬──────────────┘
-                                       │
-                        ┌──────────────▼──────────────┐
-                        │   Feature Engine             │
-                        │   pandas_ta · 16 indicators  │
-                        └──────────────┬──────────────┘
-                                       │
-          ┌────────┬────────┬──────────┼──────────┬────────┬────────┐
-          ▼        ▼        ▼          ▼          ▼        ▼        ▼
-       ┌──────┐┌──────┐┌────────┐┌─────────┐┌────────┐┌───────┐┌──────┐
-       │Trend ││ Vol  ││Spread/ ││Mean-Rev ││Momentum││ Swing ││PRISM │
-       │Agent ││Agent ││Cost    ││ Agent   ││ Agent  ││Struct ││Data  │
-       └──┬───┘└──┬───┘└──┬─────┘└──┬──────┘└──┬─────┘└──┬────┘└──┬───┘
-          └───────┴───────┴─────────┴──────────┴─────────┴────────┘
-                                       │
-                        ┌──────────────▼──────────────┐
-                        │   LLM Analyst                │
-                        │   GPT-5.2 + deterministic    │
-                        │   fallback                   │
-                        └──────────────┬──────────────┘
-                                       │
-                        ┌──────────────▼──────────────┐
-                        │   Risk Governor              │
-                        │   7 kill criteria            │
-                        │   Kelly sizing · regime gate │
-                        └──────────────┬──────────────┘
-                                       │
-                        ┌──────────────▼──────────────┐
-                        │   Artifact                   │
-                        │   RFC 8785 hash · ERC-8004   │
-                        └──────┬──────────────┬───────┘
-                               │              │
-                 ┌─────────────▼──┐   ┌───────▼───────────┐
-                 │  Kraken Paper  │   │ Sepolia Risk       │
-                 │  Execution     │   │ Router (EIP-712)   │
-                 └─────────────┬──┘   └───────┬───────────┘
-                               │              │
-                 ┌─────────────▼──┐   ┌───────▼───────────┐
-                 │  FastAPI       │   │ Validation &       │
-                 │  Backend       │   │ Reputation         │
-                 └─────────────┬──┘   │ Registries         │
-                               │      └───────┬───────────┘
-                 ┌─────────────▼──┐   ┌───────▼───────────┐
-                 │  Next.js       │   │ On-chain           │
-                 │  Dashboard     │   │ Leaderboard        │
-                 └────────────────┘   └───────────────────┘
+```mermaid
+flowchart TD
+    subgraph DATA["Data Layer"]
+        KR["Kraken REST API\nOHLC · Ticker · Bid/Ask"]
+        PRISM["PRISM\nMarket Data"]
+    end
+
+    FE["Feature Engine\npandas_ta · 16 indicators"]
+
+    subgraph SIGNALS["6 Deterministic Signal Agents"]
+        direction LR
+        S1["Trend"]
+        S2["Volatility"]
+        S3["Spread/Cost"]
+        S4["Mean-Rev"]
+        S5["Momentum"]
+        S6["Swing Struct"]
+    end
+
+    LLM["LLM Analyst\nGPT-5.2 + deterministic fallback"]
+    RG["Risk Governor\n7 kill criteria · Kelly sizing · regime gate"]
+    ART["Artifact\nRFC 8785 hash · ERC-8004"]
+
+    subgraph EXEC["Dual Execution"]
+        direction LR
+        KP["Kraken\nPaper Trading"]
+        SR["Sepolia Risk Router\nEIP-712 TradeIntent"]
+    end
+
+    subgraph UI["Presentation"]
+        direction LR
+        API["FastAPI\nBackend"]
+        DASH["Next.js\nDashboard"]
+        VAL["Validation &\nReputation Registries"]
+        CHAIN["On-chain\nLeaderboard"]
+    end
+
+    KR --> FE
+    PRISM --> FE
+    FE --> SIGNALS
+    SIGNALS --> LLM
+    LLM --> RG
+    RG --> ART
+    ART --> KP
+    ART --> SR
+    KP --> API
+    API --> DASH
+    SR --> VAL
+    VAL --> CHAIN
+
+    style DATA fill:#1a1a2e,stroke:#0ff,color:#fff
+    style SIGNALS fill:#16213e,stroke:#0ff,color:#fff
+    style EXEC fill:#1a1a2e,stroke:#0f0,color:#fff
+    style UI fill:#0f3460,stroke:#e94560,color:#fff
+    style RG fill:#e94560,stroke:#e94560,color:#fff
+    style ART fill:#533483,stroke:#0ff,color:#fff
 ```
 
 ### Strategy
