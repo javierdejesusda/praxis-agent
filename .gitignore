@@ -30,6 +30,9 @@ sota-red-team-research.md
 sota-sources-comprehensive.md
 NEXT_PHASE.md
 
+# Backup files
+*_original.py
+
 # Runtime data (root-level only, not src/artifacts/ Python module)
 /artifacts/
 /state/
@@ -48,6 +51,20 @@ Thumbs.db
 .vscode/
 .idea/
 .vercel
+
+# Large data files (download via scripts/download_fmp_history.py)
+data/BTCUSD_60m.csv
+data/BTCUSD_60m_fmp.csv
+data/ETHUSD_60m.csv
+data/ETHUSD_60m_fmp.csv
+
+# LaTeX build artifacts
+docs/*.aux
+docs/*.bbl
+docs/*.blg
+docs/*.log
+docs/*.out
+docs/*.synctex.gz
 
 # Snapshot files
 snapshot-*.md
