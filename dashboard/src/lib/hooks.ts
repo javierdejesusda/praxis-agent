@@ -17,7 +17,7 @@ import {
   type Attestation,
 } from "./api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8888";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8001";
 
 // Single shared SWR fetcher that recursively converts canonical Decimal
 // strings from the Python backend into numbers before components see

@@ -117,7 +117,7 @@ def main() -> None:
 
     # Markdown
     lines = [
-        "# Aegis Agent — Hackathon Backtest Report",
+        "# Praxis Agent — Hackathon Backtest Report",
         "",
         f"Generated: {payload['generated_at']}",
         "",

@@ -12,7 +12,7 @@ export default function AgentsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Aegis Agent"
+        eyebrow="Praxis Agent"
         title="Regime-Adaptive Trading Intelligence"
         description="Six deterministic signal agents analyze 16 technical indicators in parallel, a GPT meta-analyst resolves conflicts and calibrates conviction, and a risk governor with 7 kill criteria enforces position limits the LLM can never override."
       />
@@ -20,10 +20,10 @@ export default function AgentsPage() {
         <HairlineCard>
           <div className="mb-5">
             <h2 className="text-[17px] font-semibold text-[color:var(--color-ink)] tracking-[-0.02em]">
-              How Aegis Works
+              How Praxis Works
             </h2>
             <p className="text-[13px] text-[color:var(--color-muted)] mt-1 leading-relaxed max-w-3xl">
-              Aegis runs two concurrent loops. The strategic loop executes the full analysis pipeline
+              Praxis runs two concurrent loops. The strategic loop executes the full analysis pipeline
               every 15 minutes. The protective loop monitors open positions every 60 seconds, enforcing
               trailing stops and kill criteria in real time. Every trade decision flows through the
               complete pipeline below before execution.

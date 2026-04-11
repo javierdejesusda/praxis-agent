@@ -83,7 +83,7 @@ async def main() -> int:
     direction = Direction.LONG if args.side == "long" else Direction.SHORT
 
     print("=" * 66)
-    print("  AEGIS AGENT — FORCE-TRADE VERIFICATION")
+    print("  PRAXIS AGENT — FORCE-TRADE VERIFICATION")
     print(f"  Pair: {args.pair}  Side: {direction.value}  Size: ${args.size_usd:.2f}")
     print("=" * 66)
 

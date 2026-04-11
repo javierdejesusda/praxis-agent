@@ -1527,7 +1527,7 @@ def regime_split(trades: list[dict], features_bulk: dict[str, pd.DataFrame],
 
 
 def generate_tearsheet(equity_curve: list[tuple], output_path: str = "logs/tearsheet.html",
-                       title: str = "Aegis Agent") -> str | None:
+                       title: str = "Praxis Agent") -> str | None:
     """Generate a QuantStats HTML tearsheet from the equity curve.
 
     Args:
@@ -1577,7 +1577,7 @@ async def run_backtest(
     """
     source = "CSV" if use_csv else f"Kraken API ({bars} bars)"
     print(f"\n{'='*72}")
-    print(f"  AEGIS AGENT — FULL PIPELINE BACKTEST")
+    print(f"  PRAXIS AGENT — FULL PIPELINE BACKTEST")
     print(f"  Interval: {interval}min | Source: {source}")
     print(f"  Pairs: {', '.join(STRATEGY.pairs)}")
     print(f"  Pipeline: 6 signals -> cross-pair boost -> deterministic fallback -> risk governor")
@@ -1712,7 +1712,7 @@ if __name__ == "__main__":
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
 
-    parser = argparse.ArgumentParser(description="Aegis Agent Backtester")
+    parser = argparse.ArgumentParser(description="Praxis Agent Backtester")
     parser.add_argument(
         "--csv", action="store_true", default=True,
         help="Load data from CSV files (default: true).",

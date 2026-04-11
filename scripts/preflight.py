@@ -37,7 +37,7 @@ def check(label: str, ok: bool, detail: str = "") -> None:
 
 async def main() -> int:
     print("=" * 60)
-    print("  AEGIS AGENT — Pre-Flight Check")
+    print("  PRAXIS AGENT — Pre-Flight Check")
     print("=" * 60)
 
     failed = 0

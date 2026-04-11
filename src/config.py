@@ -1,4 +1,4 @@
-"""Central configuration for Aegis trading agent."""
+"""Central configuration for Praxis trading agent."""
 
 import os
 from dataclasses import dataclass, field

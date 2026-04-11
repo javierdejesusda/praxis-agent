@@ -1,4 +1,4 @@
-"""Register Aegis Agent on Sepolia and claim vault allocation.
+"""Register Praxis Agent on Sepolia and claim vault allocation.
 
 Run this once before starting the live orchestrator. Saves agent ID to
 state/agent_id.json for future sessions to pick up.
@@ -18,7 +18,7 @@ from src.execution.risk_router import RiskRouterAdapter
 
 def main() -> int:
     print("=" * 60)
-    print("  AEGIS AGENT — Sepolia Registration")
+    print("  PRAXIS AGENT — Sepolia Registration")
     print("=" * 60)
 
     if not SEPOLIA_RPC_URL:
@@ -73,7 +73,7 @@ def main() -> int:
         print(f"\nRegistering agent on AgentRegistry...")
         try:
             agent_id = router.register_agent(
-                name="AegisAgent",
+                name="PraxisAgent",
                 description="Regime-adaptive AI trading agent with 7-criteria deterministic risk governance",
                 capabilities=["trading", "risk-management", "validation", "regime-adaptive"],
                 agent_uri="",

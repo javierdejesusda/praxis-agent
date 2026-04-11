@@ -19,7 +19,7 @@ const plexSerif = IBM_Plex_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "Aegis \u2014 Trading Operations",
+  title: "Praxis \u2014 Trading Operations",
   description: "Regime-adaptive trading agent with on-chain validation.",
 };
 

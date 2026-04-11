@@ -1,4 +1,4 @@
-"""Walk-forward out-of-sample validation for the Aegis agent.
+"""Walk-forward out-of-sample validation for the Praxis agent.
 
 Splits the full history into disjoint train/test segments, sweeps hyper-
 parameters on each train window to pick the best config, then evaluates

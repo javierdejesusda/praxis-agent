@@ -28,7 +28,7 @@ export function TopBar() {
     >
       <div className="flex items-center gap-3 px-5 border-r border-[color:var(--color-rule)] min-w-[220px]">
         <span className="text-[20px] font-semibold tracking-[-0.03em] text-[color:var(--color-ink)]">
-          Aegis
+          Praxis
         </span>
         <span className="text-[10px] uppercase tracking-[0.12em] text-[color:var(--color-muted)] font-medium">
           Trading

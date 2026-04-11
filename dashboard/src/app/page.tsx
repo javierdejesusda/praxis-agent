@@ -26,10 +26,10 @@ export default function HeroPage() {
           <EthIcon size={44} />
         </div>
         <div className="text-3xl md:text-7xl font-bold text-center">
-          Aegis Agent
+          Praxis
         </div>
         <div className="font-extralight text-base md:text-4xl py-4 text-center">
-          AI-Powered Trading Operations
+          Where Theory Becomes Execution
         </div>
         <button
           onClick={() => router.push("/overview")}

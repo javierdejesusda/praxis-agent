@@ -781,7 +781,7 @@ async def main_loop() -> None:
     )
 
     mode = "COMPETITION" if COMPETITION_MODE else "DEFAULT"
-    logger.info("Aegis Agent starting in %s mode (log: %s)", mode, log_file)
+    logger.info("Praxis Agent starting in %s mode (log: %s)", mode, log_file)
     logger.info("Risk params: paper>=%d shorts=%s consec=%d stop=%.1f trail=%.1f dd_sf=%.3f",
                 RISK.min_signal_score_paper, RISK.shorts_enabled,
                 RISK.max_consecutive_losses, RISK.stop_mult, RISK.trail_mult,

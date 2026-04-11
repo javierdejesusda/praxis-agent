@@ -155,7 +155,7 @@ async def main():
     initial_equity = 10000.0
 
     print(f"\n{'='*72}")
-    print(f"  AEGIS AGENT — RIGOROUS BACKTEST REPORT")
+    print(f"  PRAXIS AGENT — RIGOROUS BACKTEST REPORT")
     print(f"  Interval: {interval}min | OOS split: {oos_split}")
     print(f"  Pairs: {', '.join(STRATEGY.pairs)}")
     print(f"  dd_scale_factor: {RISK.dd_scale_factor}")

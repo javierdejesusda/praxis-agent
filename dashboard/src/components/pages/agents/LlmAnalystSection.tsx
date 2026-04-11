@@ -23,7 +23,7 @@ export function LlmAnalystSection() {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-6">
         <div className="space-y-3">
           <p className="text-[12px] text-[color:var(--color-muted)] leading-relaxed">
-            Aegis sends all 6 deterministic signal reports, 16 feature values, and PRISM external
+            Praxis sends all 6 deterministic signal reports, 16 feature values, and PRISM external
             intelligence to GPT. The LLM returns a structured Pydantic response: unified direction,
             conviction score (0{"\u2013"}100), rationale, regime assessment, and key risks. If the API
             is unavailable, a deterministic fallback produces the same schema from signal consensus.

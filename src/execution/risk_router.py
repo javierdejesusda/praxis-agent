@@ -249,7 +249,7 @@ class RiskRouterAdapter:
 
     def register_agent(
         self,
-        name: str = "AegisAgent",
+        name: str = "PraxisAgent",
         description: str = "Regime-adaptive AI trading agent with deterministic risk governance",
         capabilities: Optional[list[str]] = None,
         agent_uri: str = "",

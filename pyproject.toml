@@ -1,5 +1,5 @@
 [project]
-name = "aegis-agent"
+name = "praxis-agent"
 version = "0.1.0"
 description = "Regime-adaptive AI trading agent with ERC-8004 validation"
 requires-python = ">=3.11"

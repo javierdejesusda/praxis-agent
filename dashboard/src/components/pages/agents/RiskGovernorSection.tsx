@@ -24,7 +24,7 @@ export function RiskGovernorSection() {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-6">
         <div className="space-y-3">
           <p className="text-[12px] text-[color:var(--color-muted)] leading-relaxed">
-            Aegis{"'"}s risk governor is fully deterministic — the LLM can never override it.
+            Praxis{"'"}s risk governor is fully deterministic — the LLM can never override it.
             It enforces 7 kill criteria, validates signal consensus, sizes positions via Half-Kelly
             with a 1% risk cap, and sets ATR-based trailing stops and targets. A 3% daily loss cap
             and 8% max drawdown gate protect capital automatically.

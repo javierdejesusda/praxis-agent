@@ -1,4 +1,4 @@
-"""Grid-sweep the Aegis backtester to optimize risk-adjusted returns.
+"""Grid-sweep the Praxis backtester to optimize risk-adjusted returns.
 
 Pre-computes features once per (pair, interval) and runs many parameter
 combinations in memory. Ranks configs by a risk-adjusted score:

@@ -34,10 +34,10 @@ _CRYPTO_SYMBOL_SUFFIX = "USD"
 
 
 def _normalize_crypto_symbol(pair: str) -> str:
-    """Normalize an aegis pair symbol ("BTCUSD") to FMP's ticker format.
+    """Normalize a pair symbol ("BTCUSD") to FMP's ticker format.
 
     FMP uses plain ``BTCUSD``, ``ETHUSD`` for crypto intraday charts, which
-    matches the aegis convention — so the symbol passes through unchanged.
+    matches the Praxis convention — so the symbol passes through unchanged.
     """
     return pair.upper()
 

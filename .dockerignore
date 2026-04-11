@@ -1,0 +1,14 @@
+node_modules
+.next
+dashboard/node_modules
+dashboard/.next
+__pycache__
+*.pyc
+.env
+.env.local
+.git
+.claude
+.playwright-mcp
+logs/*.log
+*.png
+*.sqlite

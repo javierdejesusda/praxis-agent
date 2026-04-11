@@ -18,7 +18,7 @@ from src.features.prism import get_signals as prism_signals, get_risk_metrics as
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Aegis Agent API", version="0.1.0")
+app = FastAPI(title="Praxis Agent API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
