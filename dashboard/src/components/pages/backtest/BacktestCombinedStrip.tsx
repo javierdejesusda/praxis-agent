@@ -7,14 +7,16 @@ import { useBacktestReport } from "@/lib/hooks";
 
 export function BacktestCombinedStrip() {
   const { data } = useBacktestReport();
-  const c = data?.combined;
+  const oos = data?.out_of_sample;
+  const c = oos ?? data?.combined;
   if (!c) return null;
+  const label = oos ? "Out-of-Sample" : "Full History";
   const initialEquity = data?.initial_equity;
   return (
     <div className="space-y-4">
       <HairlineCard>
         <div className="text-[10px] uppercase tracking-[0.12em] text-[color:var(--color-muted)] font-medium mb-4">
-          Performance
+          Performance ({label})
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6">
           <MetricCell
@@ -99,7 +101,7 @@ export function BacktestCombinedStrip() {
 
       <HairlineCard>
         <div className="text-[10px] uppercase tracking-[0.12em] text-[color:var(--color-muted)] font-medium mb-4">
-          Risk-Adjusted Ratios
+          Risk-Adjusted Ratios ({label})
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
           <MetricCell

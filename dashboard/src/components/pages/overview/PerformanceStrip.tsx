@@ -19,14 +19,16 @@ export function PerformanceStrip() {
     );
   }
 
-  const c = data.combined;
+  const oos = data.out_of_sample;
+  const c = oos ?? data.combined;
+  const label = oos ? "Out-of-Sample" : "Full History";
   const winTone = c.win_rate_pct >= 50 ? "ok" : c.win_rate_pct >= 40 ? "warn" : "crit";
   const pfTone = (c.profit_factor ?? 0) >= 2 ? "ok" : (c.profit_factor ?? 0) >= 1.5 ? "warn" : "crit";
 
   return (
     <HairlineCard>
       <SectionHeader
-        title="Backtest Results"
+        title={`Backtest Results (${label})`}
         rightSlot={
           <span className="text-[10px] text-[color:var(--color-muted)]">
             Generated {data.generated_at?.split("T")[0]}
