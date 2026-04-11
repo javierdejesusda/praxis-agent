@@ -8,9 +8,6 @@ secrets.toml
 *.pem
 *.key
 
-# AI tools
-.claude/
-CLAUDE.md
 *.sqlite
 *.db
 
