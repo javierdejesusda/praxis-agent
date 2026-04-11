@@ -14,10 +14,6 @@ RUN pip install --no-cache-dir .
 COPY scripts/ scripts/
 RUN chmod +x scripts/start.sh
 
-# Copy state/artifacts if they exist (seed data)
-COPY state/ state/
-COPY artifacts/ artifacts/
-
 RUN mkdir -p state artifacts logs
 
 EXPOSE 8001
