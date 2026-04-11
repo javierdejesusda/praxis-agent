@@ -34,7 +34,7 @@ export function BacktestCombinedStrip() {
             emphasis="strong"
             value={
               <NumericValue
-                value={c.total_pnl_usd}
+                value={c.total_pnl_usd ?? 0}
                 kind="usd"
                 color="auto"
                 sign="always"
@@ -135,24 +135,24 @@ export function BacktestCombinedStrip() {
             emphasis="strong"
             value={
               <NumericValue
-                value={c.win_rate_pct / 100}
+                value={(c.win_rate_pct ?? 0) / 100}
                 kind="pct"
                 decimals={1}
               />
             }
-            footnote={`${c.wins}W / ${c.losses}L`}
+            footnote={`${c.wins ?? 0}W / ${c.losses ?? 0}L`}
           />
           <MetricCell
             label="Avg Bars Held"
             emphasis="strong"
             value={
               <NumericValue
-                value={c.avg_bars_held ?? 0}
+                value={"avg_bars_held" in c ? (c.avg_bars_held ?? 0) : 0}
                 kind="ratio"
                 decimals={1}
               />
             }
-            footnote={`${c.total_trades} trades`}
+            footnote={`${c.total_trades ?? 0} trades`}
           />
         </div>
       </HairlineCard>

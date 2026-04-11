@@ -22,7 +22,8 @@ export function PerformanceStrip() {
   const oos = data.out_of_sample;
   const c = oos ?? data.combined;
   const label = oos ? "Out-of-Sample" : "Full History";
-  const winTone = c.win_rate_pct >= 50 ? "ok" : c.win_rate_pct >= 40 ? "warn" : "crit";
+  const wr = c.win_rate_pct ?? 0;
+  const winTone = wr >= 50 ? "ok" : wr >= 40 ? "warn" : "crit";
   const pfTone = (c.profit_factor ?? 0) >= 2 ? "ok" : (c.profit_factor ?? 0) >= 1.5 ? "warn" : "crit";
 
   return (
@@ -53,7 +54,7 @@ export function PerformanceStrip() {
           label="Total PnL"
           value={
             <NumericValue
-              value={c.total_pnl_usd}
+              value={c.total_pnl_usd ?? 0}
               kind="usd"
               color="auto"
               sign="always"
@@ -65,15 +66,15 @@ export function PerformanceStrip() {
             label="Win Rate"
             value={
               <NumericValue
-                value={c.win_rate_pct / 100}
+                value={wr / 100}
                 kind="pct"
                 decimals={1}
               />
             }
-            footnote={`${c.wins}W / ${c.losses}L`}
+            footnote={`${c.wins ?? 0}W / ${c.losses ?? 0}L`}
           />
           <div className="mt-1.5">
-            <StatusPill tone={winTone} label={c.win_rate_pct >= 50 ? "STRONG" : "MODERATE"} />
+            <StatusPill tone={winTone} label={wr >= 50 ? "STRONG" : "MODERATE"} />
           </div>
         </div>
         <div>
