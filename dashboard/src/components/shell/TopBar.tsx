@@ -10,7 +10,6 @@ import { setMobileNavOpen } from "@/lib/mobile-nav";
 import { toggleTimezoneMode, useTimezoneMode } from "@/lib/timezone";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { CostWidget } from "./CostWidget";
-import { DemoModeToggle } from "./DemoModeToggle";
 import { LastUpdated } from "./LastUpdated";
 import { StatusIndicator } from "./StatusIndicator";
 
@@ -101,7 +100,6 @@ export function TopBar() {
         >
           {mounted && isDark ? <Sun size={14} strokeWidth={1.75} /> : <Moon size={14} strokeWidth={1.75} />}
         </button>
-        <DemoModeToggle />
         <CostWidget />
         <button
           type="button"
