@@ -1,5 +1,7 @@
 "use client";
 
+import { AlertTriangle } from "lucide-react";
+
 import { usePrism, useRegime } from "@/lib/hooks";
 import { HairlineCard } from "@/components/ui/HairlineCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
@@ -115,6 +117,15 @@ function PrismCard({ symbol }: { symbol: string }) {
 
   const sig = prism?.signals?.data?.[0];
   const risk = prism?.risk;
+  const meta = prism?.signals?.metadata;
+  const degraded = meta?.degraded_sources ?? [];
+  const warning = meta?.warning;
+  const degradedLabel =
+    degraded.includes("insufficient_ohlcv")
+      ? "Upstream OHLCV feed is degraded — PRISM is recomputing this pair."
+      : degraded.length > 0
+        ? `Upstream sources degraded: ${degraded.join(", ")}`
+        : undefined;
 
   return (
     <HairlineCard>
@@ -126,11 +137,26 @@ function PrismCard({ symbol }: { symbol: string }) {
               tone="neutral"
               label={sig.overall_signal.toUpperCase()}
             />
+          ) : degraded.length > 0 ? (
+            <StatusPill tone="warn" label="DEGRADED" />
           ) : undefined
         }
       />
       {!sig ? (
-        <EmptyState label={`No Prism data for ${symbol}.`} />
+        <EmptyState
+          tone={degraded.length > 0 ? "warn" : "neutral"}
+          icon={
+            degraded.length > 0 ? (
+              <AlertTriangle size={16} strokeWidth={2} />
+            ) : undefined
+          }
+          label={
+            degraded.length > 0
+              ? `PRISM temporarily unavailable for ${symbol}`
+              : `No Prism data for ${symbol}.`
+          }
+          sub={degradedLabel ?? warning}
+        />
       ) : (
         <div className="space-y-5">
           <div className="num text-[24px] font-semibold text-[color:var(--color-ink)] tracking-[-0.02em]">

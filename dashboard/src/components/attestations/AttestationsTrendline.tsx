@@ -19,12 +19,29 @@ import type {Attestation} from "@/lib/api";
 const HOUR_MS = 60 * 60 * 1000;
 const BUCKETS = 24;
 
+let nowSnapshot = 0;
+const nowListeners = new Set<() => void>();
+let nowIntervalId: number | null = null;
 function subscribeNow(onChange: () => void): () => void {
-  const id = window.setInterval(onChange, 60_000);
-  return () => window.clearInterval(id);
+  if (nowSnapshot === 0) nowSnapshot = Date.now();
+  nowListeners.add(onChange);
+  if (nowIntervalId === null) {
+    nowIntervalId = window.setInterval(() => {
+      nowSnapshot = Date.now();
+      nowListeners.forEach((fn) => fn());
+    }, 60_000);
+  }
+  return () => {
+    nowListeners.delete(onChange);
+    if (nowListeners.size === 0 && nowIntervalId !== null) {
+      window.clearInterval(nowIntervalId);
+      nowIntervalId = null;
+    }
+  };
 }
 function getNow(): number {
-  return Date.now();
+  if (nowSnapshot === 0) nowSnapshot = Date.now();
+  return nowSnapshot;
 }
 function getNowServer(): number {
   return 0;
@@ -233,6 +250,10 @@ export function AttestationsTrendline() {
     () => topScoreMarkers(records ?? [], bucketCurrent, nowMs),
     [records, bucketCurrent, nowMs],
   );
+  const yDomainMax = useMemo(
+    () => Math.max(1, ...bucketCurrent.map((p) => p.cumulative)),
+    [bucketCurrent],
+  );
 
   const delta = useMemo(() => {
     if (buckets.previousTotal === 0) {
@@ -323,10 +344,7 @@ export function AttestationsTrendline() {
                 tickLine={false}
                 height={14}
               />
-              <YAxis
-                hide
-                domain={[0, (max: number) => Math.max(1, max)]}
-              />
+              <YAxis hide domain={[0, yDomainMax]} />
               <Tooltip
                 content={<AttestationsTooltip />}
                 cursor={{

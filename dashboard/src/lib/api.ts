@@ -326,6 +326,11 @@ export interface PrismData {
       current_price: number;
       indicators?: Record<string, number>;
     }>;
+    metadata?: {
+      degraded_sources?: string[];
+      warning?: string;
+      timestamp?: string;
+    };
   } | null;
   risk: {
     daily_volatility?: number;
