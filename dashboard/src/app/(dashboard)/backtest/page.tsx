@@ -3,6 +3,7 @@
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useBacktestReport } from "@/lib/hooks";
 import { BacktestCombinedStrip } from "@/components/pages/backtest/BacktestCombinedStrip";
+import { BacktestExportBar } from "@/components/pages/backtest/BacktestExportBar";
 import { PerPairTable } from "@/components/pages/backtest/PerPairTable";
 import { BacktestConfigBlock } from "@/components/pages/backtest/BacktestConfigBlock";
 import { ValidationSplit } from "@/components/pages/backtest/ValidationSplit";
@@ -18,7 +19,11 @@ export default function BacktestPage() {
   if (isLoading) {
     return (
       <>
-        <PageHeader eyebrow="Historical" title="Backtest" />
+        <PageHeader
+          eyebrow="Historical"
+          title="Backtest"
+          rightSlot={<BacktestExportBar />}
+        />
         <div className="space-y-6">
           <BacktestCombinedStrip />
           <HairlineCard>
@@ -35,7 +40,11 @@ export default function BacktestPage() {
   if (!data?.available) {
     return (
       <>
-        <PageHeader eyebrow="Historical" title="Backtest" />
+        <PageHeader
+          eyebrow="Historical"
+          title="Backtest"
+          rightSlot={<BacktestExportBar />}
+        />
         <HairlineCard>
           <EmptyState
             label="No backtest report generated."
@@ -52,6 +61,7 @@ export default function BacktestPage() {
         eyebrow="Historical"
         title="Backtest"
         description={`Generated ${fmtTimestamp(data.generated_at)}`}
+        rightSlot={<BacktestExportBar />}
       />
       <div className="space-y-6">
         <BacktestCombinedStrip />

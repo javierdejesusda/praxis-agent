@@ -1,10 +1,11 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { Menu, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useSyncExternalStore } from "react";
 
 import { useKillCriteria, useRegime } from "@/lib/hooks";
+import { setMobileNavOpen } from "@/lib/mobile-nav";
 import { toggleTimezoneMode, useTimezoneMode } from "@/lib/timezone";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { LastUpdated } from "./LastUpdated";
@@ -40,25 +41,37 @@ export function TopBar() {
         WebkitBackdropFilter: "saturate(180%) blur(20px)",
       }}
     >
-      <div className="flex items-center gap-3 px-5 border-r border-[color:var(--color-rule)] min-w-[220px]">
+      <button
+        type="button"
+        onClick={() => setMobileNavOpen(true)}
+        aria-label="Open navigation"
+        className="md:hidden flex items-center justify-center w-11 h-full px-3 border-r border-[color:var(--color-rule)] text-[color:var(--color-ink-soft)] hover:bg-[color:var(--color-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--color-accent)]"
+      >
+        <Menu size={18} strokeWidth={1.75} />
+      </button>
+      <div className="flex items-center gap-3 px-4 md:px-5 border-r border-[color:var(--color-rule)] md:min-w-[220px]">
         <span className="text-[20px] font-semibold tracking-[-0.03em] text-[color:var(--color-ink)]">
           Praxis
         </span>
-        <span className="text-[10px] uppercase tracking-[0.12em] text-[color:var(--color-muted)] font-medium">
+        <span className="hidden sm:inline text-[10px] uppercase tracking-[0.12em] text-[color:var(--color-muted)] font-medium">
           Trading
         </span>
       </div>
       <div className="flex-1" />
-      <div className="flex items-center justify-end gap-4 px-5">
-        <StatusIndicator tone={killTone} label={killLabel} />
+      <div className="flex items-center justify-end gap-2 md:gap-4 px-3 md:px-5">
+        <div className="hidden md:block">
+          <StatusIndicator tone={killTone} label={killLabel} />
+        </div>
         <StatusPill tone="neutral" label={regime?.regime?.toUpperCase() || "UNKNOWN"} />
-        <StatusPill tone="info" label="PAPER" />
+        <div className="hidden sm:block">
+          <StatusPill tone="info" label="PAPER" />
+        </div>
         <button
           type="button"
           onClick={toggleTimezoneMode}
           aria-label={`Timezone: ${tzMode}. Switch to ${tzMode === "UTC" ? "local time" : "UTC"}`}
           title={`Timezone: ${tzMode} (click to switch)`}
-          className="num text-[10px] font-medium uppercase tracking-[0.08em] text-[color:var(--color-ink-soft)] px-2 py-1 rounded-md border border-[color:var(--color-rule)] hover:bg-[color:var(--color-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--color-accent)]"
+          className="hidden sm:inline-block num text-[10px] font-medium uppercase tracking-[0.08em] text-[color:var(--color-ink-soft)] px-2 py-1 rounded-md border border-[color:var(--color-rule)] hover:bg-[color:var(--color-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--color-accent)]"
         >
           {tzMode}
         </button>
@@ -71,7 +84,9 @@ export function TopBar() {
         >
           {mounted && isDark ? <Sun size={14} strokeWidth={1.75} /> : <Moon size={14} strokeWidth={1.75} />}
         </button>
-        <LastUpdated iso={regime?.timestamp ?? null} />
+        <div className="hidden lg:block">
+          <LastUpdated iso={regime?.timestamp ?? null} />
+        </div>
       </div>
     </header>
   );

@@ -15,7 +15,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex flex-1 min-h-0">
         <LeftRail />
         <main className="flex-1 min-w-0 overflow-auto">
-          <div className="px-8 py-7">
+          <div className="px-4 sm:px-6 md:px-8 py-5 md:py-7">
             <PageTransition>{children}</PageTransition>
           </div>
         </main>

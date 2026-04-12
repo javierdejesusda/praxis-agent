@@ -3,6 +3,7 @@
 import {useMemo} from "react";
 
 import {AttestationsTable} from "@/components/attestations/AttestationsTable";
+import {AttestationsTrendline} from "@/components/attestations/AttestationsTrendline";
 import {HairlineCard} from "@/components/ui/HairlineCard";
 import {MetricCell} from "@/components/ui/MetricCell";
 import {NumericValue} from "@/components/ui/NumericValue";
@@ -57,6 +58,7 @@ export default function AttestationsPage() {
         description="ERC-8004 validation, reputation and trade-intent records anchored on Sepolia."
       />
       <div className="space-y-6">
+        <AttestationsTrendline />
         <HairlineCard>
           <div className="grid grid-cols-3 gap-8">
             <MetricCell

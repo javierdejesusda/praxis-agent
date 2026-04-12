@@ -48,6 +48,12 @@ export function BacktestCombinedStrip() {
   if (!c) return null;
   const label = oos ? "Out-of-Sample" : "Full History";
   const initialEquity = data?.initial_equity;
+  const combined = data?.combined;
+  const avgBarsHeld =
+    "avg_bars_held" in c && c.avg_bars_held != null
+      ? c.avg_bars_held
+      : combined?.avg_bars_held;
+  const alphaPct = combined?.alpha_pct;
   return (
     <div className="space-y-4">
       <HairlineCard>
@@ -196,6 +202,65 @@ export function BacktestCombinedStrip() {
             }
             footnote={`${c.total_trades ?? 0} trades`}
           />
+        </div>
+      </HairlineCard>
+
+      <HairlineCard>
+        <div className="text-[10px] uppercase tracking-[0.12em] text-[color:var(--color-muted)] font-medium mb-4">
+          Cost / Edge
+        </div>
+        <div
+          className="h-px w-full mb-4"
+          style={{background: "var(--color-rule)"}}
+          aria-hidden="true"
+        />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div title="Documented Kraken round-trip cost (maker + taker). Used as the floor the strategy must clear before trading.">
+            <MetricCell
+              label="Round-Trip Cost"
+              emphasis="strong"
+              value={<NumericValue value={55} kind="bps" decimals={0} />}
+              footnote="Kraken maker+taker"
+            />
+          </div>
+          <div title="Minimum expected edge required before the strategy will enter a trade. Derived from round-trip cost plus a safety buffer.">
+            <MetricCell
+              label="Min Edge"
+              emphasis="strong"
+              value={<NumericValue value={82.5} kind="bps" decimals={1} />}
+              footnote="vs cost floor"
+            />
+          </div>
+          <div title="Average number of bars a position is held before exit. Lower values indicate faster turnover.">
+            <MetricCell
+              label="Avg Bars Held"
+              emphasis="strong"
+              value={
+                <NumericValue
+                  value={avgBarsHeld ?? 0}
+                  kind="ratio"
+                  decimals={1}
+                />
+              }
+              footnote="per trade"
+            />
+          </div>
+          <div title="Excess return over a passive BTC buy-and-hold benchmark for the same period.">
+            <MetricCell
+              label="Alpha vs BTC Hold"
+              emphasis="strong"
+              value={
+                <NumericValue
+                  value={(alphaPct ?? 0) / 100}
+                  kind="pct"
+                  color="auto"
+                  sign="always"
+                  decimals={2}
+                />
+              }
+              footnote="buy & hold baseline"
+            />
+          </div>
         </div>
       </HairlineCard>
     </div>
