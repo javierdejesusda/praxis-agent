@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { animate, useReducedMotion } from "framer-motion";
 
 import { HairlineCard } from "@/components/ui/HairlineCard";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -12,6 +13,43 @@ import {
   useStats,
 } from "@/lib/hooks";
 import { fmtRelative } from "@/lib/format";
+
+function useTweenedNumber(target: number, duration = 0.4): number {
+  const [display, setDisplay] = useState(target);
+  const prefersReducedMotion = useReducedMotion();
+  const lastRef = useRef(target);
+
+  useEffect(() => {
+    if (lastRef.current === target) return;
+    const from = lastRef.current;
+    lastRef.current = target;
+    if (prefersReducedMotion) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDisplay(target);
+      return;
+    }
+    const controls = animate(from, target, {
+      duration,
+      ease: [0.25, 0.1, 0.25, 1],
+      onUpdate: (latest) => setDisplay(latest),
+    });
+    return () => controls.stop();
+  }, [target, duration, prefersReducedMotion]);
+
+  return display;
+}
+
+type CountUpProps = {
+  value: number;
+  format: (n: number) => string;
+};
+
+function CountUp({ value, format }: CountUpProps) {
+  const display = useTweenedNumber(value);
+  return (
+    <span className="tabular-nums">{format(display)}</span>
+  );
+}
 
 function Cell({
   label,
@@ -30,7 +68,7 @@ function Cell({
       {loading ? (
         <Skeleton width={90} height={18} />
       ) : (
-        <div className="num font-medium text-[color:var(--color-ink)] text-[15px] leading-tight tracking-[-0.015em] truncate w-full">
+        <div className="num font-medium text-[color:var(--color-ink)] text-[15px] leading-tight tracking-[-0.015em] truncate w-full tabular-nums">
           {value}
         </div>
       )}
@@ -52,7 +90,15 @@ function regimeLabel(regime: string | undefined): string {
   return regime.charAt(0).toUpperCase() + regime.slice(1);
 }
 
-export function AgentsLiveStrip() {
+function formatInt(n: number): string {
+  return Math.round(n).toLocaleString("en-US");
+}
+
+function formatPctZero(n: number): string {
+  return `${Math.round(n)}%`;
+}
+
+function AgentsLiveStripImpl() {
   const { data: regime, isLoading: regimeLoading } = useRegime();
   const { data: artifacts, isLoading: artifactsLoading } = useArtifacts(200);
   const { data: latestSignals, isLoading: signalsLoading } = useLatestSignals();
@@ -87,18 +133,18 @@ export function AgentsLiveStrip() {
     return onchain.attestation_totals?.validation ?? 0;
   }, [onchain]);
 
-  const approvalPct = useMemo(() => {
-    if (!stats) return null;
+  const approvalPctValue = useMemo(() => {
+    if (!stats) return 0;
     const r = Number(stats.validation_rate) || 0;
-    return `${(r * 100).toFixed(0)}%`;
+    return r * 100;
   }, [stats]);
 
   const regimeValue = useMemo(() => {
-    if (!regime) return "—";
+    if (!regime) return "\u2014";
     const label = regimeLabel(regime.regime);
     const adx = Number(regime.adx);
     if (!Number.isFinite(adx) || adx <= 0) return label;
-    return `${label} · ADX ${Math.round(adx)}`;
+    return `${label} \u00b7 ADX ${Math.round(adx)}`;
   }, [regime]);
 
   return (
@@ -126,32 +172,40 @@ export function AgentsLiveStrip() {
         />
         <Cell
           label="Strategic cycles"
-          value={cyclesToday.toLocaleString("en-US")}
+          value={<CountUp value={cyclesToday} format={formatInt} />}
           loading={artifactsLoading && !artifacts}
         />
         <Cell
           label="Signals last cycle"
-          value={signalCount}
+          value={<CountUp value={signalCount} format={formatInt} />}
           loading={signalsLoading && !latestSignals}
         />
         <Cell
           label="Governor approval"
-          value={approvalPct ?? "—"}
+          value={
+            stats ? (
+              <CountUp value={approvalPctValue} format={formatPctZero} />
+            ) : (
+              "\u2014"
+            )
+          }
           loading={statsLoading && !stats}
         />
         <Cell
           label="Attestations"
-          value={attestations.toLocaleString("en-US")}
+          value={<CountUp value={attestations} format={formatInt} />}
           loading={onchainLoading && !onchain}
         />
         <Cell
           label="Last activity"
-          value={lastActivity ? fmtRelative(lastActivity) : "—"}
+          value={lastActivity ? fmtRelative(lastActivity) : "\u2014"}
           loading={artifactsLoading && !artifacts}
         />
       </div>
     </HairlineCard>
   );
 }
+
+export const AgentsLiveStrip = memo(AgentsLiveStripImpl);
 
 export default AgentsLiveStrip;

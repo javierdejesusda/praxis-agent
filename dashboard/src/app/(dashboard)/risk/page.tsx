@@ -1,9 +1,19 @@
 "use client";
 
+import dynamic from "next/dynamic";
+
 import { PageHeader } from "@/components/ui/PageHeader";
 import { HairlineCard } from "@/components/ui/HairlineCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { KillCriteriaTable } from "@/components/pages/risk/KillCriteriaTable";
+import { SkeletonChart } from "@/components/ui/Skeleton";
+
+const KillCriteriaTable = dynamic(
+  () =>
+    import("@/components/pages/risk/KillCriteriaTable").then((m) => ({
+      default: m.KillCriteriaTable,
+    })),
+  { ssr: false, loading: () => <SkeletonChart height={320} /> },
+);
 
 export default function RiskPage() {
   return (

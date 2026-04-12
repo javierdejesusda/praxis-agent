@@ -2,11 +2,13 @@
 
 import {
   Activity,
+  BookOpen,
   BrainCircuit,
   Briefcase,
   Clock,
   FileText,
   Hash,
+  Keyboard,
   LayoutDashboard,
   LineChart,
   Moon,
@@ -19,6 +21,8 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { setHowItWorksOpen } from "@/components/how-it-works/how-it-works-store";
+import { setShortcutsOpen } from "@/components/shortcuts/shortcuts-store";
 import { useArtifacts } from "@/lib/hooks";
 import { toggleTimezoneMode } from "@/lib/timezone";
 
@@ -172,6 +176,49 @@ function CommandPaletteModal() {
         run: () => {
           toggleTimezoneMode();
           setCommandOpen(false);
+        },
+      },
+      {
+        id: "action:how-it-works",
+        kind: "action",
+        section: "Actions",
+        label: "How it works",
+        hint: "Architecture overview",
+        icon: BookOpen,
+        run: () => {
+          setCommandOpen(false);
+          setHowItWorksOpen(true);
+        },
+      },
+      {
+        id: "action:shortcuts",
+        kind: "action",
+        section: "Actions",
+        label: "Keyboard shortcuts",
+        hint: "Press ?",
+        icon: Keyboard,
+        run: () => {
+          setCommandOpen(false);
+          setShortcutsOpen(true);
+        },
+      },
+      {
+        id: "action:replay-tour",
+        kind: "action",
+        section: "Actions",
+        label: "Replay welcome tour",
+        hint: "Onboarding",
+        icon: BookOpen,
+        run: () => {
+          if (typeof window !== "undefined") {
+            try {
+              window.localStorage.removeItem("praxis-onboarding-v1");
+            } catch {
+              // ignore
+            }
+            setCommandOpen(false);
+            window.location.assign("/overview");
+          }
         },
       },
     ];

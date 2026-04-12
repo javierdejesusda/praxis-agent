@@ -207,6 +207,11 @@ table.data-table td.num, table.data-table th.num {
   animation: live-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+@keyframes freshness-fade {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 0.25; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .live-dot { animation: none; }
 }
@@ -261,5 +266,10 @@ table.data-table td.num, table.data-table th.num {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { transition: none !important; animation: none !important; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

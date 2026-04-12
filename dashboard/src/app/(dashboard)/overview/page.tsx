@@ -1,14 +1,66 @@
 "use client";
 
-import { PageHeader } from "@/components/ui/PageHeader";
-import DecisionWalkthrough from "@/components/pages/overview/DecisionWalkthrough";
-import { KpiStrip } from "@/components/pages/overview/KpiStrip";
-import { PerformanceStrip } from "@/components/pages/overview/PerformanceStrip";
-import { RegimeCard } from "@/components/pages/overview/RegimeCard";
-import { LatestSignalCard } from "@/components/pages/overview/LatestSignalCard";
-import { KillSummary } from "@/components/pages/overview/KillSummary";
-import { LivePriceChart } from "@/components/pages/overview/LivePriceChart";
-import { RecentDecisions } from "@/components/pages/overview/RecentDecisions";
+import dynamic from "next/dynamic";
+
+import {PageHeader} from "@/components/ui/PageHeader";
+import {SkeletonChart, SkeletonText} from "@/components/ui/Skeleton";
+
+const DecisionWalkthrough = dynamic(
+  () =>
+    import("@/components/pages/overview/DecisionWalkthrough").then((m) => ({
+      default: m.default,
+    })),
+  {ssr: false, loading: () => <SkeletonChart height={180} />},
+);
+const KpiStrip = dynamic(
+  () =>
+    import("@/components/pages/overview/KpiStrip").then((m) => ({
+      default: m.KpiStrip,
+    })),
+  {ssr: false, loading: () => <SkeletonText lines={1} widths={["60%"]} />},
+);
+const PerformanceStrip = dynamic(
+  () =>
+    import("@/components/pages/overview/PerformanceStrip").then((m) => ({
+      default: m.PerformanceStrip,
+    })),
+  {ssr: false, loading: () => <SkeletonChart height={120} />},
+);
+const RegimeCard = dynamic(
+  () =>
+    import("@/components/pages/overview/RegimeCard").then((m) => ({
+      default: m.RegimeCard,
+    })),
+  {ssr: false, loading: () => <SkeletonChart height={140} />},
+);
+const LatestSignalCard = dynamic(
+  () =>
+    import("@/components/pages/overview/LatestSignalCard").then((m) => ({
+      default: m.LatestSignalCard,
+    })),
+  {ssr: false, loading: () => <SkeletonChart height={140} />},
+);
+const KillSummary = dynamic(
+  () =>
+    import("@/components/pages/overview/KillSummary").then((m) => ({
+      default: m.KillSummary,
+    })),
+  {ssr: false, loading: () => <SkeletonChart height={140} />},
+);
+const LivePriceChart = dynamic(
+  () =>
+    import("@/components/pages/overview/LivePriceChart").then((m) => ({
+      default: m.LivePriceChart,
+    })),
+  {ssr: false, loading: () => <SkeletonChart height={260} />},
+);
+const RecentDecisions = dynamic(
+  () =>
+    import("@/components/pages/overview/RecentDecisions").then((m) => ({
+      default: m.RecentDecisions,
+    })),
+  {ssr: false, loading: () => <SkeletonChart height={220} />},
+);
 
 export default function OverviewPage() {
   return (

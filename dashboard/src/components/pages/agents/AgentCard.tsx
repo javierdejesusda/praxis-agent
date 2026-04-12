@@ -1,5 +1,8 @@
 "use client";
 
+import { memo, useEffect, useRef } from "react";
+import { useAnimationControls, useReducedMotion, motion } from "framer-motion";
+
 import { StatusPill, type PillTone } from "@/components/ui/StatusPill";
 
 export type AgentInfo = {
@@ -17,28 +20,70 @@ function directionTone(dir: string | undefined): PillTone {
   return "neutral";
 }
 
-export function AgentCard({
-  agent,
-  direction,
-  confidence,
-}: {
+type AgentCardProps = {
   agent: AgentInfo;
   direction?: string;
   confidence?: number;
-}) {
+  decisionId?: string | null;
+};
+
+function AgentCardImpl({
+  agent,
+  direction,
+  confidence,
+  decisionId,
+}: AgentCardProps) {
   const conf = confidence ?? 0;
   const pct = Math.max(0, Math.min(100, conf));
   const barColor =
     conf >= 70 ? "#00C853" : conf >= 40 ? "#FF9100" : "#86868B";
 
+  const prefersReducedMotion = useReducedMotion();
+  const controls = useAnimationControls();
+  const lastIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!decisionId) {
+      lastIdRef.current = null;
+      return;
+    }
+    if (lastIdRef.current === decisionId) return;
+    const isFirst = lastIdRef.current === null;
+    lastIdRef.current = decisionId;
+    if (isFirst) return;
+
+    if (prefersReducedMotion) {
+      controls.start({
+        borderColor: ["var(--color-accent)", "var(--color-rule)"],
+        transition: { duration: 0.2, times: [0, 1] },
+      });
+      return;
+    }
+    controls.start({
+      borderColor: [
+        "var(--color-rule)",
+        "var(--color-accent)",
+        "var(--color-rule)",
+      ],
+      scale: [1, 1.015, 1],
+      transition: {
+        duration: 0.6,
+        times: [0, 0.5, 1],
+        ease: [0.25, 0.1, 0.25, 1],
+      },
+    });
+  }, [decisionId, controls, prefersReducedMotion]);
+
   return (
-    <div
+    <motion.div
+      animate={controls}
+      initial={false}
       className="rounded-2xl p-5 flex flex-col gap-4"
       style={{
-        background: "rgba(255, 255, 255, 0.72)",
+        background: "var(--color-surface)",
         backdropFilter: "saturate(180%) blur(20px)",
         WebkitBackdropFilter: "saturate(180%) blur(20px)",
-        border: "1px solid rgba(0, 0, 0, 0.06)",
+        border: "1px solid var(--color-rule)",
         boxShadow:
           "0 0.5px 1px rgba(0, 0, 0, 0.03), 0 2px 8px rgba(0, 0, 0, 0.02)",
         transition:
@@ -81,7 +126,7 @@ export function AgentCard({
             <span
               key={inp}
               className="text-[10px] px-2 py-0.5 rounded-full text-[color:var(--color-ink-soft)]"
-              style={{ background: "rgba(0,0,0,0.04)" }}
+              style={{ background: "var(--color-hover)" }}
             >
               {inp}
             </span>
@@ -94,11 +139,11 @@ export function AgentCard({
           <span className="text-[10px] uppercase tracking-[0.1em] text-[color:var(--color-muted)] font-medium">
             Confidence
           </span>
-          <span className="num text-[13px] font-semibold text-[color:var(--color-ink)]">
+          <span className="num text-[13px] font-semibold text-[color:var(--color-ink)] tabular-nums">
             {conf}%
           </span>
         </div>
-        <div className="h-1.5 rounded-full" style={{ background: "rgba(0,0,0,0.06)" }}>
+        <div className="h-1.5 rounded-full" style={{ background: "var(--color-rule)" }}>
           <div
             className="h-full rounded-full"
             style={{
@@ -113,6 +158,8 @@ export function AgentCard({
       <p className="text-[11px] text-[color:var(--color-muted)] leading-relaxed italic">
         {agent.logic}
       </p>
-    </div>
+    </motion.div>
   );
 }
+
+export const AgentCard = memo(AgentCardImpl);

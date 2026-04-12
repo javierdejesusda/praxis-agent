@@ -1,5 +1,7 @@
 "use client";
 
+import { memo } from "react";
+
 import { HairlineCard } from "@/components/ui/HairlineCard";
 import { MetricCell } from "@/components/ui/MetricCell";
 import { NumericValue } from "@/components/ui/NumericValue";
@@ -31,7 +33,7 @@ function SkeletonStrip({ label, cols }: { label: string; cols: number }) {
   );
 }
 
-export function BacktestCombinedStrip() {
+export const BacktestCombinedStrip = memo(function BacktestCombinedStrip() {
   const { data, isLoading } = useBacktestReport();
 
   if (isLoading) {
@@ -248,4 +250,4 @@ export function BacktestCombinedStrip() {
       </HairlineCard>
     </div>
   );
-}
+});

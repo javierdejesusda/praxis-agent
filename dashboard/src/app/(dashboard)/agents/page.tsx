@@ -1,13 +1,47 @@
 "use client";
 
+import dynamic from "next/dynamic";
+
 import { PageHeader } from "@/components/ui/PageHeader";
 import { HairlineCard } from "@/components/ui/HairlineCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { AgentsLiveStrip } from "@/components/pages/agents/AgentsLiveStrip";
-import { PipelineFlow } from "@/components/pages/agents/PipelineFlow";
-import { AgentsGrid } from "@/components/pages/agents/AgentsGrid";
-import { LlmAnalystSection } from "@/components/pages/agents/LlmAnalystSection";
-import { RiskGovernorSection } from "@/components/pages/agents/RiskGovernorSection";
+import { SkeletonChart } from "@/components/ui/Skeleton";
+
+const AgentsLiveStrip = dynamic(
+  () =>
+    import("@/components/pages/agents/AgentsLiveStrip").then((m) => ({
+      default: m.AgentsLiveStrip,
+    })),
+  { ssr: false, loading: () => <SkeletonChart height={120} /> },
+);
+const PipelineFlow = dynamic(
+  () =>
+    import("@/components/pages/agents/PipelineFlow").then((m) => ({
+      default: m.PipelineFlow,
+    })),
+  { ssr: false, loading: () => <SkeletonChart height={160} /> },
+);
+const AgentsGrid = dynamic(
+  () =>
+    import("@/components/pages/agents/AgentsGrid").then((m) => ({
+      default: m.AgentsGrid,
+    })),
+  { ssr: false, loading: () => <SkeletonChart height={260} /> },
+);
+const LlmAnalystSection = dynamic(
+  () =>
+    import("@/components/pages/agents/LlmAnalystSection").then((m) => ({
+      default: m.LlmAnalystSection,
+    })),
+  { ssr: false, loading: () => <SkeletonChart height={200} /> },
+);
+const RiskGovernorSection = dynamic(
+  () =>
+    import("@/components/pages/agents/RiskGovernorSection").then((m) => ({
+      default: m.RiskGovernorSection,
+    })),
+  { ssr: false, loading: () => <SkeletonChart height={200} /> },
+);
 
 export default function AgentsPage() {
   return (

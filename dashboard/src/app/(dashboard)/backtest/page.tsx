@@ -1,20 +1,59 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useBacktestReport } from "@/lib/hooks";
-import { BacktestCombinedStrip } from "@/components/pages/backtest/BacktestCombinedStrip";
-import { BacktestExportBar } from "@/components/pages/backtest/BacktestExportBar";
-import { PerPairTable } from "@/components/pages/backtest/PerPairTable";
-import { BacktestConfigBlock } from "@/components/pages/backtest/BacktestConfigBlock";
-import { ValidationSplit } from "@/components/pages/backtest/ValidationSplit";
-import { SnapshotBanner } from "@/components/pages/backtest/SnapshotBanner";
 import { HairlineCard } from "@/components/ui/HairlineCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { SkeletonText } from "@/components/ui/Skeleton";
+import { SkeletonChart, SkeletonText } from "@/components/ui/Skeleton";
 import { fmtTimestamp } from "@/lib/format";
+
+const BacktestCombinedStrip = dynamic(
+  () =>
+    import("@/components/pages/backtest/BacktestCombinedStrip").then((m) => ({
+      default: m.BacktestCombinedStrip,
+    })),
+  { ssr: false, loading: () => <SkeletonChart height={140} /> },
+);
+const BacktestExportBar = dynamic(
+  () =>
+    import("@/components/pages/backtest/BacktestExportBar").then((m) => ({
+      default: m.BacktestExportBar,
+    })),
+  { ssr: false, loading: () => null },
+);
+const PerPairTable = dynamic(
+  () =>
+    import("@/components/pages/backtest/PerPairTable").then((m) => ({
+      default: m.PerPairTable,
+    })),
+  { ssr: false, loading: () => <SkeletonChart height={180} /> },
+);
+const BacktestConfigBlock = dynamic(
+  () =>
+    import("@/components/pages/backtest/BacktestConfigBlock").then((m) => ({
+      default: m.BacktestConfigBlock,
+    })),
+  { ssr: false, loading: () => <SkeletonChart height={160} /> },
+);
+const ValidationSplit = dynamic(
+  () =>
+    import("@/components/pages/backtest/ValidationSplit").then((m) => ({
+      default: m.ValidationSplit,
+    })),
+  { ssr: false, loading: () => <SkeletonChart height={200} /> },
+);
+const SnapshotBanner = dynamic(
+  () =>
+    import("@/components/pages/backtest/SnapshotBanner").then((m) => ({
+      default: m.SnapshotBanner,
+    })),
+  { ssr: false, loading: () => null },
+);
 
 function SnapshotBannerSlot({
   currentGeneratedAt,

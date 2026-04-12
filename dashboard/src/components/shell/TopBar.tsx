@@ -1,13 +1,16 @@
 "use client";
 
-import { Menu, Moon, Sun } from "lucide-react";
+import { BookOpen, Menu, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useSyncExternalStore } from "react";
 
+import { setHowItWorksOpen } from "@/components/how-it-works/how-it-works-store";
 import { useKillCriteria, useRegime } from "@/lib/hooks";
 import { setMobileNavOpen } from "@/lib/mobile-nav";
 import { toggleTimezoneMode, useTimezoneMode } from "@/lib/timezone";
 import { StatusPill } from "@/components/ui/StatusPill";
+import { CostWidget } from "./CostWidget";
+import { DemoModeToggle } from "./DemoModeToggle";
 import { LastUpdated } from "./LastUpdated";
 import { StatusIndicator } from "./StatusIndicator";
 
@@ -97,6 +100,17 @@ export function TopBar() {
           className="flex items-center justify-center w-7 h-7 rounded-md border border-[color:var(--color-rule)] text-[color:var(--color-ink-soft)] hover:bg-[color:var(--color-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--color-accent)]"
         >
           {mounted && isDark ? <Sun size={14} strokeWidth={1.75} /> : <Moon size={14} strokeWidth={1.75} />}
+        </button>
+        <DemoModeToggle />
+        <CostWidget />
+        <button
+          type="button"
+          onClick={() => setHowItWorksOpen(true)}
+          aria-label="How Praxis Agent works"
+          title="How it works"
+          className="hidden md:flex items-center justify-center w-7 h-7 rounded-md border border-[color:var(--color-rule)] text-[color:var(--color-ink-soft)] hover:bg-[color:var(--color-hover)] hover:text-[color:var(--color-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--color-accent)] cursor-pointer"
+        >
+          <BookOpen size={14} strokeWidth={1.75} />
         </button>
         <a
           href="https://github.com/javierdejesusda/praxis-agent"

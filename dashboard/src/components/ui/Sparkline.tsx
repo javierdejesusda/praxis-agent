@@ -1,16 +1,20 @@
-export function Sparkline({
-  data,
-  width = 96,
-  height = 24,
-  tone = "auto",
-  strokeWidth = 1,
-}: {
+import {memo} from "react";
+
+type SparklineProps = {
   data: number[];
   width?: number;
   height?: number;
   tone?: "gain" | "loss" | "neutral" | "auto";
   strokeWidth?: number;
-}) {
+};
+
+function SparklineBase({
+  data,
+  width = 96,
+  height = 24,
+  tone = "auto",
+  strokeWidth = 1,
+}: SparklineProps) {
   if (data.length < 2) {
     return <span className="text-[color:var(--color-muted-soft)] text-[10px]">—</span>;
   }
@@ -54,3 +58,5 @@ export function Sparkline({
     </svg>
   );
 }
+
+export const Sparkline = memo(SparklineBase);

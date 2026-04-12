@@ -1,11 +1,40 @@
 "use client";
+
+import dynamic from "next/dynamic";
+
 import { PageHeader } from "@/components/ui/PageHeader";
 import { HairlineCard } from "@/components/ui/HairlineCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { SignalGrid } from "@/components/pages/signals/SignalGrid";
-import { AnalystBlock } from "@/components/pages/signals/AnalystBlock";
-import { RiskDecisionBlock } from "@/components/pages/signals/RiskDecisionBlock";
-import { PrismRow } from "@/components/pages/signals/PrismRow";
+import { SkeletonChart } from "@/components/ui/Skeleton";
+
+const SignalGrid = dynamic(
+  () =>
+    import("@/components/pages/signals/SignalGrid").then((m) => ({
+      default: m.SignalGrid,
+    })),
+  { ssr: false, loading: () => <SkeletonChart height={240} /> },
+);
+const AnalystBlock = dynamic(
+  () =>
+    import("@/components/pages/signals/AnalystBlock").then((m) => ({
+      default: m.AnalystBlock,
+    })),
+  { ssr: false, loading: () => <SkeletonChart height={220} /> },
+);
+const RiskDecisionBlock = dynamic(
+  () =>
+    import("@/components/pages/signals/RiskDecisionBlock").then((m) => ({
+      default: m.RiskDecisionBlock,
+    })),
+  { ssr: false, loading: () => <SkeletonChart height={220} /> },
+);
+const PrismRow = dynamic(
+  () =>
+    import("@/components/pages/signals/PrismRow").then((m) => ({
+      default: m.PrismRow,
+    })),
+  { ssr: false, loading: () => <SkeletonChart height={160} /> },
+);
 
 export default function SignalsPage() {
   return (

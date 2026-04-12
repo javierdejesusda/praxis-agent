@@ -1,13 +1,13 @@
 "use client";
 
-import { usePrism } from "@/lib/hooks";
+import { usePrism, useRegime } from "@/lib/hooks";
 import { HairlineCard } from "@/components/ui/HairlineCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { NumericValue } from "@/components/ui/NumericValue";
-import { KeyValueGrid } from "@/components/ui/KeyValueGrid";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton, SkeletonText } from "@/components/ui/Skeleton";
+import { IndicatorCell, type IndicatorTone } from "./IndicatorCell";
 
 function ScoreBar({
   label,
@@ -41,8 +41,47 @@ function ScoreBar({
   );
 }
 
+function rsiTone(rsi: number | undefined): IndicatorTone {
+  if (rsi == null || !Number.isFinite(rsi)) return "neutral";
+  if (rsi >= 55) return "bullish";
+  if (rsi <= 45) return "bearish";
+  return "neutral";
+}
+
+function adxTone(adx: number | undefined): IndicatorTone {
+  if (adx == null || !Number.isFinite(adx) || adx <= 0) return "neutral";
+  if (adx >= 25) return "bullish";
+  if (adx < 20) return "bearish";
+  return "neutral";
+}
+
+function regimeTone(regime: string | undefined): IndicatorTone {
+  const r = (regime || "").toLowerCase();
+  if (r === "trending" || r === "momentum" || r === "trend") return "bullish";
+  if (r === "ranging" || r === "mean_reversion" || r === "mean-reversion")
+    return "bearish";
+  return "neutral";
+}
+
+function volTone(daily: number | undefined): IndicatorTone {
+  if (daily == null || !Number.isFinite(daily) || daily <= 0) return "neutral";
+  if (daily >= 0.04) return "bearish";
+  if (daily <= 0.02) return "bullish";
+  return "neutral";
+}
+
+function regimeLabel(regime: string | undefined): string {
+  const r = (regime || "").toLowerCase();
+  if (!r || r === "unknown") return "—";
+  if (r === "trending" || r === "momentum" || r === "trend") return "TREND";
+  if (r === "ranging" || r === "mean_reversion" || r === "mean-reversion")
+    return "RANGE";
+  return r.slice(0, 6).toUpperCase();
+}
+
 function PrismCard({ symbol }: { symbol: string }) {
   const { data: prism, isLoading } = usePrism(symbol);
+  const { data: regime } = useRegime();
 
   if (isLoading) {
     return (
@@ -101,120 +140,47 @@ function PrismCard({ symbol }: { symbol: string }) {
             <ScoreBar label="Bull" score={sig.bullish_score} variant="gain" />
             <ScoreBar label="Bear" score={sig.bearish_score} variant="loss" />
           </div>
-          <KeyValueGrid
-            items={[
-              {
-                k: "RSI",
-                v: (
-                  <NumericValue
-                    value={sig.indicators?.rsi ?? 0}
-                    kind="ratio"
-                    decimals={2}
-                  />
-                ),
-              },
-              {
-                k: "MACD",
-                v: (
-                  <NumericValue
-                    value={sig.indicators?.macd ?? 0}
-                    kind="ratio"
-                    decimals={2}
-                  />
-                ),
-              },
-              {
-                k: "MACD Hist",
-                v: (
-                  <NumericValue
-                    value={sig.indicators?.macd_hist ?? 0}
-                    kind="ratio"
-                    decimals={2}
-                  />
-                ),
-              },
-              {
-                k: "BB Upper",
-                v: (
-                  <NumericValue
-                    value={sig.indicators?.bb_upper ?? 0}
-                    kind="ratio"
-                    decimals={2}
-                  />
-                ),
-              },
-              {
-                k: "BB Lower",
-                v: (
-                  <NumericValue
-                    value={sig.indicators?.bb_lower ?? 0}
-                    kind="ratio"
-                    decimals={2}
-                  />
-                ),
-              },
-              {
-                k: "Daily Vol",
-                v: (
-                  <NumericValue
-                    value={risk?.daily_volatility ?? 0}
-                    kind="ratio"
-                    decimals={2}
-                  />
-                ),
-              },
-              {
-                k: "Annual Vol",
-                v: (
-                  <NumericValue
-                    value={risk?.annual_volatility ?? 0}
-                    kind="ratio"
-                    decimals={2}
-                  />
-                ),
-              },
-              {
-                k: "Sharpe",
-                v: (
-                  <NumericValue
-                    value={risk?.sharpe_ratio ?? 0}
-                    kind="ratio"
-                    decimals={2}
-                  />
-                ),
-              },
-              {
-                k: "Current DD",
-                v: (
-                  <NumericValue
-                    value={risk?.current_drawdown ?? 0}
-                    kind="ratio"
-                    decimals={2}
-                  />
-                ),
-              },
-              {
-                k: "Max DD",
-                v: (
-                  <NumericValue
-                    value={risk?.max_drawdown ?? 0}
-                    kind="ratio"
-                    decimals={2}
-                  />
-                ),
-              },
-              {
-                k: "Positive Days %",
-                v: (
-                  <NumericValue
-                    value={risk?.positive_days_pct ?? 0}
-                    kind="ratio"
-                    decimals={2}
-                  />
-                ),
-              },
-            ]}
-          />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <IndicatorCell
+              label="Regime"
+              value={null}
+              badgeText={regimeLabel(regime?.regime)}
+              tone={regimeTone(regime?.regime)}
+            />
+            <IndicatorCell
+              label="ADX 14"
+              value={regime?.adx}
+              kind="ratio"
+              decimals={1}
+              tone={adxTone(regime?.adx)}
+            />
+            <IndicatorCell
+              label="RSI 14"
+              value={sig.indicators?.rsi}
+              kind="ratio"
+              decimals={1}
+              tone={rsiTone(sig.indicators?.rsi)}
+            />
+            <IndicatorCell
+              label="Spread bps"
+              value={sig.indicators?.spread_bps}
+              kind="bps"
+              tone="neutral"
+            />
+            <IndicatorCell
+              label="Daily Vol"
+              value={risk?.daily_volatility}
+              kind="ratio"
+              decimals={3}
+              tone={volTone(risk?.daily_volatility)}
+            />
+            <IndicatorCell
+              label="Cost bps"
+              value={sig.indicators?.cost_bps}
+              kind="bps"
+              tone="neutral"
+            />
+          </div>
         </div>
       )}
     </HairlineCard>

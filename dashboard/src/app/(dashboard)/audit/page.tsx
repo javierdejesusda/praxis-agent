@@ -1,8 +1,8 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import {useMemo, useState} from "react";
 
-import {ArtifactsTable} from "@/components/audit/ArtifactsTable";
 import {
   AuditFilterBar,
   EMPTY_AUDIT_FILTERS,
@@ -11,7 +11,23 @@ import {
 import {HairlineCard} from "@/components/ui/HairlineCard";
 import {PageHeader} from "@/components/ui/PageHeader";
 import {SectionHeader} from "@/components/ui/SectionHeader";
+import {SkeletonChart} from "@/components/ui/Skeleton";
 import {useArtifacts} from "@/lib/hooks";
+
+const ArtifactsTable = dynamic(
+  () =>
+    import("@/components/audit/ArtifactsTable").then((m) => ({
+      default: m.ArtifactsTable,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="p-5">
+        <SkeletonChart height={260} />
+      </div>
+    ),
+  },
+);
 
 export default function AuditPage() {
   const {data, isLoading} = useArtifacts(200);

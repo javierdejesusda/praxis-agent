@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
-import { ArrowRight, ExternalLink } from "lucide-react";
+import { ArrowRight, ExternalLink, Play } from "lucide-react";
 
 import { useArtifacts, useKillCriteria, useOnchainStatus } from "@/lib/hooks";
 import type {
@@ -425,9 +425,11 @@ function WalkthroughSkeleton() {
 function Header({
   timestamp,
   pair,
+  rightSlot,
 }: {
   timestamp?: string;
   pair?: string;
+  rightSlot?: React.ReactNode;
 }) {
   return (
     <div className="flex items-center justify-between gap-3 pb-3 mb-3.5 border-b border-[color:var(--color-rule)]">
@@ -457,15 +459,48 @@ function Header({
           </span>
         )}
       </div>
-      {timestamp && (
-        <span
-          className="num text-[10.5px] tabular-nums"
-          style={{ color: "var(--color-muted)" }}
-        >
-          {fmtRelative(timestamp)}
-        </span>
-      )}
+      <div className="flex items-center gap-3">
+        {timestamp && (
+          <span
+            className="num text-[10.5px] tabular-nums"
+            style={{ color: "var(--color-muted)" }}
+          >
+            {fmtRelative(timestamp)}
+          </span>
+        )}
+        {rightSlot}
+      </div>
     </div>
+  );
+}
+
+function ReplayButton({
+  onClick,
+  playing,
+  disabled,
+}: {
+  onClick: () => void;
+  playing: boolean;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled || playing}
+      aria-label="Replay last decision"
+      className="cursor-pointer inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] transition-[background-color,border-color,color,transform] duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)] hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-accent)] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+      style={{
+        borderColor: playing
+          ? "var(--color-accent)"
+          : "var(--color-rule-strong)",
+        color: playing ? "var(--color-accent)" : "var(--color-ink-soft)",
+        background: "transparent",
+      }}
+    >
+      <Play size={11} strokeWidth={2.4} />
+      {playing ? "Replaying" : "Replay last decision"}
+    </button>
   );
 }
 
@@ -474,6 +509,18 @@ export default function DecisionWalkthrough() {
   const { data: kills } = useKillCriteria();
   const { data: onchain } = useOnchainStatus();
   const reduceMotion = useReducedMotion();
+
+  const [replayKey, setReplayKey] = useState(0);
+  const [activeStep, setActiveStep] = useState<number | null>(null);
+  const [replaying, setReplaying] = useState(false);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach((t) => clearTimeout(t));
+      timersRef.current = [];
+    };
+  }, []);
 
   const artifact = useMemo(() => pickWalkthroughArtifact(artifacts), [artifacts]);
 
@@ -484,6 +531,39 @@ export default function DecisionWalkthrough() {
     );
     return match ?? null;
   }, [artifact, onchain]);
+
+  const handleReplay = useCallback(() => {
+    timersRef.current.forEach((t) => clearTimeout(t));
+    timersRef.current = [];
+
+    if (reduceMotion) {
+      setReplayKey((k) => k + 1);
+      setActiveStep(null);
+      setReplaying(false);
+      return;
+    }
+
+    setReplayKey((k) => k + 1);
+    setReplaying(true);
+    setActiveStep(0);
+
+    const stepCount = 5;
+    const stagger = 300;
+    for (let i = 1; i < stepCount; i += 1) {
+      timersRef.current.push(
+        setTimeout(() => setActiveStep(i), i * stagger),
+      );
+    }
+    timersRef.current.push(
+      setTimeout(
+        () => {
+          setActiveStep(null);
+          setReplaying(false);
+        },
+        stepCount * stagger + 200,
+      ),
+    );
+  }, [reduceMotion]);
 
   const loading = artifactsLoading && !artifact;
 
@@ -528,11 +608,16 @@ export default function DecisionWalkthrough() {
   const itemVariants: Variants = reduceMotion
     ? { hidden: { opacity: 1, y: 0 }, show: { opacity: 1, y: 0 } }
     : {
-        hidden: { opacity: 0, y: 8 },
+        hidden: { opacity: 0, y: 8, scale: 1 },
         show: {
           opacity: 1,
           y: 0,
-          transition: { duration: 0.32, ease: [0.25, 0.1, 0.25, 1] },
+          scale: [1, 1.02, 1],
+          transition: {
+            duration: 0.32,
+            ease: [0.25, 0.1, 0.25, 1],
+            scale: { duration: 0.32, times: [0, 0.6, 1] },
+          },
         },
       };
 
@@ -582,31 +667,70 @@ export default function DecisionWalkthrough() {
 
   return (
     <HairlineCard>
-      <Header timestamp={artifact.timestamp} pair={pair} />
+      <Header
+        timestamp={artifact.timestamp}
+        pair={pair}
+        rightSlot={
+          <ReplayButton
+            onClick={handleReplay}
+            playing={replaying}
+            disabled={!artifact}
+          />
+        }
+      />
       <motion.div
+        key={replayKey}
         variants={containerVariants}
         initial="hidden"
         animate="show"
         className="flex flex-col md:flex-row md:items-stretch gap-3 md:gap-0"
       >
-        {steps.map((step, i) => (
-          <div key={`wrap-${step.key}`} className="contents">
-            <motion.div
-              variants={itemVariants}
-              className="flex-1 min-w-0 flex items-stretch"
-            >
-              <Link
-                href={step.href}
-                prefetch={true}
-                aria-label={step.ariaLabel}
-                className="w-full min-w-0 flex items-stretch rounded-xl transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)] hover:-translate-y-px hover:shadow-[0_0_0_1px_var(--color-accent),0_6px_18px_rgba(0,0,0,0.05)] focus-visible:outline-none focus-visible:shadow-[0_0_0_2px_var(--color-accent)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+        {steps.map((step, i) => {
+          const isActive = activeStep === i;
+          const breath =
+            !reduceMotion && isActive
+              ? { opacity: [0.95, 1, 0.95] }
+              : undefined;
+          return (
+            <div key={`wrap-${step.key}`} className="contents">
+              <motion.div
+                variants={itemVariants}
+                animate={breath}
+                transition={
+                  breath
+                    ? {
+                        opacity: {
+                          duration: 3,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                        },
+                      }
+                    : undefined
+                }
+                className="flex-1 min-w-0 flex items-stretch"
+                style={
+                  isActive
+                    ? {
+                        boxShadow:
+                          "0 0 0 2px var(--color-accent), 0 6px 18px rgba(0,0,0,0.08)",
+                        borderRadius: 12,
+                      }
+                    : undefined
+                }
               >
-                {step.node}
-              </Link>
-            </motion.div>
-            {i < steps.length - 1 && <StepDivider />}
-          </div>
-        ))}
+                <Link
+                  href={step.href}
+                  prefetch={true}
+                  aria-label={step.ariaLabel}
+                  className="w-full min-w-0 flex items-stretch rounded-xl transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)] hover:-translate-y-px hover:shadow-[0_0_0_1px_var(--color-accent),0_6px_18px_rgba(0,0,0,0.05)] focus-visible:outline-none focus-visible:shadow-[0_0_0_2px_var(--color-accent)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                >
+                  {step.node}
+                </Link>
+              </motion.div>
+              {i < steps.length - 1 && <StepDivider />}
+            </div>
+          );
+        })}
       </motion.div>
     </HairlineCard>
   );

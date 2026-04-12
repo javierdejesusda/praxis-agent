@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { ArrowUpRight, ArrowDownRight, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { useTrades } from "@/lib/hooks";
@@ -69,7 +69,7 @@ function TypeBadge({ isClose }: { isClose: boolean }) {
   );
 }
 
-export function TradesTable({ onSelect, selectedKey }: TradesTableProps) {
+function TradesTableImpl({ onSelect, selectedKey }: TradesTableProps) {
   const { data: trades, isLoading } = useTrades();
   const [pageIndex, setPageIndex] = useState(0);
   const tzMode = useTimezoneMode();
@@ -97,11 +97,12 @@ export function TradesTable({ onSelect, selectedKey }: TradesTableProps) {
               <th className="num">Price</th>
               <th>Status</th>
               <th>Hash</th>
+              <th aria-hidden="true" style={{ width: 28 }} />
             </tr>
           </thead>
           <tbody>
             {Array.from({ length: 6 }).map((_, i) => (
-              <SkeletonRow key={i} cols={8} />
+              <SkeletonRow key={i} cols={9} />
             ))}
           </tbody>
         </table>
@@ -135,6 +136,7 @@ export function TradesTable({ onSelect, selectedKey }: TradesTableProps) {
               <th className="num">Price</th>
               <th>Status</th>
               <th>Hash</th>
+              <th aria-hidden="true" style={{ width: 28 }} />
             </tr>
           </thead>
           <tbody>
@@ -184,12 +186,11 @@ export function TradesTable({ onSelect, selectedKey }: TradesTableProps) {
                     }
                   }}
                   tabIndex={0}
-                  role="button"
                   aria-label={`Open detail for ${pair} trade`}
-                  className="cursor-pointer outline-none focus-visible:ring-2"
+                  className="cursor-pointer outline-none focus-visible:ring-2 trade-row"
                   style={{
                     background: rowBg,
-                    transition: "background 150ms ease",
+                    transition: "background 150ms ease, box-shadow 150ms ease",
                   }}
                 >
                   <td style={{ borderLeft, paddingLeft: 12 }}>
@@ -257,12 +258,24 @@ export function TradesTable({ onSelect, selectedKey }: TradesTableProps) {
                       <span className="text-[color:var(--color-muted)]">{"\u2014"}</span>
                     )}
                   </td>
+                  <td
+                    aria-hidden="true"
+                    style={{ color: "var(--color-muted-soft)" }}
+                  >
+                    <ChevronRight size={14} strokeWidth={2} />
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
+      <style jsx>{`
+        .trade-row:hover {
+          background: var(--color-hover) !important;
+          box-shadow: inset 0 0 0 1px var(--color-rule-strong);
+        }
+      `}</style>
 
       {rows.length > PAGE_SIZE && (
         <div
@@ -340,3 +353,5 @@ export function TradesTable({ onSelect, selectedKey }: TradesTableProps) {
     </div>
   );
 }
+
+export const TradesTable = memo(TradesTableImpl);

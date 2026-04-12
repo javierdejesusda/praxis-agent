@@ -1,18 +1,64 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useState } from "react";
 
 import { PageHeader } from "@/components/ui/PageHeader";
 import { HairlineCard } from "@/components/ui/HairlineCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { PositionsTable } from "@/components/pages/positions/PositionsTable";
-import { EquityAreaChart } from "@/components/pages/positions/EquityAreaChart";
-import { DrawdownBar } from "@/components/pages/positions/DrawdownBar";
-import { TradesTable } from "@/components/pages/positions/TradesTable";
-import { TradeDetailDrawer } from "@/components/pages/positions/TradeDetailDrawer";
 import { SkeletonChart } from "@/components/ui/Skeleton";
 import type { Artifact } from "@/lib/api";
 import { useTrades } from "@/lib/hooks";
+
+const PositionsTable = dynamic(
+  () =>
+    import("@/components/pages/positions/PositionsTable").then((m) => ({
+      default: m.PositionsTable,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="p-5">
+        <SkeletonChart height={120} />
+      </div>
+    ),
+  },
+);
+const EquityAreaChart = dynamic(
+  () =>
+    import("@/components/pages/positions/EquityAreaChart").then((m) => ({
+      default: m.EquityAreaChart,
+    })),
+  { ssr: false, loading: () => <SkeletonChart height={220} /> },
+);
+const DrawdownBar = dynamic(
+  () =>
+    import("@/components/pages/positions/DrawdownBar").then((m) => ({
+      default: m.DrawdownBar,
+    })),
+  { ssr: false, loading: () => <SkeletonChart height={140} /> },
+);
+const TradesTable = dynamic(
+  () =>
+    import("@/components/pages/positions/TradesTable").then((m) => ({
+      default: m.TradesTable,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="p-5">
+        <SkeletonChart height={180} />
+      </div>
+    ),
+  },
+);
+const TradeDetailDrawer = dynamic(
+  () =>
+    import("@/components/pages/positions/TradeDetailDrawer").then((m) => ({
+      default: m.TradeDetailDrawer,
+    })),
+  { ssr: false, loading: () => null },
+);
 
 export default function PositionsPage() {
   const [selected, setSelected] = useState<Artifact | null>(null);

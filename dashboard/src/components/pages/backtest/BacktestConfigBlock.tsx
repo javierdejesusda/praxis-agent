@@ -1,12 +1,14 @@
 "use client";
 
+import { memo } from "react";
+
 import { KeyValueGrid } from "@/components/ui/KeyValueGrid";
 import { NumericValue } from "@/components/ui/NumericValue";
 import { SkeletonText } from "@/components/ui/Skeleton";
 import { fmtTimestamp } from "@/lib/format";
 import { useBacktestReport } from "@/lib/hooks";
 
-export function BacktestConfigBlock() {
+export const BacktestConfigBlock = memo(function BacktestConfigBlock() {
   const { data, isLoading } = useBacktestReport();
 
   if (isLoading) {
@@ -160,4 +162,4 @@ export function BacktestConfigBlock() {
       )}
     </div>
   );
-}
+});

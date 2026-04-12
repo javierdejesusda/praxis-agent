@@ -1,6 +1,6 @@
 "use client";
 
-import {useMemo, useRef, useState} from "react";
+import {useCallback, useMemo, useRef, useState} from "react";
 import {ExternalLink} from "lucide-react";
 import {useVirtualizer} from "@tanstack/react-virtual";
 
@@ -12,6 +12,8 @@ import {StatusPill, type PillTone} from "@/components/ui/StatusPill";
 import type {Attestation} from "@/lib/api";
 import {etherscanTx} from "@/lib/chain";
 import {formatTimestamp, useTimezoneMode} from "@/lib/timezone";
+
+import {AttestationReceiptModal} from "./AttestationReceiptModal";
 
 type KindFilter = "all" | "validation" | "reputation" | "trade_intent";
 
@@ -135,6 +137,7 @@ export function AttestationsTable({
 }: AttestationsTableProps) {
   const tzMode = useTimezoneMode();
   const [kind, setKind] = useState<KindFilter>("all");
+  const [selected, setSelected] = useState<Attestation | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const filtered = useMemo(
@@ -149,6 +152,16 @@ export function AttestationsTable({
     estimateSize: () => ROW_HEIGHT,
     overscan: 8,
   });
+
+  const handleRowKey = useCallback(
+    (e: React.KeyboardEvent<HTMLTableRowElement>, record: Attestation) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        setSelected(record);
+      }
+    },
+    [],
+  );
 
   return (
     <div>
@@ -203,7 +216,14 @@ export function AttestationsTable({
             <TableHeader />
             <tbody>
               {filtered.map((record) => (
-                <tr key={record.tx_hash}>
+                <tr
+                  key={record.tx_hash}
+                  tabIndex={0}
+                  aria-label={`Open attestation receipt for ${record.pair || record.kind}`}
+                  onClick={() => setSelected(record)}
+                  onKeyDown={(e) => handleRowKey(e, record)}
+                  className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-accent)] hover:bg-[color:var(--color-hover)] transition-colors duration-150"
+                >
                   <AttestationRowCells record={record} tzMode={tzMode} />
                 </tr>
               ))}
@@ -245,6 +265,11 @@ export function AttestationsTable({
                           key={record.tx_hash}
                           data-index={vItem.index}
                           ref={virtualizer.measureElement}
+                          tabIndex={0}
+                          aria-label={`Open attestation receipt for ${record.pair || record.kind}`}
+                          onClick={() => setSelected(record)}
+                          onKeyDown={(e) => handleRowKey(e, record)}
+                          className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-accent)] hover:bg-[color:var(--color-hover)] transition-colors duration-150"
                         >
                           <AttestationRowCells
                             record={record}
@@ -268,6 +293,11 @@ export function AttestationsTable({
           </table>
         </div>
       )}
+
+      <AttestationReceiptModal
+        record={selected}
+        onClose={() => setSelected(null)}
+      />
     </div>
   );
 }

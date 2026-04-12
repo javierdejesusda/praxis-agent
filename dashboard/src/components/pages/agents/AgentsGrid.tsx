@@ -1,5 +1,7 @@
 "use client";
 
+import { memo, useMemo } from "react";
+
 import { useLatestSignals } from "@/lib/hooks";
 import { AgentCard, type AgentInfo } from "./AgentCard";
 
@@ -54,39 +56,56 @@ const AGENTS: AgentInfo[] = [
   },
 ];
 
-export function AgentsGrid() {
+const AGENT_NAME_MAP: Record<string, string> = {
+  trend: "Trend",
+  volatility: "Volatility",
+  spread_cost: "Spread / Cost",
+  mean_reversion: "Mean Reversion",
+  momentum: "Momentum",
+  swing_structure: "Swing Structure",
+};
+
+function AgentsGridImpl() {
   const { data } = useLatestSignals();
-  const signals = data?.signals ?? [];
+  const signals = data?.signals;
+  const timestamp = data?.timestamp ?? "";
 
-  const agentNameMap: Record<string, string> = {
-    trend: "Trend",
-    volatility: "Volatility",
-    spread_cost: "Spread / Cost",
-    mean_reversion: "Mean Reversion",
-    momentum: "Momentum",
-    swing_structure: "Swing Structure",
-  };
-
-  function findSignal(agentName: string) {
-    return signals.find((s) => {
-      const mapped = agentNameMap[s.agent_name] || s.agent_name;
-      return mapped === agentName;
-    });
-  }
+  const byAgent = useMemo(() => {
+    const out: Record<
+      string,
+      { direction: string; confidence: number; decisionId: string }
+    > = {};
+    if (!signals) return out;
+    for (const s of signals) {
+      const mapped = AGENT_NAME_MAP[s.agent_name] || s.agent_name;
+      // Decision id per agent is a stable key derived from the cycle
+      // timestamp plus the agent name + confidence so that identical
+      // rebroadcasts don't retrigger the pulse but real updates do.
+      out[mapped] = {
+        direction: s.direction,
+        confidence: s.confidence,
+        decisionId: `${timestamp}|${mapped}|${s.direction}|${s.confidence}`,
+      };
+    }
+    return out;
+  }, [signals, timestamp]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
       {AGENTS.map((agent) => {
-        const sig = findSignal(agent.name);
+        const sig = byAgent[agent.name];
         return (
           <AgentCard
             key={agent.name}
             agent={agent}
             direction={sig?.direction}
             confidence={sig?.confidence}
+            decisionId={sig?.decisionId ?? null}
           />
         );
       })}
     </div>
   );
 }
+
+export const AgentsGrid = memo(AgentsGridImpl);

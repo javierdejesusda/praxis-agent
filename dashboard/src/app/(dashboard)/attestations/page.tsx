@@ -1,17 +1,37 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import {useMemo} from "react";
 
-import {AttestationsTable} from "@/components/attestations/AttestationsTable";
-import {AttestationsTrendline} from "@/components/attestations/AttestationsTrendline";
-import {HackathonVaultBadge} from "@/components/attestations/HackathonVaultBadge";
 import {HairlineCard} from "@/components/ui/HairlineCard";
 import {MetricCell} from "@/components/ui/MetricCell";
 import {NumericValue} from "@/components/ui/NumericValue";
 import {PageHeader} from "@/components/ui/PageHeader";
 import {SectionHeader} from "@/components/ui/SectionHeader";
-import {SkeletonMetric} from "@/components/ui/Skeleton";
+import {SkeletonChart, SkeletonMetric} from "@/components/ui/Skeleton";
 import {useAttestations, useOnchainStatus} from "@/lib/hooks";
+
+const AttestationsTable = dynamic(
+  () =>
+    import("@/components/attestations/AttestationsTable").then((m) => ({
+      default: m.AttestationsTable,
+    })),
+  {ssr: false, loading: () => <SkeletonChart height={240} />},
+);
+const AttestationsTrendline = dynamic(
+  () =>
+    import("@/components/attestations/AttestationsTrendline").then((m) => ({
+      default: m.AttestationsTrendline,
+    })),
+  {ssr: false, loading: () => <SkeletonChart height={180} />},
+);
+const HackathonVaultBadge = dynamic(
+  () =>
+    import("@/components/attestations/HackathonVaultBadge").then((m) => ({
+      default: m.HackathonVaultBadge,
+    })),
+  {ssr: false, loading: () => <SkeletonChart height={80} />},
+);
 
 type LegendItem = {
   label: string;

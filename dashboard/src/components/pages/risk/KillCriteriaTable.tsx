@@ -1,22 +1,36 @@
 "use client";
 
-import { useKillCriteria, usePortfolio } from "@/lib/hooks";
-import { NumericValue } from "@/components/ui/NumericValue";
-import { StatusPill } from "@/components/ui/StatusPill";
-import { Skeleton } from "@/components/ui/Skeleton";
+import {useState} from "react";
+import {AnimatePresence, motion} from "framer-motion";
+import {ChevronRight} from "lucide-react";
+
+import {NumericValue} from "@/components/ui/NumericValue";
+import {Skeleton} from "@/components/ui/Skeleton";
+import {StatusPill} from "@/components/ui/StatusPill";
+import {useKillCriteria, usePortfolio} from "@/lib/hooks";
 
 const STALE_DATA_SECONDS = 7200;
 const MAX_DAILY_LOSS_PCT = 0.03;
 const MAX_DRAWDOWN_PCT = 0.08;
 const MIN_SPREAD_BPS = 20;
-const MAX_CONSECUTIVE_LOSSES = 3;
 
-type Row = {
-  id: string;
+type GateId =
+  | "stale_data"
+  | "malformed_output"
+  | "ledger_mismatch"
+  | "spread_too_wide"
+  | "daily_loss_breached"
+  | "max_drawdown_breached"
+  | "kill_switch";
+
+type Gate = {
+  id: GateId;
   criterion: string;
   threshold: string;
   current: React.ReactNode;
   tripped: boolean;
+  explanation: string;
+  ratio: number | null;
 };
 
 function formatStaleWindow(seconds: number): string {
@@ -25,10 +39,44 @@ function formatStaleWindow(seconds: number): string {
   return `\u2264 ${seconds}s`;
 }
 
+function barTone(ratio: number | null, tripped: boolean): string {
+  if (tripped || (ratio !== null && ratio >= 1)) return "var(--color-loss)";
+  if (ratio !== null && ratio >= 0.7) return "var(--color-warn)";
+  return "var(--color-gain)";
+}
+
+function GateBar({
+  ratio,
+  tripped,
+}: {
+  ratio: number | null;
+  tripped: boolean;
+}) {
+  if (ratio === null && !tripped) return null;
+  const clamped = tripped ? 1 : Math.max(0, Math.min(1, ratio ?? 0));
+  const color = barTone(ratio, tripped);
+  return (
+    <div
+      className="relative w-full h-1.5 rounded-full overflow-hidden"
+      style={{background: "var(--color-rule)"}}
+      aria-hidden="true"
+    >
+      <motion.div
+        initial={{width: 0}}
+        animate={{width: `${clamped * 100}%`}}
+        transition={{duration: 0.3, ease: [0.22, 1, 0.36, 1]}}
+        className="absolute top-0 left-0 h-full"
+        style={{background: color}}
+      />
+    </div>
+  );
+}
+
 export function KillCriteriaTable() {
-  const { data: kill, isLoading: killLoading } = useKillCriteria();
-  const { data: portfolio, isLoading: portfolioLoading } = usePortfolio();
+  const {data: kill, isLoading: killLoading} = useKillCriteria();
+  const {data: portfolio, isLoading: portfolioLoading} = usePortfolio();
   const loading = killLoading || portfolioLoading;
+  const [expandedId, setExpandedId] = useState<GateId | null>(null);
 
   if (loading) {
     return (
@@ -39,7 +87,7 @@ export function KillCriteriaTable() {
         className="px-5 pb-4"
       >
         <div className="grid grid-cols-[1.3fr_1fr_1fr_auto] gap-x-6 gap-y-3 pt-3">
-          {Array.from({ length: 7 }).map((_, i) => (
+          {Array.from({length: 7}).map((_, i) => (
             <div key={i} className="contents">
               <Skeleton width="70%" height={12} />
               <Skeleton width="55%" height={12} />
@@ -56,14 +104,27 @@ export function KillCriteriaTable() {
     portfolio && portfolio.equity > 0
       ? portfolio.daily_pnl / portfolio.equity
       : null;
+  const dailyLossRatio =
+    dailyPnlRatio !== null && dailyPnlRatio < 0
+      ? Math.min(1, Math.abs(dailyPnlRatio) / MAX_DAILY_LOSS_PCT)
+      : dailyPnlRatio !== null
+        ? 0
+        : null;
+  const drawdownRatio =
+    portfolio !== undefined
+      ? Math.min(1, portfolio.drawdown_pct / MAX_DRAWDOWN_PCT)
+      : null;
 
-  const rows: Row[] = [
+  const gates: Gate[] = [
     {
       id: "stale_data",
       criterion: "Data Freshness",
       threshold: formatStaleWindow(STALE_DATA_SECONDS),
       current: "\u2014",
       tripped: Boolean(kill?.stale_data),
+      ratio: null,
+      explanation:
+        "Fails when the last market snapshot is older than 5 minutes. Stale quotes invalidate spread and volatility gates.",
     },
     {
       id: "malformed_output",
@@ -71,6 +132,9 @@ export function KillCriteriaTable() {
       threshold: "Valid schema",
       current: "\u2014",
       tripped: Boolean(kill?.malformed_output),
+      ratio: null,
+      explanation:
+        "Fails when the Kraken CLI returns output that cannot be parsed. Prevents executing on unverifiable responses.",
     },
     {
       id: "ledger_mismatch",
@@ -78,6 +142,9 @@ export function KillCriteriaTable() {
       threshold: "Internal \u2261 Exchange",
       current: "\u2014",
       tripped: Boolean(kill?.ledger_mismatch),
+      ratio: null,
+      explanation:
+        "Fails when the internal ledger diverges from exchange balances. Guards against silent fill or fee drift.",
     },
     {
       id: "spread_too_wide",
@@ -85,6 +152,9 @@ export function KillCriteriaTable() {
       threshold: `\u2264 ${MIN_SPREAD_BPS} bps`,
       current: "\u2014",
       tripped: Boolean(kill?.spread_too_wide),
+      ratio: null,
+      explanation:
+        "Fails when quoted spread exceeds 20 bps. Real Kraken round-trip cost makes wider spreads uneconomic versus expected edge.",
     },
     {
       id: "daily_loss_breached",
@@ -97,6 +167,9 @@ export function KillCriteriaTable() {
           "\u2014"
         ),
       tripped: Boolean(kill?.daily_loss_breached),
+      ratio: dailyLossRatio,
+      explanation:
+        "Fails when cumulative daily loss exceeds 3% of equity. Hard daily stop prevents tilt and compounding drawdowns.",
     },
     {
       id: "max_drawdown_breached",
@@ -109,6 +182,9 @@ export function KillCriteriaTable() {
           "\u2014"
         ),
       tripped: Boolean(kill?.max_drawdown_breached),
+      ratio: drawdownRatio,
+      explanation:
+        "Fails when peak-to-trough drawdown exceeds 8%. Session halts until operator review and recovery.",
     },
     {
       id: "kill_switch",
@@ -116,62 +192,99 @@ export function KillCriteriaTable() {
       threshold: "Manual override off",
       current: "\u2014",
       tripped: Boolean(kill?.kill_switch),
+      ratio: null,
+      explanation:
+        "Fails when an operator manually activates the kill switch. Immediate, unconditional halt of all execution.",
     },
   ];
 
-  void MAX_CONSECUTIVE_LOSSES;
+  const toggle = (id: GateId) =>
+    setExpandedId((prev) => (prev === id ? null : id));
 
   return (
     <div
       role="region"
       aria-label="Kill criteria status"
-      className="px-5 pb-4 overflow-x-auto"
+      className="px-5 pb-4 flex flex-col gap-1.5"
     >
-      <table className="w-full text-[13px]">
-        <thead>
-          <tr className="border-b border-[color:var(--color-rule-strong)]">
-            <th className="py-2 pr-4 text-left text-[10px] uppercase tracking-[0.08em] text-[color:var(--color-muted)] font-medium">
-              Criterion
-            </th>
-            <th className="py-2 px-4 text-left text-[10px] uppercase tracking-[0.08em] text-[color:var(--color-muted)] font-medium">
-              Threshold
-            </th>
-            <th className="py-2 px-4 text-right text-[10px] uppercase tracking-[0.08em] text-[color:var(--color-muted)] font-medium">
-              Current
-            </th>
-            <th className="py-2 pl-4 text-right text-[10px] uppercase tracking-[0.08em] text-[color:var(--color-muted)] font-medium">
-              Status
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr
-              key={r.id}
-              role="status"
-              aria-live="polite"
-              aria-label={`${r.criterion}: ${r.tripped ? "tripped" : "ok"}`}
-              className="border-b border-[color:var(--color-rule)] last:border-b-0"
+      <div className="grid grid-cols-[auto_1.4fr_1fr_1fr_auto] gap-x-4 py-2 border-b border-[color:var(--color-rule-strong)] text-[10px] uppercase tracking-[0.08em] text-[color:var(--color-muted)] font-medium">
+        <span />
+        <span>Criterion</span>
+        <span>Threshold</span>
+        <span className="text-right">Current</span>
+        <span className="text-right">Status</span>
+      </div>
+      {gates.map((g) => {
+        const isOpen = expandedId === g.id;
+        return (
+          <div
+            key={g.id}
+            className="border-b border-[color:var(--color-rule)] last:border-b-0"
+          >
+            <button
+              type="button"
+              onClick={() => toggle(g.id)}
+              aria-expanded={isOpen}
+              aria-controls={`gate-panel-${g.id}`}
+              aria-label={`${g.criterion}: ${g.tripped ? "tripped" : "ok"}. Expand details.`}
+              className="w-full grid grid-cols-[auto_1.4fr_1fr_1fr_auto] gap-x-4 items-center py-2 text-[13px] cursor-pointer text-left transition-colors duration-150 hover:bg-[color:var(--color-hover)] focus-visible:outline-none focus-visible:bg-[color:var(--color-hover)] rounded-md"
             >
-              <td className="py-2 pr-4 text-[color:var(--color-ink)]">
-                {r.criterion}
-              </td>
-              <td className="py-2 px-4 num text-[color:var(--color-ink-soft)]">
-                {r.threshold}
-              </td>
-              <td className="py-2 px-4 num text-right text-[color:var(--color-ink-soft)]">
-                {r.current}
-              </td>
-              <td className="py-2 pl-4 text-right">
+              <motion.span
+                animate={{rotate: isOpen ? 90 : 0}}
+                transition={{duration: 0.18, ease: [0.22, 1, 0.36, 1]}}
+                className="inline-flex items-center justify-center text-[color:var(--color-muted)]"
+                style={{width: 16}}
+                aria-hidden="true"
+              >
+                <ChevronRight size={14} strokeWidth={2} />
+              </motion.span>
+              <span className="text-[color:var(--color-ink)]">
+                {g.criterion}
+              </span>
+              <span className="num text-[color:var(--color-ink-soft)]">
+                {g.threshold}
+              </span>
+              <span className="num text-right text-[color:var(--color-ink-soft)]">
+                {g.current}
+              </span>
+              <span className="text-right">
                 <StatusPill
-                  tone={r.tripped ? "crit" : "ok"}
-                  label={r.tripped ? "TRIP" : "OK"}
+                  tone={g.tripped ? "crit" : "ok"}
+                  label={g.tripped ? "TRIP" : "OK"}
                 />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </span>
+            </button>
+            <AnimatePresence initial={false}>
+              {isOpen && (
+                <motion.div
+                  id={`gate-panel-${g.id}`}
+                  key="panel"
+                  initial={{height: 0, opacity: 0}}
+                  animate={{height: "auto", opacity: 1}}
+                  exit={{height: 0, opacity: 0}}
+                  transition={{duration: 0.22, ease: [0.22, 1, 0.36, 1]}}
+                  style={{overflow: "hidden"}}
+                >
+                  <div
+                    className="flex flex-col gap-2.5 px-6 py-3 mb-2 rounded-lg"
+                    style={{
+                      background: "var(--color-paper)",
+                      border: "1px solid var(--color-rule)",
+                    }}
+                  >
+                    {g.ratio !== null && (
+                      <GateBar ratio={g.ratio} tripped={g.tripped} />
+                    )}
+                    <p className="text-[12px] leading-relaxed text-[color:var(--color-ink-soft)]">
+                      {g.explanation}
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      })}
     </div>
   );
 }
