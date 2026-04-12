@@ -122,7 +122,7 @@ Realistic cost modeling is essential in cryptocurrency markets, where taker fees
 
 Figure~\ref{fig:architecture} presents the end-to-end architecture.
 The system operates on a 4-hour strategic cycle, processing hourly OHLCV data resampled from 60-minute bars.
-At each cycle, the pipeline executes sequentially: (1)~data ingestion and feature computation, (2)~regime classification, (3)~parallel signal generation by six independent agents, (4)~signal consensus, (5)~risk governor evaluation, and (6)~execution via next-bar fill.
+At each cycle, the pipeline executes sequentially: (1)~data ingestion and feature computation, (2)~regime classification, (3)~parallel signal generation by five independent directional agents, (4)~signal consensus, (5)~risk governor evaluation, and (6)~execution via next-bar fill.
 
 \begin{figure}[!t]
 \centering
