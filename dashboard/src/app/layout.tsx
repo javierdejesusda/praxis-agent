@@ -19,8 +19,21 @@ const plexSerif = IBM_Plex_Serif({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://praxis-agent.site"),
   title: "Praxis \u2014 Trading Operations",
   description: "Regime-adaptive trading agent with on-chain validation.",
+  openGraph: {
+    title: "Praxis \u2014 Trading Operations",
+    description: "Regime-adaptive trading agent with on-chain validation.",
+    url: "https://praxis-agent.site",
+    siteName: "Praxis",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Praxis \u2014 Trading Operations",
+    description: "Regime-adaptive trading agent with on-chain validation.",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
