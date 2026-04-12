@@ -10,6 +10,21 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { useOnchainStatus, useRegime, useStats } from "@/lib/hooks";
 
 const LIVE_URL = "https://praxis-agent.site";
+const REPO_URL = "https://github.com/javierdejesusda/praxis-agent";
+
+function GithubMark({ size = 15 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.98 3.23 9.2 7.71 10.7.56.1.77-.25.77-.55 0-.27-.01-1.17-.02-2.12-3.14.68-3.8-1.34-3.8-1.34-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.69.08-.69 1.14.08 1.73 1.17 1.73 1.17 1 1.72 2.64 1.22 3.28.93.1-.73.39-1.22.71-1.5-2.5-.28-5.14-1.25-5.14-5.57 0-1.23.44-2.24 1.17-3.03-.12-.29-.51-1.44.11-3 0 0 .95-.3 3.12 1.15.9-.25 1.87-.37 2.83-.38.96.01 1.93.13 2.83.38 2.17-1.45 3.12-1.15 3.12-1.15.62 1.56.23 2.71.11 3 .73.79 1.17 1.8 1.17 3.03 0 4.33-2.65 5.29-5.17 5.57.41.35.77 1.04.77 2.1 0 1.52-.01 2.74-.01 3.11 0 .3.2.66.78.55 4.48-1.5 7.7-5.72 7.7-10.7C23.25 5.48 18.27.5 12 .5z" />
+    </svg>
+  );
+}
 
 function MetricCard({
   label,
@@ -133,6 +148,15 @@ export default function HeroPage() {
           >
             See backtest
           </Link>
+          <a
+            href={REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[14px] font-medium border border-[color:var(--color-rule-strong)] text-[color:var(--color-ink)] hover:bg-[color:var(--color-hover)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--color-accent)] focus-visible:outline-offset-2"
+          >
+            <GithubMark size={15} />
+            View on GitHub
+          </a>
         </div>
       </motion.div>
 
