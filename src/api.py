@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from src.artifacts.hasher import canonical_json
-from src.config import ARTIFACTS_DIR, STATE_DIR
+from src.config import ARTIFACTS_DIR, RISK, STATE_DIR
 from src.execution.kraken_adapter import get_ohlc
 from src.features.fmp_prices import get_crypto_intraday, get_crypto_quote
 from src.features.prism import get_signals as prism_signals, get_risk_metrics as prism_risk
@@ -62,7 +62,11 @@ def _load_artifacts(limit: int = 50) -> list[dict]:
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
+    return {
+        "status": "ok",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "execution_mode": RISK.execution_mode,
+    }
 
 
 @app.get("/api/portfolio")

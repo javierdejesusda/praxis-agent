@@ -5,7 +5,7 @@ import { useTheme } from "next-themes";
 import { useSyncExternalStore } from "react";
 
 import { setHowItWorksOpen } from "@/components/how-it-works/how-it-works-store";
-import { useKillCriteria, useRegime } from "@/lib/hooks";
+import { useHealth, useKillCriteria, useRegime } from "@/lib/hooks";
 import { setMobileNavOpen } from "@/lib/mobile-nav";
 import { toggleTimezoneMode, useTimezoneMode } from "@/lib/timezone";
 import { StatusPill } from "@/components/ui/StatusPill";
@@ -34,8 +34,14 @@ function GithubMark({ size = 14 }: { size?: number }) {
 export function TopBar() {
   const { data: kill } = useKillCriteria();
   const { data: regime } = useRegime();
+  const { data: health } = useHealth();
   const { resolvedTheme, setTheme } = useTheme();
   const tzMode = useTimezoneMode();
+
+  const execMode = health?.execution_mode;
+  const modeLabel =
+    execMode === "live" ? "LIVE" : execMode === "paper" ? "PAPER" : null;
+  const modeTone: "ok" | "info" = execMode === "live" ? "ok" : "info";
 
   const mounted = useSyncExternalStore(EMPTY, getTrue, getFalse);
 
@@ -79,9 +85,11 @@ export function TopBar() {
           <StatusIndicator tone={killTone} label={killLabel} />
         </div>
         <StatusPill tone="neutral" label={regime?.regime?.toUpperCase() || "UNKNOWN"} />
-        <div className="hidden sm:block">
-          <StatusPill tone="info" label="PAPER" />
-        </div>
+        {modeLabel && (
+          <div className="hidden sm:block">
+            <StatusPill tone={modeTone} label={modeLabel} />
+          </div>
+        )}
         <button
           type="button"
           onClick={toggleTimezoneMode}

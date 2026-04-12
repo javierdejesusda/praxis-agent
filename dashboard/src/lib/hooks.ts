@@ -35,6 +35,19 @@ async function numericFetcher<T>(url: string): Promise<T> {
 const rawFetcher = <T>(url: string): Promise<T> =>
   fetch(url).then((r) => r.json());
 
+export type HealthPayload = {
+  status: string;
+  timestamp: string;
+  execution_mode?: "live" | "paper";
+};
+
+export function useHealth() {
+  return useSWR<HealthPayload>(`${API_BASE}/api/health`, rawFetcher, {
+    refreshInterval: 15000,
+    fallbackData: { status: "unknown", timestamp: "" },
+  });
+}
+
 export function usePortfolio() {
   return useSWR<Portfolio>(`${API_BASE}/api/portfolio`, numericFetcher, {
     refreshInterval: 5000,
