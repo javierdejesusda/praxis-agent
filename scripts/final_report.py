@@ -19,6 +19,7 @@ Usage:
 import argparse
 import asyncio
 import json
+import logging
 import math
 import sys
 from dataclasses import asdict
@@ -27,6 +28,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import numpy as np
 import pandas as pd
 
 from src.backtester import (
@@ -39,6 +41,194 @@ from src.config import RISK, STATE_DIR, STRATEGY
 
 OOS_SPLIT_DEFAULT = "2023-01-01"
 ESTIMATED_NUM_TRIALS = 3000  # Conservative estimate of total optimization trials run
+BARS_PER_YEAR_4H = 2190  # 24 / 4 * 365
+OOS_WINDOW_START = "2023-02-03"
+OOS_WINDOW_END = "2026-04-09"
+
+
+def _slice_window(df: pd.DataFrame, start, end) -> pd.DataFrame:
+    """Return rows of ``df`` within [start, end] (inclusive), if provided.
+
+    Args:
+        df: Source OHLCV DataFrame with a DatetimeIndex.
+        start: ISO date string or ``None`` for no lower bound.
+        end: ISO date string or ``None`` for no upper bound.
+
+    Returns:
+        A sliced DataFrame (possibly the original if both bounds are ``None``).
+    """
+    if start is None and end is None:
+        return df
+    mask = pd.Series(True, index=df.index)
+    if start is not None:
+        mask &= df.index >= pd.Timestamp(start, tz="UTC")
+    if end is not None:
+        mask &= df.index <= pd.Timestamp(end, tz="UTC")
+    return df[mask]
+
+
+def _equity_stats(equity: np.ndarray, bars_per_year: float = BARS_PER_YEAR_4H) -> dict:
+    """Compute return, annualized Sharpe, and max drawdown from an equity curve.
+
+    Args:
+        equity: 1-D array of equity values over time (first value is starting capital).
+        bars_per_year: Annualization factor for Sharpe (defaults to 4h bars).
+
+    Returns:
+        Dict with ``return_pct``, ``sharpe``, ``max_drawdown_pct`` and ``final_equity``.
+    """
+    if equity is None or len(equity) < 2:
+        return {
+            "return_pct": 0.0,
+            "sharpe": 0.0,
+            "max_drawdown_pct": 0.0,
+            "final_equity": float(equity[0]) if len(equity) else 0.0,
+        }
+    equity = np.asarray(equity, dtype=float)
+    rets = np.diff(equity) / equity[:-1]
+    rets = rets[np.isfinite(rets)]
+    sharpe = 0.0
+    if len(rets) > 1 and float(np.std(rets, ddof=1)) > 0:
+        sharpe = float(np.mean(rets) / np.std(rets, ddof=1) * math.sqrt(bars_per_year))
+    running_max = np.maximum.accumulate(equity)
+    drawdowns = (equity - running_max) / running_max
+    max_dd_pct = float(abs(drawdowns.min()) * 100.0) if len(drawdowns) else 0.0
+    return {
+        "return_pct": float((equity[-1] / equity[0] - 1.0) * 100.0),
+        "sharpe": sharpe,
+        "max_drawdown_pct": max_dd_pct,
+        "final_equity": float(equity[-1]),
+    }
+
+
+def baseline_buy_hold(
+    pair_frames: dict,
+    pair: str,
+    initial_equity: float = 10000.0,
+    oos_start: str | None = None,
+    oos_end: str | None = None,
+) -> dict:
+    """Buy-and-hold baseline for a single pair over the given window.
+
+    Args:
+        pair_frames: Mapping of pair symbol -> OHLCV DataFrame (DatetimeIndex).
+        pair: Pair to hold (e.g. ``BTCUSD``).
+        initial_equity: Starting capital.
+        oos_start: Optional ISO start date to slice the frame.
+        oos_end: Optional ISO end date to slice the frame.
+
+    Returns:
+        Dict with ``return_pct``, ``sharpe``, ``max_drawdown_pct``, ``final_equity``.
+    """
+    df = pair_frames.get(pair)
+    if df is None or len(df) < 2:
+        return {"return_pct": 0.0, "sharpe": 0.0, "max_drawdown_pct": 0.0,
+                "final_equity": initial_equity}
+    df = _slice_window(df, oos_start, oos_end)
+    if len(df) < 2:
+        return {"return_pct": 0.0, "sharpe": 0.0, "max_drawdown_pct": 0.0,
+                "final_equity": initial_equity}
+    closes = df["close"].to_numpy(dtype=float)
+    units = initial_equity / closes[0]
+    equity = units * closes
+    return _equity_stats(equity)
+
+
+def baseline_equal_weight(
+    pair_frames: dict,
+    initial_equity: float = 10000.0,
+    oos_start: str | None = None,
+    oos_end: str | None = None,
+) -> dict:
+    """No-rebalance 50/50 baseline across BTCUSD and ETHUSD (if both present).
+
+    Each leg is allocated half of ``initial_equity`` at the first common bar
+    and held to the end of the window. Missing legs fall back to buy-and-hold
+    on whichever pair is available.
+
+    Args:
+        pair_frames: Mapping of pair symbol -> OHLCV DataFrame (DatetimeIndex).
+        initial_equity: Starting capital split evenly across the legs.
+        oos_start: Optional ISO start date to slice the frames.
+        oos_end: Optional ISO end date to slice the frames.
+
+    Returns:
+        Dict with ``return_pct``, ``sharpe``, ``max_drawdown_pct``, ``final_equity``.
+    """
+    legs = [p for p in ("BTCUSD", "ETHUSD") if p in pair_frames]
+    if not legs:
+        return {"return_pct": 0.0, "sharpe": 0.0, "max_drawdown_pct": 0.0,
+                "final_equity": initial_equity}
+    sliced = {p: _slice_window(pair_frames[p], oos_start, oos_end) for p in legs}
+    sliced = {p: df for p, df in sliced.items() if len(df) >= 2}
+    if not sliced:
+        return {"return_pct": 0.0, "sharpe": 0.0, "max_drawdown_pct": 0.0,
+                "final_equity": initial_equity}
+    common_index = None
+    for df in sliced.values():
+        common_index = df.index if common_index is None else common_index.intersection(df.index)
+    if common_index is None or len(common_index) < 2:
+        return {"return_pct": 0.0, "sharpe": 0.0, "max_drawdown_pct": 0.0,
+                "final_equity": initial_equity}
+    per_leg_equity = initial_equity / len(sliced)
+    total_equity = np.zeros(len(common_index), dtype=float)
+    for df in sliced.values():
+        closes = df.loc[common_index, "close"].to_numpy(dtype=float)
+        units = per_leg_equity / closes[0]
+        total_equity += units * closes
+    return _equity_stats(total_equity)
+
+
+def baseline_ema_cross(
+    pair_frames: dict,
+    pair: str,
+    fast: int = 20,
+    slow: int = 50,
+    initial_equity: float = 10000.0,
+    oos_start: str | None = None,
+    oos_end: str | None = None,
+) -> dict:
+    """Long-only EMA-crossover sanity baseline (next-bar open, zero costs).
+
+    Goes long when the fast EMA is above the slow EMA, flat otherwise. Shorts
+    are disabled. Fills occur on the next bar's open. No transaction costs or
+    slippage are applied — this baseline is a signal-quality sanity check,
+    not a tradable benchmark.
+
+    Args:
+        pair_frames: Mapping of pair symbol -> OHLCV DataFrame (DatetimeIndex).
+        pair: Pair to trade (e.g. ``BTCUSD``).
+        fast: Fast EMA span.
+        slow: Slow EMA span.
+        initial_equity: Starting capital.
+        oos_start: Optional ISO start date to slice the frame.
+        oos_end: Optional ISO end date to slice the frame.
+
+    Returns:
+        Dict with ``return_pct``, ``sharpe``, ``max_drawdown_pct``, ``final_equity``.
+    """
+    df = pair_frames.get(pair)
+    if df is None or len(df) < slow + 2:
+        return {"return_pct": 0.0, "sharpe": 0.0, "max_drawdown_pct": 0.0,
+                "final_equity": initial_equity}
+    df = _slice_window(df, oos_start, oos_end)
+    if len(df) < slow + 2:
+        return {"return_pct": 0.0, "sharpe": 0.0, "max_drawdown_pct": 0.0,
+                "final_equity": initial_equity}
+    close = df["close"].astype(float)
+    open_ = df["open"].astype(float)
+    ema_fast = close.ewm(span=fast, adjust=False).mean()
+    ema_slow = close.ewm(span=slow, adjust=False).mean()
+    # Signal decided on bar i, executed on bar i+1 open -> held until bar i+2 open.
+    long_signal = (ema_fast > ema_slow).astype(int)
+    entry_open = open_.shift(-1)
+    exit_open = open_.shift(-2)
+    bar_returns = (exit_open / entry_open - 1.0).fillna(0.0)
+    strat_returns = (long_signal * bar_returns).to_numpy(dtype=float)
+    strat_returns = strat_returns[np.isfinite(strat_returns)]
+    equity = initial_equity * np.cumprod(1.0 + strat_returns)
+    equity = np.insert(equity, 0, initial_equity)
+    return _equity_stats(equity)
 
 
 def _extract_metrics(result: dict) -> dict:
@@ -155,10 +345,14 @@ async def main():
     parser.add_argument("--interval", type=int, default=240)
     parser.add_argument("--oos-split", default=OOS_SPLIT_DEFAULT,
                         help="ISO date for out-of-sample split")
+    parser.add_argument("--seed", type=int, default=42,
+                        help="Random seed for reproducibility (numpy).")
     args = parser.parse_args()
 
     interval = args.interval
     oos_split = args.oos_split
+    seed = args.seed
+    np.random.seed(seed)
     initial_equity = 10000.0
 
     print(f"\n{'='*72}")
@@ -222,6 +416,94 @@ async def main():
         oos_per_pair = _per_pair_metrics(oos_result, oos_frames)
         _print_metrics("Out-of-Sample", oos_metrics)
 
+    print(f"\n{'='*72}")
+    print("  BASELINE COMPARISONS")
+    print(f"{'='*72}")
+
+    def _compute_baselines(start: str | None, end: str | None) -> dict:
+        """Compute all four baselines over the given window."""
+        return {
+            "btc_buy_hold": baseline_buy_hold(
+                full_frames, "BTCUSD", initial_equity=initial_equity,
+                oos_start=start, oos_end=end),
+            "eth_buy_hold": baseline_buy_hold(
+                full_frames, "ETHUSD", initial_equity=initial_equity,
+                oos_start=start, oos_end=end),
+            "equal_weight_50_50": baseline_equal_weight(
+                full_frames, initial_equity=initial_equity,
+                oos_start=start, oos_end=end),
+            "ema_cross_btc": baseline_ema_cross(
+                full_frames, "BTCUSD", fast=20, slow=50,
+                initial_equity=initial_equity, oos_start=start, oos_end=end),
+        }
+
+    baselines_full = _compute_baselines(None, None)
+    baselines_oos = _compute_baselines(OOS_WINDOW_START, OOS_WINDOW_END)
+
+    def _print_baseline_block(label: str, baselines: dict) -> None:
+        print(f"\n  --- {label} ---")
+        print("  | Baseline           | Return      | Sharpe | Max DD   |")
+        print("  |--------------------|-------------|--------|----------|")
+        for name, b in baselines.items():
+            print(f"  | {name:<18} | {b['return_pct']:>+9.2f}% | {b['sharpe']:>6.3f} | {b['max_drawdown_pct']:>7.2f}% |")
+
+    _print_baseline_block("Full History", baselines_full)
+    _print_baseline_block(f"Out-of-Sample ({OOS_WINDOW_START} to {OOS_WINDOW_END})", baselines_oos)
+
+    new_metrics_available = False
+    jk_stat = None
+    jk_p = None
+    try:
+        from src.backtester import (
+            bootstrap_sharpe_ci,
+            jobson_korkie_test,
+            psr_trade_count,
+        )
+        if is_metrics is not None and oos_metrics is not None:
+            is_trade_returns = np.array(
+                [t["pnl_pct"] / 100 for t in is_result.get("trades", [])],
+                dtype=float,
+            )
+            oos_trade_returns = np.array(
+                [t["pnl_pct"] / 100 for t in oos_result.get("trades", [])],
+                dtype=float,
+            )
+            is_sharpe_observed = float(
+                is_metrics.get("sharpe_annualized") or is_metrics.get("sharpe") or 0.0
+            )
+            oos_sharpe_observed = float(
+                oos_metrics.get("sharpe_annualized") or oos_metrics.get("sharpe") or 0.0
+            )
+            is_lo, is_hi = bootstrap_sharpe_ci(
+                is_trade_returns, annualized_sharpe=is_sharpe_observed
+            )
+            oos_lo, oos_hi = bootstrap_sharpe_ci(
+                oos_trade_returns, annualized_sharpe=oos_sharpe_observed
+            )
+            is_result["sharpe_ci_lower"] = is_lo
+            is_result["sharpe_ci_upper"] = is_hi
+            oos_result["sharpe_ci_lower"] = oos_lo
+            oos_result["sharpe_ci_upper"] = oos_hi
+            is_result["psr_trade_count"] = psr_trade_count(is_trade_returns)
+            oos_result["psr_trade_count"] = psr_trade_count(oos_trade_returns)
+            jk_stat, jk_p = jobson_korkie_test(
+                is_trade_returns,
+                oos_trade_returns,
+                annualized_sharpe_a=is_sharpe_observed,
+                annualized_sharpe_b=oos_sharpe_observed,
+            )
+            is_metrics["sharpe_ci_lower"] = is_result["sharpe_ci_lower"]
+            is_metrics["sharpe_ci_upper"] = is_result["sharpe_ci_upper"]
+            is_metrics["psr_trade_count"] = is_result["psr_trade_count"]
+            oos_metrics["sharpe_ci_lower"] = oos_result["sharpe_ci_lower"]
+            oos_metrics["sharpe_ci_upper"] = oos_result["sharpe_ci_upper"]
+            oos_metrics["psr_trade_count"] = oos_result["psr_trade_count"]
+            new_metrics_available = True
+    except ImportError as e:
+        logging.warning(f"New metrics unavailable: {e}")
+    except Exception as e:  # noqa: BLE001
+        logging.warning(f"Failed to compute new metrics: {e}")
+
     recent_trades = [t for t in full_result.get("trades", [])
                      if t["timestamp"] >= "2024-01-01"]
     recent = None
@@ -245,6 +527,7 @@ async def main():
         "interval_minutes": interval,
         "initial_equity": initial_equity,
         "oos_split": oos_split,
+        "random_seed": seed,
         "config": _full_config(),
         "available": True,
         "combined": {
@@ -283,6 +566,9 @@ async def main():
             "portfolio_return_pct": is_metrics.get("agent_return_pct"),
             "cagr_pct": is_metrics.get("cagr_pct"),
             "sharpe": is_metrics.get("sharpe_annualized"),
+            "sharpe_ci_lower": is_metrics.get("sharpe_ci_lower"),
+            "sharpe_ci_upper": is_metrics.get("sharpe_ci_upper"),
+            "psr_trade_count": is_metrics.get("psr_trade_count"),
             "sortino": is_metrics.get("sortino_annualized"),
             "calmar": is_metrics.get("calmar_ratio"),
             "max_drawdown_pct": is_metrics.get("max_drawdown_pct"),
@@ -305,6 +591,9 @@ async def main():
             "portfolio_return_pct": oos_metrics.get("agent_return_pct"),
             "cagr_pct": oos_metrics.get("cagr_pct"),
             "sharpe": oos_metrics.get("sharpe_annualized"),
+            "sharpe_ci_lower": oos_metrics.get("sharpe_ci_lower"),
+            "sharpe_ci_upper": oos_metrics.get("sharpe_ci_upper"),
+            "psr_trade_count": oos_metrics.get("psr_trade_count"),
             "sortino": oos_metrics.get("sortino_annualized"),
             "calmar": oos_metrics.get("calmar_ratio"),
             "max_drawdown_pct": oos_metrics.get("max_drawdown_pct"),
@@ -316,6 +605,21 @@ async def main():
             "profit_factor": oos_metrics.get("profit_factor"),
             "expectancy_usd": oos_metrics.get("expectancy_usd"),
             "per_pair": oos_per_pair,
+        }
+
+    report["baselines"] = {
+        "full_history": baselines_full,
+        "out_of_sample": {
+            "window_start": OOS_WINDOW_START,
+            "window_end": OOS_WINDOW_END,
+            **baselines_oos,
+        },
+    }
+
+    if jk_stat is not None and jk_p is not None:
+        report["is_oos_jobson_korkie"] = {
+            "statistic": float(jk_stat),
+            "p_value": float(jk_p),
         }
 
     # Pre-compute features once for sensitivity analyses
@@ -398,6 +702,37 @@ async def main():
             print(f"\n  FRAGILE PARAMETERS: {', '.join(fragile_params)}")
         else:
             print(f"\n  No fragile parameters detected (all stable within ±10%)")
+
+        print(f"\n  --- Baselines (Full History) ---")
+        for name, b in baselines_full.items():
+            print(f"  {name:<20}: return={b['return_pct']:>+8.2f}%  "
+                  f"sharpe={b['sharpe']:>6.3f}  max_dd={b['max_drawdown_pct']:>6.2f}%")
+        print(f"\n  --- Baselines (OOS {OOS_WINDOW_START} to {OOS_WINDOW_END}) ---")
+        for name, b in baselines_oos.items():
+            print(f"  {name:<20}: return={b['return_pct']:>+8.2f}%  "
+                  f"sharpe={b['sharpe']:>6.3f}  max_dd={b['max_drawdown_pct']:>6.2f}%")
+
+        if new_metrics_available:
+            is_lo = is_metrics.get("sharpe_ci_lower")
+            is_hi = is_metrics.get("sharpe_ci_upper")
+            oos_lo = oos_metrics.get("sharpe_ci_lower")
+            oos_hi = oos_metrics.get("sharpe_ci_upper")
+            print(f"\n  --- Bootstrap 95% Sharpe CIs (trade returns) ---")
+            if is_lo is not None and is_hi is not None:
+                print(f"  IS  Sharpe CI:  [{is_lo:.3f}, {is_hi:.3f}]")
+            if oos_lo is not None and oos_hi is not None:
+                print(f"  OOS Sharpe CI:  [{oos_lo:.3f}, {oos_hi:.3f}]")
+            is_psr_tc = is_metrics.get("psr_trade_count")
+            oos_psr_tc = oos_metrics.get("psr_trade_count")
+            if is_psr_tc is not None:
+                print(f"  IS  PSR (trade-count):  {float(is_psr_tc):.4f}")
+            if oos_psr_tc is not None:
+                print(f"  OOS PSR (trade-count):  {float(oos_psr_tc):.4f}")
+            if jk_stat is not None and jk_p is not None:
+                print(f"  Jobson-Korkie IS vs OOS: z={float(jk_stat):.3f}  "
+                      f"p-value={float(jk_p):.4f}")
+        else:
+            print(f"\n  (New statistical metrics unavailable — awaiting backtester update.)")
         print(f"{'='*72}")
 
 

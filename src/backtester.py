@@ -32,7 +32,6 @@ from src.agents.risk_governor import evaluate_risk
 from src.agents.signals import (
     mean_reversion_signal,
     momentum_signal,
-    spread_cost_signal,
     swing_structure_signal,
     trend_signal,
     volatility_signal,
@@ -40,7 +39,7 @@ from src.agents.signals import (
 from src.config import RISK, STRATEGY
 from src.execution.kraken_adapter import KRAKEN_TAKER_FEE
 from src.features.engine import compute_features_bulk, features_at
-from src.models import Direction, Portfolio, SignalReport
+from src.models import ClosedTrade, Direction, Portfolio, SignalReport
 
 logger = logging.getLogger(__name__)
 
@@ -50,16 +49,41 @@ ENTRY_SLIPPAGE_BPS = TYPICAL_SPREAD_BPS / 2.0
 EXIT_SLIPPAGE_BPS = TYPICAL_SPREAD_BPS / 2.0
 BASELINE_ATR_PCT = 0.025  # 2.5% — median BTC ATR/price ratio for vol-scaling
 
+RANDOM_SEED = 42
+BARS_PER_YEAR_4H = 2190  # 365.25 * 24 / 4 ≈ 2191.5; rounded to 2190 for annualization
 
-def _run_signals(features):
-    """Run all 6 deterministic signal agents."""
+
+_SIGNAL_FUNCS = {
+    "trend": trend_signal,
+    "volatility": volatility_signal,
+    "mean_reversion": mean_reversion_signal,
+    "momentum": momentum_signal,
+    "swing_structure": swing_structure_signal,
+}
+VALID_AGENT_NAMES = frozenset(_SIGNAL_FUNCS.keys())
+
+
+def _run_signals(features, enabled_agents: Optional[set[str]] = None):
+    """Run deterministic signal agents, optionally restricted to a subset.
+
+    Args:
+        features: ``Features`` object with precomputed indicators.
+        enabled_agents: Optional set of agent names to run. When ``None``
+            (default), all six agents execute in their canonical order.
+            When provided, only agents whose name appears in the set are
+            invoked. Valid names are ``VALID_AGENT_NAMES``. Unknown names
+            are silently ignored. This hook exists so ablation studies can
+            disable individual agents without touching the orchestrator.
+
+    Returns:
+        List of ``SignalReport`` objects in the canonical agent order.
+    """
+    if enabled_agents is None:
+        return [fn(features) for fn in _SIGNAL_FUNCS.values()]
     return [
-        trend_signal(features),
-        volatility_signal(features),
-        spread_cost_signal(features),
-        mean_reversion_signal(features),
-        momentum_signal(features),
-        swing_structure_signal(features),
+        fn(features)
+        for name, fn in _SIGNAL_FUNCS.items()
+        if name in enabled_agents
     ]
 
 
@@ -205,6 +229,7 @@ def backtest_portfolio(
     lock_value_pct: float = 0.0065,
     partial_tp_pct: float = 0.0,  # Fraction of position to close at atr_target (0=disabled, 0.5=half)
     precomputed_features: Optional[dict[str, pd.DataFrame]] = None,
+    enabled_agents: Optional[set[str]] = None,
     num_trials: int = 1,
     verbose: bool = True,
 ) -> dict:
@@ -497,6 +522,14 @@ def backtest_portfolio(
                         portfolio.consecutive_losses = 0
                         portfolio.total_wins += 1
 
+                    portfolio.closed_trades.append(
+                        ClosedTrade(
+                            pair=pair,
+                            pnl_pct=float(pnl_pct),
+                            is_win=pnl_usd > 0,
+                        )
+                    )
+
                     portfolio.peak_equity = max(portfolio.peak_equity, portfolio.equity)
                     portfolio.drawdown_pct = (
                         (portfolio.peak_equity - portfolio.equity) / portfolio.peak_equity
@@ -533,7 +566,7 @@ def backtest_portfolio(
             if pair in positions or pair in pending_entries:
                 continue
 
-            signals = _run_signals(features)
+            signals = _run_signals(features, enabled_agents=enabled_agents)
             if cross_pair_boost:
                 signals = _apply_cross_pair_boost_sync(
                     signals, pair, last_pair_signals
@@ -622,6 +655,13 @@ def backtest_portfolio(
         pnl_usd, pnl_pct = _simulate_close(position, close_price)
         portfolio.equity += pnl_usd
         portfolio.total_pnl += pnl_usd
+        portfolio.closed_trades.append(
+            ClosedTrade(
+                pair=pair,
+                pnl_pct=float(pnl_pct),
+                is_win=pnl_usd > 0,
+            )
+        )
         trade = {
             "bar": len(df) - 1,
             "timestamp": str(df.index[-1]),
@@ -672,6 +712,25 @@ def backtest_portfolio(
     metrics["alpha_pct"] = round(
         metrics["agent_return_pct"] - metrics["buy_hold_return_pct"], 3
     )
+
+    trade_returns_arr = np.array(
+        [t.get("pnl_pct", 0.0) / 100.0 for t in all_trades],
+        dtype=float,
+    )
+    sharpe_observed = float(metrics.get("sharpe_annualized", 0.0) or 0.0)
+    if trade_returns_arr.size >= 10:
+        ci_lower, ci_upper = bootstrap_sharpe_ci(
+            trade_returns_arr, annualized_sharpe=sharpe_observed
+        )
+        psr_tc = psr_trade_count(trade_returns_arr)
+    else:
+        ci_lower = float("nan")
+        ci_upper = float("nan")
+        psr_tc = float("nan")
+    metrics["psr_trade_count"] = psr_tc
+    metrics["sharpe_ci_lower"] = ci_lower
+    metrics["sharpe_ci_upper"] = ci_upper
+    metrics["bootstrap_seed"] = RANDOM_SEED
     return metrics
 
 
@@ -711,16 +770,28 @@ def _deflated_sharpe(sr_observed: float, num_trials: int,
 
 
 def _monte_carlo_pvalue(trade_pnls: list[float], observed_total: float,
-                        n_sims: int = 10000) -> float:
+                        n_sims: int = 10000,
+                        seed: int = RANDOM_SEED) -> float:
     """Monte Carlo permutation test.
 
     Shuffles trade PnLs and counts how often the shuffled total beats
-    the observed total. Returns p-value (lower = more significant).
+    the observed total.
+
+    Args:
+        trade_pnls: List of per-trade PnLs (any unit).
+        observed_total: Observed aggregate PnL to compare against.
+        n_sims: Number of random permutations.
+        seed: Seed for ``numpy.random.default_rng`` so that p-values are
+            reproducible across runs. Defaults to ``RANDOM_SEED``.
+
+    Returns:
+        Two-sided p-value approximation (fraction of permutations whose
+        total meets or exceeds ``observed_total``).
     """
     if len(trade_pnls) < 5:
         return 1.0
     arr = np.array(trade_pnls)
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(seed)
     beat_count = 0
     for _ in range(n_sims):
         rng.shuffle(arr)
@@ -729,6 +800,227 @@ def _monte_carlo_pvalue(trade_pnls: list[float], observed_total: float,
         if shuffled_total >= observed_total:
             beat_count += 1
     return beat_count / n_sims
+
+
+def bootstrap_sharpe_ci(
+    trade_returns: np.ndarray,
+    annualized_sharpe: Optional[float] = None,
+    confidence: float = 0.95,
+    seed: int = RANDOM_SEED,
+) -> tuple[float, float]:
+    """Analytical confidence interval on an annualized Sharpe ratio.
+
+    Uses the Lo (2002) asymptotic standard error formula
+    ``SE(S) = sqrt((1 + S^2 / 2) / T)`` where ``T`` is the number of
+    trades. This gives a normal-approximation CI that matches the
+    sample-size-uncertainty discussion in the backtest methodology
+    paper. The name is preserved for API backward compatibility with
+    earlier bootstrap implementations; the current implementation is
+    purely analytical and does not use ``seed`` (kept for signature
+    stability).
+
+    Args:
+        trade_returns: 1-D numpy array of per-trade fractional returns.
+            Only ``len(trade_returns)`` is used to determine ``T``; the
+            values themselves are used only as a fallback when
+            ``annualized_sharpe`` is not provided.
+        annualized_sharpe: The observed annualized Sharpe from the
+            backtester. When provided (the normal case), the CI is
+            centered here. When ``None``, a per-trade Sharpe is
+            computed from the returns and annualized with
+            ``sqrt(trades_per_year)`` assuming the trades span the
+            full period (fallback only; callers should provide
+            ``annualized_sharpe`` when possible).
+        confidence: Two-sided coverage (e.g. 0.95 for 95% CI).
+        seed: Ignored; kept for backward compatibility.
+
+    Returns:
+        Tuple ``(lower, upper)`` of floats bounding the annualized
+        Sharpe ratio at the requested confidence level. Returns
+        ``(nan, nan)`` when fewer than 10 trades are supplied.
+
+    References:
+        Lo, A. W. (2002). "The Statistics of Sharpe Ratios." Financial
+        Analysts Journal, 58(4), 36-52.
+    """
+    del seed  # unused; kept for backward compatibility
+    arr = np.asarray(trade_returns, dtype=float).ravel()
+    n = int(arr.size)
+    if n < 10:
+        return (float("nan"), float("nan"))
+
+    if annualized_sharpe is None:
+        std = float(arr.std(ddof=1))
+        if std <= 0:
+            return (float("nan"), float("nan"))
+        per_trade_sharpe = float(arr.mean()) / std
+        annualized_sharpe = per_trade_sharpe * math.sqrt(max(n, 1))
+
+    se = annualized_sharpe * math.sqrt(
+        (1.0 + (annualized_sharpe ** 2) / 2.0) / n
+    )
+    alpha = 1.0 - confidence
+    z = float(sp_stats.norm.ppf(1.0 - alpha / 2.0))
+    return (
+        float(annualized_sharpe - z * se),
+        float(annualized_sharpe + z * se),
+    )
+
+
+def jobson_korkie_test(
+    returns_a: np.ndarray,
+    returns_b: np.ndarray,
+    annualized_sharpe_a: Optional[float] = None,
+    annualized_sharpe_b: Optional[float] = None,
+) -> tuple[float, float]:
+    """Sharpe-difference test handling both paired and unpaired samples.
+
+    When ``returns_a`` and ``returns_b`` have the same length, applies
+    the Jobson-Korkie (1981) test with the Memmel (2003) bias
+    correction (paired case, e.g. two strategies on the same time
+    window). When the lengths differ --- as is the case when comparing
+    in-sample and out-of-sample windows --- falls back to an unpaired
+    normal-approximation test using the Lo (2002) standard error for
+    each series and ``Var(SR_a - SR_b) = Var(SR_a) + Var(SR_b)``
+    assuming independence. For the unpaired case the caller may supply
+    the observed annualized Sharpe ratios via ``annualized_sharpe_a``
+    and ``annualized_sharpe_b``; when omitted, per-trade Sharpe is
+    computed directly from the return arrays.
+
+    Args:
+        returns_a: 1-D numpy array of per-trade returns for strategy A
+            (or window A).
+        returns_b: 1-D numpy array of per-trade returns for strategy B
+            (or window B).
+        annualized_sharpe_a: Optional observed annualized Sharpe for A.
+            Only used in the unpaired case; ignored when the arrays
+            have the same length.
+        annualized_sharpe_b: Optional observed annualized Sharpe for B.
+            Only used in the unpaired case.
+
+    Returns:
+        Tuple ``(z_statistic, p_value)``. ``p_value`` is the two-sided
+        probability from the standard normal distribution. Returns
+        ``(nan, nan)`` when either series has fewer than 10
+        observations or zero variance.
+
+    References:
+        Memmel, C. (2003). "Performance Hypothesis Testing with the
+            Sharpe Ratio." Finance Letters, 1, 21-23.
+        Lo, A. W. (2002). "The Statistics of Sharpe Ratios." Financial
+            Analysts Journal, 58(4), 36-52.
+    """
+    a = np.asarray(returns_a, dtype=float).ravel()
+    b = np.asarray(returns_b, dtype=float).ravel()
+    if a.size < 10 or b.size < 10:
+        return (float("nan"), float("nan"))
+
+    if a.size == b.size:
+        mu_a = float(a.mean())
+        mu_b = float(b.mean())
+        var_a = float(a.var(ddof=1))
+        var_b = float(b.var(ddof=1))
+        if var_a <= 0 or var_b <= 0:
+            return (float("nan"), float("nan"))
+        sigma_a = math.sqrt(var_a)
+        sigma_b = math.sqrt(var_b)
+        sr_a = mu_a / sigma_a
+        sr_b = mu_b / sigma_b
+        cov_ab = float(np.cov(a, b, ddof=1)[0, 1])
+        n = a.size
+        theta = (1.0 / n) * (
+            2.0 - 2.0 * cov_ab / (sigma_a * sigma_b)
+            + 0.5 * (sr_a ** 2 + sr_b ** 2)
+            - sr_a * sr_b * (cov_ab ** 2) / (var_a * var_b)
+        )
+        if theta <= 0:
+            return (float("nan"), float("nan"))
+        z = (sr_a - sr_b) / math.sqrt(theta)
+        p_value = float(2.0 * (1.0 - sp_stats.norm.cdf(abs(z))))
+        return (float(z), p_value)
+
+    if annualized_sharpe_a is None:
+        std_a = float(a.std(ddof=1))
+        if std_a <= 0:
+            return (float("nan"), float("nan"))
+        annualized_sharpe_a = float(a.mean()) / std_a * math.sqrt(a.size)
+    if annualized_sharpe_b is None:
+        std_b = float(b.std(ddof=1))
+        if std_b <= 0:
+            return (float("nan"), float("nan"))
+        annualized_sharpe_b = float(b.mean()) / std_b * math.sqrt(b.size)
+
+    se_a = math.sqrt((1.0 + (annualized_sharpe_a ** 2) / 2.0) / a.size)
+    se_b = math.sqrt((1.0 + (annualized_sharpe_b ** 2) / 2.0) / b.size)
+    se_diff = math.sqrt(se_a ** 2 + se_b ** 2)
+    if se_diff <= 0:
+        return (float("nan"), float("nan"))
+    diff = annualized_sharpe_b - annualized_sharpe_a
+    z = diff / se_diff
+    p_value = float(2.0 * (1.0 - sp_stats.norm.cdf(abs(z))))
+    return (float(z), p_value)
+
+
+def psr_trade_count(
+    trade_returns: np.ndarray,
+    benchmark_sr: float = 0.0,
+) -> float:
+    """Probabilistic Sharpe Ratio computed on per-trade returns.
+
+    Implements the Bailey & Lopez de Prado (2014) PSR on the per-trade
+    return series (rather than per-bar returns). The benchmark Sharpe is
+    supplied on an *annualized* scale and is converted to the per-trade
+    scale by dividing by ``sqrt(BARS_PER_YEAR_4H / n_trades)`` — that
+    ratio is the approximate annualization factor that would have been
+    applied to the sample Sharpe had it been reported on an annual
+    basis. Skewness and kurtosis corrections follow Mertens's (2002)
+    asymptotic variance, as used in Bailey & Lopez de Prado's paper.
+
+    Args:
+        trade_returns: 1-D numpy array of per-trade fractional returns.
+        benchmark_sr: Annualized benchmark Sharpe ratio (default 0.0).
+
+    Returns:
+        Probability that the true (per-trade) Sharpe exceeds the
+        benchmark, as a float in ``[0, 1]``. Returns ``nan`` when fewer
+        than 5 trades are provided.
+
+    References:
+        Bailey, D. H., & Lopez de Prado, M. (2014). "The Deflated Sharpe
+        Ratio: Correcting for Selection Bias, Backtest Overfitting, and
+        Non-Normality." *Journal of Portfolio Management*, 40(5), 94-107.
+    """
+    arr = np.asarray(trade_returns, dtype=float).ravel()
+    n = arr.size
+    if n < 5:
+        return float("nan")
+
+    std = float(arr.std(ddof=1))
+    if std <= 0:
+        return float("nan")
+
+    sr_per_trade = float(arr.mean()) / std
+    skew_val = float(sp_stats.skew(arr))
+    kurt_val = float(sp_stats.kurtosis(arr, fisher=False))
+
+    annualization = math.sqrt(BARS_PER_YEAR_4H / n)
+    if annualization <= 0:
+        return float("nan")
+    benchmark_per_trade = benchmark_sr / annualization
+
+    denom_sq = (
+        1.0
+        - skew_val * sr_per_trade
+        + ((kurt_val - 1.0) / 4.0) * (sr_per_trade ** 2)
+    )
+    if denom_sq <= 0 or n <= 1:
+        return float("nan")
+    sr_std = math.sqrt(denom_sq / (n - 1))
+    if sr_std <= 0:
+        return float("nan")
+
+    z = (sr_per_trade - benchmark_per_trade) / sr_std
+    return float(sp_stats.norm.cdf(z))
 
 
 def compute_metrics(
@@ -980,6 +1272,7 @@ def cost_sensitivity(
     initial_equity: float = 10000.0,
     precomputed_features: dict[str, pd.DataFrame] | None = None,
     verbose: bool = False,
+    fine_grid: bool = False,
 ) -> list[dict]:
     """Run the backtest at multiple cost tiers and report metric degradation.
 
@@ -989,11 +1282,24 @@ def cost_sensitivity(
         spread_bps_list: List of typical spreads in bps to test.
         initial_equity: Starting equity.
         precomputed_features: Pre-computed feature frames to avoid recomputation.
+        fine_grid: When ``True`` and neither ``fee_rates`` nor
+            ``spread_bps_list`` is supplied, use a dense 10-tier grid of
+            per-side fee rates (``[0.10, 0.15, 0.20, 0.26, 0.30, 0.40,
+            0.50, 0.60, 0.80, 1.00]`` percent) with a matching spread
+            schedule. When ``False`` (default), the historical 4-tier
+            behaviour is preserved.
 
     Returns:
         List of dicts with fee_rate, spread_bps, and key metrics.
     """
     global FEE_RATE, TYPICAL_SPREAD_BPS, ENTRY_SLIPPAGE_BPS, EXIT_SLIPPAGE_BPS
+
+    if fee_rates is None and spread_bps_list is None and fine_grid:
+        fee_rates = [
+            0.0010, 0.0015, 0.0020, 0.0026, 0.0030,
+            0.0040, 0.0050, 0.0060, 0.0080, 0.0100,
+        ]
+        spread_bps_list = [4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 20.0, 24.0]
 
     if fee_rates is None:
         fee_rates = [0.0010, 0.0026, 0.0040, 0.0060]

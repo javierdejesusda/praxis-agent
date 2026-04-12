@@ -1,4 +1,4 @@
-"""Central configuration for Praxis trading agent."""
+"""Central configuration for Praxis trading agent. Frozen reference for paper reproducibility."""
 
 import os
 from dataclasses import dataclass, field
@@ -79,25 +79,8 @@ class ContractAddresses:
     eip712_domain_version: str = "1"
 
 
-COMPETITION_MODE = os.getenv("COMPETITION_MODE", "").lower() in ("1", "true", "yes")
-
-if COMPETITION_MODE:
-    RISK = RiskParams(
-        min_signal_score_paper=75,
-        min_signal_score_erc=85,
-        min_signal_score_short=80,
-        shorts_enabled=True,
-        max_consecutive_losses=5,
-        stop_mult=2.5,
-        trail_mult=2.5,
-        target_mult_base=2.85,
-        target_mult_mid=3.5,
-        target_mult_hi=6.25,
-        dd_scale_factor=0.001,
-        mtf_daily_filter=True,
-    )
-else:
-    RISK = RiskParams()
+RISK = RiskParams()
+CONFIG_VERSION = "paper-v1"
 
 STRATEGY = StrategyParams()
 CONTRACTS = ContractAddresses()

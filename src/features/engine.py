@@ -7,67 +7,6 @@ from src.config import STRATEGY
 from src.models import Features, Regime
 
 
-def _detect_divergence(
-    close: pd.Series,
-    indicator: pd.Series,
-    lookback: int = 20,
-) -> int:
-    """Detect bullish or bearish divergence between price and indicator.
-
-    Args:
-        close: Price series.
-        indicator: Indicator series (RSI or MACD).
-        lookback: Number of bars to scan for swing points.
-
-    Returns:
-        1 for bullish divergence, -1 for bearish, 0 for none.
-    """
-    if len(close) < lookback + 5 or len(indicator) < lookback + 5:
-        return 0
-
-    recent_close = close.iloc[-lookback:]
-    recent_ind = indicator.iloc[-lookback:]
-    prev_close = close.iloc[-lookback * 2:-lookback]
-    prev_ind = indicator.iloc[-lookback * 2:-lookback]
-
-    if len(prev_close) < 5 or len(prev_ind) < 5:
-        return 0
-
-    price_low_now = recent_close.min()
-    price_low_prev = prev_close.min()
-    ind_low_now = (
-        recent_ind.loc[recent_close.idxmin()]
-        if recent_close.idxmin() in recent_ind.index
-        else recent_ind.min()
-    )
-    ind_low_prev = (
-        prev_ind.loc[prev_close.idxmin()]
-        if prev_close.idxmin() in prev_ind.index
-        else prev_ind.min()
-    )
-
-    if price_low_now < price_low_prev and ind_low_now > ind_low_prev:
-        return 1
-
-    price_high_now = recent_close.max()
-    price_high_prev = prev_close.max()
-    ind_high_now = (
-        recent_ind.loc[recent_close.idxmax()]
-        if recent_close.idxmax() in recent_ind.index
-        else recent_ind.max()
-    )
-    ind_high_prev = (
-        prev_ind.loc[prev_close.idxmax()]
-        if prev_close.idxmax() in prev_ind.index
-        else prev_ind.max()
-    )
-
-    if price_high_now > price_high_prev and ind_high_now < ind_high_prev:
-        return -1
-
-    return 0
-
-
 def compute_features_bulk(df: pd.DataFrame, pair: str) -> pd.DataFrame:
     """Pre-compute all technical features for the full DataFrame at once.
 
@@ -128,8 +67,7 @@ def compute_features_bulk(df: pd.DataFrame, pair: str) -> pd.DataFrame:
     feat["bb_width"] = bb_width_pct
     feat["bb_width_avg"] = bb_width_pct.rolling(50).mean()
 
-    vol_avg = volume.rolling(20).mean()
-    feat["volume_ratio"] = (volume / vol_avg).fillna(0)
+    feat["volume_ratio"] = 0.0
 
     feat["returns_1bar"] = close.pct_change(1)
     feat["returns_5bar"] = close.pct_change(5)
@@ -140,25 +78,7 @@ def compute_features_bulk(df: pd.DataFrame, pair: str) -> pd.DataFrame:
     ema_spread_raw = (feat["ema_9"] - feat["ema_55"]).abs()
     feat["ema_spread"] = (ema_spread_raw / feat["ema_21"]).fillna(0)
 
-    o_prev = df["open"].shift(1)
-    c_prev = df["close"].shift(1)
-    o_curr = df["open"]
-    c_curr = df["close"]
-    body_prev = (c_prev - o_prev).abs()
-    body_curr = (c_curr - o_curr).abs()
-    bullish = (
-        (c_prev < o_prev) & (c_curr > o_curr)
-        & (o_curr <= c_prev) & (c_curr >= o_prev)
-        & (body_curr > body_prev * 1.2)
-    )
-    bearish = (
-        (c_prev > o_prev) & (c_curr < o_curr)
-        & (o_curr >= c_prev) & (c_curr <= o_prev)
-        & (body_curr > body_prev * 1.2)
-    )
     feat["engulfing"] = 0
-    feat.loc[bullish, "engulfing"] = 1
-    feat.loc[bearish, "engulfing"] = -1
 
     feat["regime"] = "transition"
     feat.loc[feat["adx_14"] > STRATEGY.adx_trending_threshold, "regime"] = "trending"
@@ -166,44 +86,9 @@ def compute_features_bulk(df: pd.DataFrame, pair: str) -> pd.DataFrame:
 
     feat["rsi_divergence"] = 0
     feat["macd_divergence"] = 0
-    lookback = 20
-    for i in range(lookback * 2, len(df)):
-        recent_close = close.iloc[i - lookback:i]
-        prev_close = close.iloc[i - lookback * 2:i - lookback]
-        recent_rsi = feat["rsi_14"].iloc[i - lookback:i]
-        prev_rsi = feat["rsi_14"].iloc[i - lookback * 2:i - lookback]
-        recent_hist = feat["macd_histogram"].iloc[i - lookback:i]
-        prev_hist = feat["macd_histogram"].iloc[i - lookback * 2:i - lookback]
 
-        if recent_close.isna().any() or recent_rsi.isna().any():
-            continue
-
-        p_low_now = recent_close.min()
-        p_low_prev = prev_close.min()
-        r_low_now = recent_rsi.min()
-        r_low_prev = prev_rsi.min()
-        p_high_now = recent_close.max()
-        p_high_prev = prev_close.max()
-        r_high_now = recent_rsi.max()
-        r_high_prev = prev_rsi.max()
-
-        if p_low_now < p_low_prev and r_low_now > r_low_prev:
-            feat.iloc[i, feat.columns.get_loc("rsi_divergence")] = 1
-        elif p_high_now > p_high_prev and r_high_now < r_high_prev:
-            feat.iloc[i, feat.columns.get_loc("rsi_divergence")] = -1
-
-        if not recent_hist.isna().any() and not prev_hist.isna().any():
-            h_low_now = recent_hist.min()
-            h_low_prev = prev_hist.min()
-            h_high_now = recent_hist.max()
-            h_high_prev = prev_hist.max()
-            if p_low_now < p_low_prev and h_low_now > h_low_prev:
-                feat.iloc[i, feat.columns.get_loc("macd_divergence")] = 1
-            elif p_high_now > p_high_prev and h_high_now < h_high_prev:
-                feat.iloc[i, feat.columns.get_loc("macd_divergence")] = -1
-
-    feat["high_50"] = high.rolling(50).max()
-    feat["low_50"] = low.rolling(50).min()
+    feat["high_50"] = 0.0
+    feat["low_50"] = 0.0
 
     feat["pair"] = pair
     return feat
@@ -298,8 +183,8 @@ def compute_features(df: pd.DataFrame, pair: str) -> Features:
     signal_col = macd_df.columns[1]
     hist_col = macd_df.columns[2]
 
-    rsi_div = _detect_divergence(close, rsi, lookback=20)
-    macd_div = _detect_divergence(close, macd_df[hist_col], lookback=20)
+    rsi_div = 0
+    macd_div = 0
 
     atr = ta.atr(high, low, close, length=20)
 
@@ -310,8 +195,6 @@ def compute_features(df: pd.DataFrame, pair: str) -> Features:
     bbl_col = [c for c in bb_df.columns if "BBL" in c][0]
     bbm_col = [c for c in bb_df.columns if "BBM" in c][0]
     bbu_col = [c for c in bb_df.columns if "BBU" in c][0]
-
-    vol_avg = volume.rolling(20).mean()
 
     latest = len(df) - 1
     latest_close = float(close.iloc[latest])
@@ -341,18 +224,6 @@ def compute_features(df: pd.DataFrame, pair: str) -> Features:
     macd_slope_val = hist_now - hist_prev
 
     engulfing_val = 0
-    if latest >= 1:
-        o_prev = float(df["open"].iloc[latest - 1])
-        c_prev = float(df["close"].iloc[latest - 1])
-        o_curr = float(df["open"].iloc[latest])
-        c_curr = float(df["close"].iloc[latest])
-        body_prev = abs(c_prev - o_prev)
-        body_curr = abs(c_curr - o_curr)
-        if body_curr > body_prev * 1.2:
-            if c_prev < o_prev and c_curr > o_curr and o_curr <= c_prev and c_curr >= o_prev:
-                engulfing_val = 1
-            elif c_prev > o_prev and c_curr < o_curr and o_curr >= c_prev and c_curr <= o_prev:
-                engulfing_val = -1
 
     ema9_val = float(ema_9.iloc[latest])
     ema21_val = float(ema_21.iloc[latest])
@@ -380,9 +251,7 @@ def compute_features(df: pd.DataFrame, pair: str) -> Features:
         bb_middle=float(bb_df[bbm_col].iloc[latest]),
         bb_lower=bb_l,
         bb_position=bb_pos,
-        volume_ratio=float(volume.iloc[latest] / vol_avg.iloc[latest])
-        if vol_avg.iloc[latest] > 0
-        else 0.0,
+        volume_ratio=0.0,
         regime=regime,
         returns_1bar=returns_1,
         returns_5bar=returns_5,
@@ -392,8 +261,8 @@ def compute_features(df: pd.DataFrame, pair: str) -> Features:
         macd_slope=macd_slope_val,
         ema_spread=ema_spread_val,
         engulfing=engulfing_val,
-        high_50=float(high.rolling(50).max().iloc[latest]),
-        low_50=float(low.rolling(50).min().iloc[latest]),
+        high_50=0.0,
+        low_50=0.0,
         bb_width=bb_width_pct,
         bb_width_avg=bb_width_avg_val,
     )

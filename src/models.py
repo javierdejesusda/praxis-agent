@@ -139,6 +139,14 @@ class ExecutionReceipt(BaseModel):
     error: Optional[str] = None
 
 
+class ClosedTrade(BaseModel):
+    """Summary of a closed trade used by the empirical Kelly estimator."""
+
+    pair: str
+    pnl_pct: float
+    is_win: bool
+
+
 class Portfolio(BaseModel):
     """Current portfolio state."""
 
@@ -155,3 +163,4 @@ class Portfolio(BaseModel):
     total_losses: int = 0
     daily_trade_count: int = 0
     last_trade_bar: int = 0
+    closed_trades: list[ClosedTrade] = Field(default_factory=list)

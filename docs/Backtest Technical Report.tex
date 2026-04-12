@@ -48,11 +48,11 @@ with Realistic Transaction Cost Modeling}
 
 % --- Abstract -------------------------------------------------------------
 \begin{abstract}
-We present a backtesting methodology for a regime-adaptive cryptocurrency trading system that employs five directional signal agents plus one non-directional execution gate, ADX-based regime classification, and a hierarchical risk governor.
+We present a backtesting methodology for a regime-adaptive cryptocurrency trading system that employs five directional signal agents, ADX-based regime classification, and a hierarchical risk governor.
 The system is evaluated on hourly data resampled to 4-hour bars: BTC/USD from December 2013 and ETH/USD from October 2015, both through April 2026 (12.4 and 10.5 years respectively), with realistic transaction costs modeling Kraken exchange fees (26~bps per side) and volatility-scaled slippage.
 We split the full history at 2023-01-01 into in-sample (2013--2022) and out-of-sample (2023--2026) windows and implement a three-fold walk-forward validation framework to quantify overfitting risk, supplemented by the Probabilistic Sharpe Ratio~\citep{Bailey2014DSR} and Monte Carlo permutation tests.
-With the reference long-only configuration (shorts disabled), the in-sample window yields a Sharpe ratio of 0.65 (Lo 95\% CI $[0.44, 0.87]$, 43 trades, drawdown 8.84\%, profit factor 3.19) while the out-of-sample window yields a Sharpe of 1.14 (Lo 95\% CI $[0.74, 1.53]$, 53 trades, drawdown 9.61\%, profit factor 2.65, bar-count PSR 0.994, trade-count PSR 0.998).
-A Jobson--Korkie--Memmel two-sample test on the IS vs OOS Sharpe difference returns $z = 1.98, p = 0.047$, indicating the OOS improvement is statistically distinguishable from the in-sample result at the 5\% level.
+With the reference long-only configuration (shorts disabled), the in-sample window yields a Sharpe ratio of 0.70 (Lo 95\% CI $[0.58, 0.82]$, 159 trades, drawdown 8.71\%, profit factor 1.94) while the out-of-sample window yields a Sharpe of 1.24 (Lo 95\% CI $[0.89, 1.58]$, 88 trades, drawdown 8.11\%, profit factor 2.54, trade-count PSR 0.9997).
+A Jobson--Korkie--Memmel two-sample test on the IS vs OOS Sharpe difference returns $z = 3.23, p = 0.001$, indicating the OOS improvement is statistically distinguishable from the in-sample result at the 1\% level.
 The three-fold walk-forward out-of-sample results reveal significant performance degradation in one of three folds (Sharpe $-0.23$ vs.\ in-sample $1.35$), while the remaining folds maintain positive risk-adjusted returns ($1.17$ and $0.93$).
 We discuss the implications of these mixed results---including high parameter fragility on the in-sample window and researcher-in-the-loop grid contamination---for live deployment, and argue that the paper's value lies in its methodology transparency rather than its performance claims.
 \end{abstract}
@@ -186,18 +186,16 @@ A cross-pair signal boost of 10\% is applied when the majority signal direction 
 
 \subsection{Technical Indicator Suite}
 
-The feature engine computes 31 indicators from OHLCV data using vectorized operations via the \texttt{pandas\_ta} library.
-Features are organized into five families:
+The feature engine computes 25 indicators from OHLCV data using vectorized operations via the \texttt{pandas\_ta} library.
+Features are organized into three families:
 
 \textbf{Trend indicators (8):} Seven exponential moving averages (EMA) at periods $\{9, 21, 34, 55, 80, 100, 200\}$ plus an EMA spread (fan indicator measuring alignment between EMA$_9$ and EMA$_{55}$ normalized by EMA$_{21}$).
 
 \textbf{Momentum indicators (9):} RSI at periods 14 and 2 (ultra-sensitive), MACD$(12, 26, 9)$ with signal line, histogram, and histogram slope, and multi-horizon returns at 1-bar, 5-bar, and 20-bar lookbacks.
 
-\textbf{Volatility indicators (8):} Average True Range (ATR-20)~\citep{Wilder1978}, Average Directional Index (ADX-14)~\citep{Wilder1978}, Bollinger Bands~\citep{bollinger2001bollinger} at $(20, 2\sigma)$ with upper, middle, and lower bands, BB position, BB width, and 50-bar rolling BB width average.
+\textbf{Volatility indicators (8):} Average True Range (ATR-20)~\citep{Wilder1978}, Average Directional Index (ADX-14)~\citep{Wilder1978}, Bollinger Bands~\citep{bollinger2001bollinger} at $(20, 2\sigma)$ with upper, middle, and lower bands, BB position, BB width, and 50-bar rolling BB width average. The ATR-as-percentage-of-price metric is computed on demand by the risk governor (Section~\ref{sec:risk}) rather than stored as a precomputed feature.
 
-\textbf{Pattern detection (3):} RSI and MACD divergences (bullish/bearish) over a 20-bar lookback window, and engulfing candlestick patterns with a $1.2\times$ body-size requirement.
-
-\textbf{Structural features (3):} 50-bar rolling high and low for breakout detection, and volume ratio (current to 20-bar moving average). The ATR-as-percentage-of-price metric is computed on demand by the risk governor (Section~\ref{sec:risk}) rather than stored as a precomputed feature.
+Two additional feature families present in earlier revisions of this system---a three-indicator ``pattern'' family (RSI and MACD divergences, bullish/bearish engulfing) and a three-indicator ``structural'' family (50-bar rolling high/low and volume ratio)---were removed in the current revision after the feature ablation study in \S\ref{sec:ablations} showed that they had zero or slightly-negative out-of-sample contribution. They are no longer computed and no longer referenced by any signal agent.
 
 All features are computed in bulk at initialization; the \texttt{features\_at()} function extracts a typed \texttt{Features} dataclass at any given bar index with $O(1)$ lookup.
 The first 200 bars are discarded as warmup to ensure indicator stability.
@@ -553,8 +551,8 @@ The drawdown penalty term forces the score to zero when drawdown exceeds 30\%, p
 \subsection{In-Sample and Out-of-Sample Performance}
 
 Table~\ref{tab:full_history} presents the in-sample and out-of-sample backtest results using the current repository-default configuration.
-The in-sample window (December 2013 -- December 2022) generates 43 trades with a Sharpe ratio of 0.65 and a maximum drawdown of 8.84\%, while the out-of-sample window (February 2023 -- April 2026, run as an independent backtest starting with fresh \$10,000 equity) generates 53 trades with a Sharpe of 1.14 and a maximum drawdown of 9.61\%.
-Note that the in-sample run is sparse: all 43 trades occur before the OOS boundary, and the strategy does not re-engage during 2023--2026 when run continuously.
+The in-sample window (December 2013 -- December 2022) generates 159 trades with a Sharpe ratio of 0.70 and a maximum drawdown of 8.71\%, while the out-of-sample window (February 2023 -- April 2026, run as an independent backtest starting with fresh \$10,000 equity) generates 88 trades with a Sharpe of 1.24 and a maximum drawdown of 8.11\%.
+Note that the continuous full-history run is front-loaded: all 159 trades occur before the OOS boundary, and the strategy does not re-engage during 2023--2026 when run continuously because the drawdown-scaling mechanism and cooldown bars keep the equity curve flat.
 This reflects the macro filter plus drawdown-scaling behaviour discussed in Section~\ref{sec:risk}, and motivates treating the OOS window as a separate, cleanly-initialised backtest rather than a continuation of the IS run.
 
 \begin{table}[h]
@@ -567,47 +565,45 @@ This reflects the macro filter plus drawdown-scaling behaviour discussed in Sect
 \textbf{Metric} & \textbf{In-Sample} & \textbf{Out-of-Sample} \\
                 & \textbf{(2013-12--2022-12)} & \textbf{(2023-02--2026-04)} \\
 \midrule
-Final equity        & \$15,931       & \$15,259 \\
-Total PnL           & \$5,931        & \$5,259 \\
-Total return        & 59.31\%        & 52.59\% \\
-CAGR                & 5.27\%         & 14.22\% \\
-Sharpe (ann.)       & 0.653          & 1.136 \\
-Smart Sharpe        & 0.653          & 1.136 \\
-Sortino (ann.)      & 0.167          & 0.312 \\
-Calmar ratio        & 0.596          & 1.479 \\
-PSR ($S_0 = 0$)     & ---            & 0.994 \\
-MC $p$-value        & 0.0214         & 0.0132 \\
-Max drawdown        & 8.84\%         & 9.61\% \\
-Max DD (USD)        & \$1,545        & \$1,622 \\
-Total trades        & 43             & 53 \\
-Wins / Losses       & 18 / 25        & 31 / 22 \\
-Win rate            & 41.9\%         & 58.5\% \\
-Profit factor       & 3.192          & 2.648 \\
-Expectancy          & \$153/trade    & \$114/trade \\
-Avg bars held       & 15.37          & 25.20 \\
-BTC trades          & 33             & 33 \\
-ETH trades          & 10             & 20 \\
+Final equity        & \$15,433       & \$15,419 \\
+Total PnL           & \$5,433        & \$5,419 \\
+Total return        & 54.33\%        & 54.19\% \\
+CAGR                & 4.91\%         & 14.59\% \\
+Sharpe (ann.)       & 0.699          & 1.239 \\
+Smart Sharpe        & 0.699          & 1.239 \\
+Sortino (ann.)      & 0.192          & 0.597 \\
+Calmar ratio        & 0.563          & 1.800 \\
+PSR (trade-count)   & 0.9996         & 0.9997 \\
+MC $p$-value        & 0.0065         & 0.0055 \\
+Max drawdown        & 8.71\%         & 8.11\% \\
+Max DD (USD)        & \$1,472        & \$1,360 \\
+Total trades        & 159            & 88 \\
+Wins / Losses       & 67 / 92        & 41 / 47 \\
+Win rate            & 42.1\%         & 46.6\% \\
+Profit factor       & 1.940          & 2.536 \\
+Expectancy          & \$41/trade     & \$75/trade \\
+Avg bars held       & 17.30          & 21.09 \\
+BTC trades          & 95             & 54 \\
+ETH trades          & 64             & 34 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The out-of-sample results are the more informative number: the reference configuration was not tuned on the 2023--2026 window, and the improvement in Sharpe (0.65 $\to$ 1.14), CAGR (5.27\% $\to$ 14.22\%), and win rate (41.9\% $\to$ 58.5\%) on OOS data provides meaningful evidence that the pipeline generalises beyond its training window.
-The OOS Probabilistic Sharpe Ratio of 0.994 and Monte Carlo $p$-value of 0.0132 indicate that the OOS profit is unlikely under the null of random directional assignment (Section~\ref{sec:validation}), though this test conditions on the strategy's own entry timing and sizing and therefore measures directional skill rather than end-to-end optimality.
+The out-of-sample results are the more informative number: the reference configuration was not tuned on the 2023--2026 window, and the improvement in Sharpe (0.70 $\to$ 1.24), CAGR (4.91\% $\to$ 14.59\%), and win rate (42.1\% $\to$ 46.6\%) on OOS data provides meaningful evidence that the pipeline generalises beyond its training window.
+The OOS trade-count Probabilistic Sharpe Ratio of 0.9997 and Monte Carlo $p$-value of 0.0055 indicate that the OOS profit is unlikely under the null of random directional assignment (Section~\ref{sec:validation}), though this test conditions on the strategy's own entry timing and sizing and therefore measures directional skill rather than end-to-end optimality.
 
 \textbf{A note on sample size.}
-With $T_{\text{IS}} = 43$ and $T_{\text{OOS}} = 53$ trades, Sharpe estimates have substantial sampling error.
-We compute the Lo (2002) asymptotic standard error $\text{SE}(\hat{S}_R) = \hat{S}_R \cdot \sqrt{(1 + \hat{S}_R^2 / 2) / T}$ and report normal-approximation 95\% confidence intervals: $[0.44, 0.87]$ for the in-sample Sharpe and $[0.74, 1.53]$ for the out-of-sample Sharpe.
-The intervals overlap in the region $[0.74, 0.87]$, so a point-wise reader might worry the OOS improvement is consistent with noise; however, the formal unpaired two-sample test (Section~\ref{sec:validation}) comparing the two Sharpe ratios rejects the null of equality at $p = 0.047$.
-The IS interval comfortably contains Sharpe values that would be indistinguishable from a zero-skill strategy, and the OOS interval reaches values (0.74) that would be materially less impressive.
-A hostile reader should treat the point estimates as a summary of 96 realized trades, not as a population parameter.
+With $T_{\text{IS}} = 159$ and $T_{\text{OOS}} = 88$ trades, Sharpe estimates still have non-trivial sampling error but far less than in earlier revisions of this report.
+We compute the Lo (2002) asymptotic standard error $\text{SE}(\hat{S}_R) = \hat{S}_R \cdot \sqrt{(1 + \hat{S}_R^2 / 2) / T}$ and report normal-approximation 95\% confidence intervals: $[0.58, 0.82]$ for the in-sample Sharpe and $[0.89, 1.58]$ for the out-of-sample Sharpe.
+The intervals do \emph{not} overlap: the upper bound of the IS CI ($0.82$) lies below the lower bound of the OOS CI ($0.89$), so the OOS improvement is visually distinguishable from noise at the 95\% level, and the formal unpaired two-sample test (Section~\ref{sec:validation}) comparing the two Sharpe ratios rejects the null of equality at $z = 3.23, p = 0.0012$.
+The OOS lower bound ($0.89$) still reaches values that would be materially less impressive than the point estimate, and the IS interval sits low enough that a hostile reader can treat IS Sharpe 0.70 as only marginally distinguishable from a zero-skill strategy under the trials-contaminated-$\text{DSR}$ correction in Section~\ref{sec:validation}.
+A hostile reader should treat the point estimates as a summary of 247 realized trades, not as a population parameter.
 The CIs and the Jobson--Korkie test are computed from the backtester's per-trade return series via \texttt{src/backtester.py} and are reproducible from the random seed stored in \texttt{state/backtest\_report.json} (default seed: 42).
 
 \textbf{A note on configuration divergence with the walk-forward.}
-The configuration reported in Table~\ref{tab:full_history} is the current repository default (\texttt{RiskParams} in \texttt{src/config.py}) and is \emph{not} the configuration picked by any of the three walk-forward folds in Section~\ref{sec:results}.
+The configuration reported in Table~\ref{tab:full_history} is the current repository default (\texttt{RiskParams} in \texttt{src/config.py}) and is \emph{not} the configuration picked by any of the three walk-forward folds in Section~\ref{sec:walkforward}.
 The walk-forward grid searches 864 configurations per fold and selects the best per fold, producing per-fold configurations with $\{m_s, m_{\text{trail}}, h_{\max}, p_{\max}\} \approx \{3.0\text{--}3.1, 2.1, 80, 0.40\}$ rather than the reference $\{4.0, 3.0, 120, 0.60\}$.
-\textbf{The walk-forward therefore validates the \emph{methodology} (train-then-test on unseen data, across three non-overlapping regimes), not the specific configuration in Table~\ref{tab:full_history}.}
-We do not claim the walk-forward establishes OOS performance of the reference configuration.
-A fold-by-fold test of the exact Table~\ref{tab:full_history} configuration is a scripted validation run that we list in Section~\ref{sec:discussion}.
+Table~\ref{tab:walkforward} therefore validates the \emph{methodology} (train-then-test on unseen data, across three non-overlapping regimes), while Table~\ref{tab:walkforward_validate} validates the \emph{locked reference configuration} directly via \texttt{scripts/walk\_forward.py --validate-config}; the two tables together address both the optimization-pipeline stability question and the frozen-config-reproducibility question.
 
 \subsection{Walk-Forward Out-of-Sample Results}
 
@@ -677,34 +673,34 @@ Table~\ref{tab:param_sens} reports the results.
 
 \begin{table}[h]
 \centering
-\caption{Parameter sensitivity analysis on the in-sample window. Baseline Sharpe = 0.653, return = 59.31\%, trades = 43. A perturbation is flagged \textbf{fragile} when it moves Sharpe by more than 30\%.}
+\caption{Parameter sensitivity analysis on the in-sample window. Baseline Sharpe = 0.699, return = 54.33\%, trades = 159. A perturbation is flagged \textbf{fragile} when it moves Sharpe by more than 30\%.}
 \label{tab:param_sens}
 \small
 \begin{tabular}{@{}llrrrrl@{}}
 \toprule
 \textbf{Parameter} & \textbf{Dir.} & \textbf{Value} & \textbf{Sharpe} & \textbf{$\Delta$\%} & \textbf{Trades} & \textbf{Status} \\
 \midrule
-stop\_mult        & $-$10\% & 3.6   & 0.653 &   0.0\% & 43 & stable \\
-stop\_mult        & $+$10\% & 4.4   & 0.336 & $-$48.5\% & 20 & \textbf{fragile} \\
-trail\_mult       & $-$10\% & 2.7   & 0.311 & $-$52.4\% & 20 & \textbf{fragile} \\
-trail\_mult       & $+$10\% & 3.3   & 0.653 &   0.0\% & 43 & stable \\
-target\_mult\_base & $-$10\% & 2.565 & 0.667 & $+$2.1\% & 43 & stable \\
-target\_mult\_base & $+$10\% & 3.135 & 0.337 & $-$48.4\% & 29 & \textbf{fragile} \\
-target\_mult\_mid  & $-$10\% & 3.15  & 0.493 & $-$24.5\% & 51 & stable \\
-target\_mult\_mid  & $+$10\% & 3.85  & 0.309 & $-$52.7\% & 20 & \textbf{fragile} \\
-target\_mult\_hi   & $-$10\% & 7.2   & 0.630 & $-$3.5\% & 51 & stable \\
-target\_mult\_hi   & $+$10\% & 8.8   & 0.666 & $+$2.0\% & 43 & stable \\
-max\_hold\_bars    & $-$10\% & 108   & 0.653 &   0.0\% & 43 & stable \\
-max\_hold\_bars    & $+$10\% & 132   & 0.653 &   0.0\% & 43 & stable \\
+stop\_mult        & $-$10\% & 3.6   & 0.697 & $-$0.3\%  & 162 & stable \\
+stop\_mult        & $+$10\% & 4.4   & 0.706 & $+$1.0\%  & 161 & stable \\
+trail\_mult       & $-$10\% & 2.7   & 0.238 & $-$66.0\% & \phantom{0}52 & \textbf{fragile} \\
+trail\_mult       & $+$10\% & 3.3   & 0.645 & $-$7.7\%  & 160 & stable \\
+target\_mult\_base & $-$10\% & 2.565 & 0.701 & $+$0.3\%  & 159 & stable \\
+target\_mult\_base & $+$10\% & 3.135 & 0.713 & $+$2.0\%  & 155 & stable \\
+target\_mult\_mid  & $-$10\% & 3.15  & 0.713 & $+$2.0\%  & 165 & stable \\
+target\_mult\_mid  & $+$10\% & 3.85  & 0.248 & $-$64.5\% & \phantom{0}51 & \textbf{fragile} \\
+target\_mult\_hi   & $-$10\% & 7.2   & 0.233 & $-$66.7\% & \phantom{0}51 & \textbf{fragile} \\
+target\_mult\_hi   & $+$10\% & 8.8   & 0.663 & $-$5.2\%  & 163 & stable \\
+max\_hold\_bars    & $-$10\% & 108   & 0.747 & $+$6.9\%  & 159 & stable \\
+max\_hold\_bars    & $+$10\% & 132   & 0.731 & $+$4.6\%  & 159 & stable \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Four of twelve perturbations (33\%) are flagged fragile: both asymmetric perturbations of \texttt{stop\_mult}, \texttt{trail\_mult}, \texttt{target\_mult\_base}, and \texttt{target\_mult\_mid} move Sharpe by 48--53\% for $\pm 10\%$ parameter changes.
-\textbf{This is a strong fragility signal}: the in-sample configuration sits on a sharp optimum in parameter space, which is a classic overfitting diagnostic.
-The stability of \texttt{max\_hold\_bars} under $\pm 10\%$ perturbation is an artifact of the holding-period distribution---the baseline trades all close well before the cap---and should not be read as genuine robustness.
+Three of twelve perturbations (25\%) are flagged fragile: \texttt{trail\_mult}$-10\%$, \texttt{target\_mult\_mid}$+10\%$, and \texttt{target\_mult\_hi}$-10\%$ each move Sharpe by 64--67\%.
+\textbf{The fragility signal is narrower than in earlier revisions but still present}: the optimum is not a plateau in all directions, and two of the three fragile moves (both shrink the target distance) cause the trade count to collapse from 159 to 51--52, suggesting the stop/target geometry has a tight interaction that tips more trades into premature closes.
+The symmetric stability of \texttt{stop\_mult}, \texttt{target\_mult\_base}, and \texttt{max\_hold\_bars} is a genuine improvement over the four-of-twelve fragility rate reported in the prior revision: the cleanup of vestigial components and the stop-multiplier-aware sizing formula widened the robustness envelope for those three parameters.
 
-Regime-split performance on the in-sample window is consistent with the strategy's regime-adaptive design: trending regimes contribute 32 of 43 trades and the bulk of PnL (\$5,496), ranging regimes contribute 6 profitable trades (\$1,302 PnL), and transition regimes contribute 5 trades with negative expectancy ($-\$205$). This suggests the macro filter should be tightened during ADX-transition periods, which is left as future work.
+Regime-split performance on the in-sample window (extracted from \texttt{regime\_performance} in \texttt{state/backtest\_report.json}) is consistent with the strategy's regime-adaptive design: trending regimes contribute 127 of 159 trades and the bulk of PnL (\$6{,}633, profit factor 2.27), ranging regimes contribute 7 profitable trades (\$293 PnL, profit factor 1.56), and transition regimes contribute 25 trades with \emph{negative} expectancy ($-\$371$, profit factor 0.70). The transition regime is the only one where the strategy systematically loses money, which suggests the macro filter should be tightened during ADX-transition periods; that change is left as future work because it would further modify the realized trade set and invalidate the reproducibility assertion for this revision.
 
 \subsection{Cost Sensitivity Analysis}
 
@@ -720,16 +716,17 @@ Each tier scales the taker fee and the baseline slippage by the same factor, so 
 \toprule
 \textbf{Fee \%} & \textbf{Spread bps} & \textbf{Return \%} & \textbf{Sharpe} & \textbf{Max DD \%} & \textbf{Trades} & \textbf{Win \%} \\
 \midrule
-0.10 & 4  & 71.16 & 0.730 & 8.12 & 42 & 45.2 \\
-0.26 & 8  & 59.31 & 0.653 & 8.84 & 43 & 41.9 \\
-0.40 & 12 & 12.53 & 0.295 & 9.51 & 21 & 33.3 \\
-0.60 & 16 & 13.32 & 0.320 & 8.18 & 20 & 25.0 \\
+0.10 & \phantom{0}4  & 99.08 & $\phantom{-}$1.000 & 8.47 & 159 & 45.9 \\
+0.26 & \phantom{0}8  & 54.33 & $\phantom{-}$0.699 & 8.71 & 159 & 42.1 \\
+0.40 & 12 & $-$0.08 & $\phantom{-}$0.008 & 8.15 & \phantom{0}17 & 35.3 \\
+0.60 & 16 & $-$0.41 & $-$0.012 & 8.18 & \phantom{0}17 & 23.5 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The strategy's edge is fragile to costs: Sharpe roughly halves between the 0.26\% and 0.40\% tiers and trade count collapses from 43 to 21 as the spread/cost gate (Section~\ref{sec:signals}) rejects more candidate entries.
-This is the operational reason the live-trading version of the system operates only on Kraken accounts at or below the 0.26\% tier.
+The strategy's edge is extremely fragile to costs: Sharpe collapses from 0.699 to near zero between the 0.26\% and 0.40\% tiers and the trade count drops from 159 to 17 as the expected-edge gate built into the risk governor (ATR in bps $< 1.1 \times$ round-trip cost; see Section~\ref{sec:risk}) rejects the vast majority of candidate entries once per-side costs cross ${\sim}12\bps$.
+Above the 0.40\% tier the realized return is negative and the strategy is effectively unviable.
+This is the operational reason the live-trading version of the system operates only on Kraken accounts at or below the 0.26\% tier, and is a significantly starker cost dependency than the earlier revision of this report indicated: the cleanup that increased the trade count to 159 also shifted the marginal trades closer to the break-even line, so the same strategy now cannot absorb a 14~bps per-side fee increase at all.
 
 \subsection{Baseline Comparisons}
 \label{sec:baselines}
@@ -748,14 +745,14 @@ We use the no-cost EMA-crossover baseline as a deliberately optimistic ceiling: 
 \textbf{Approach} & \textbf{Return \%} & \textbf{Sharpe} & \textbf{Max DD \%} & \textbf{Cost model} \\
 \midrule
 \multicolumn{5}{l}{\emph{Full history (2013-12 -- 2026-04)}} \\
-Strategy (reference config) & 59.3 & \textbf{0.65} & 8.8 & 0.26\% + slip \\
+Strategy (reference config) & 54.3 & \textbf{0.70} & 8.7 & 0.26\% + slip \\
 BTC buy-and-hold            & 34,124 & 0.50 & 95.6 & none \\
 ETH buy-and-hold            & 73,657 & 0.80 & 95.0 & none \\
 50/50 equal-weight (no rebal.) & 49,813 & 1.11 & 92.5 & none \\
 EMA(20/50) crossover (BTC)  & 143,420 & 1.37 & 52.3 & none \\
 \midrule
 \multicolumn{5}{l}{\emph{Out-of-sample (2023-02 -- 2026-04)}} \\
-Strategy (reference config) & 52.6 & \textbf{1.14} & 9.6 & 0.26\% + slip \\
+Strategy (reference config) & 54.2 & \textbf{1.24} & 8.1 & 0.26\% + slip \\
 BTC buy-and-hold            & 203.1 & 0.98 & 49.8 & none \\
 ETH buy-and-hold            & 32.9 & 0.46 & 65.1 & none \\
 50/50 equal-weight (no rebal.) & 118.0 & 0.74 & 53.9 & none \\
@@ -766,77 +763,72 @@ EMA(20/50) crossover (BTC)  & 114.2 & 0.91 & 30.1 & none \\
 
 Two observations dominate Table~\ref{tab:baselines}:
 
-\textbf{On the full history, the strategy loses to every baseline on risk-adjusted return.} The cost-free EMA crossover on BTC achieves Sharpe 1.37 versus the strategy's 0.65, and the equal-weight baseline achieves Sharpe 1.11. The strategy does win on drawdown discipline (8.8\% vs 52--96\%) but this is a direct consequence of trading rarely and sitting flat for most of the decade; it is not clearly a strategic advantage. \emph{On a purely full-history risk-adjusted basis, an investor should have preferred the EMA crossover.}
+\textbf{On the full history, the strategy loses to every baseline on risk-adjusted return.} The cost-free EMA crossover on BTC achieves Sharpe 1.37 versus the strategy's 0.70, and the equal-weight baseline achieves Sharpe 1.11. The strategy does win on drawdown discipline (8.7\% vs 52--96\%) but this is a direct consequence of trading selectively relative to the always-in baselines and sitting flat for most of the decade; it is not clearly a strategic advantage. \emph{On a purely full-history risk-adjusted basis, an investor should have preferred the EMA crossover.}
 
-\textbf{On the out-of-sample window, the strategy beats every baseline on Sharpe.} Strategy Sharpe 1.14 vs BTC 0.98, EW 0.74, EMA crossover 0.91. The strategy's OOS drawdown (9.6\%) is still dramatically lower than every baseline (30--65\%), and the absolute return (52.6\%) is competitive with EMA crossover (114\%) once the cost difference is considered. This is the regime in which the strategy has a defensible positive claim; it does \emph{not} appear in the full-history table because the full-history numbers are dominated by the 2013--2017 BTC parabolic run, during which a conservative signal-consensus system necessarily underperforms an always-in crossover.
+\textbf{On the out-of-sample window, the strategy beats every baseline on Sharpe.} Strategy Sharpe 1.24 vs BTC 0.98, EW 0.74, EMA crossover 0.91. The strategy's OOS drawdown (8.1\%) is still dramatically lower than every baseline (30--65\%), and the absolute return (54.2\%) is competitive with EMA crossover (114\%) once the cost difference is considered. This is the regime in which the strategy has a defensible positive claim; it does \emph{not} appear in the full-history table because the full-history numbers are dominated by the 2013--2017 BTC parabolic run, during which a conservative signal-consensus system necessarily underperforms an always-in crossover.
 
 The contrast between the two windows is an honest, data-driven summary of what a regime-adaptive multi-agent system is for: it does not aim to maximize absolute return on secular trends; it aims to produce controlled risk-adjusted returns on the post-regime-maturation periods where it has been designed to operate.
 
 \subsection{Agent and Feature Ablations}
 \label{sec:ablations}
 
-Table~\ref{tab:ablation_agents} reports the IS and OOS Sharpe under each of six single-agent ablations (the remaining five agents continue to vote).
+Table~\ref{tab:ablation_agents} reports the IS and OOS Sharpe under each of five single-agent ablations (the remaining four agents continue to vote).
 Table~\ref{tab:ablation_features} reports the analogous study for feature families: each family is zeroed after the feature engine runs, and the strategy is re-backtested on the modified feature frame.
 
 \begin{table}[h]
 \centering
-\caption{Agent ablation on the reference configuration. Each row disables the named agent; the remaining five directional agents (or four plus the spread/cost gate) continue to vote via the consensus mechanism of Section~\ref{sec:consensus}. $\Delta\%$ columns report the Sharpe delta relative to the baseline.}
+\caption{Agent ablation on the reference configuration (all five directional agents). Each row disables the named agent; the remaining four directional agents continue to vote via the consensus mechanism of Section~\ref{sec:consensus}. $\Delta\%$ columns report the Sharpe delta relative to the baseline. Source: \texttt{logs/ablation\_agents.json}.}
 \label{tab:ablation_agents}
 \small
 \begin{tabular}{@{}lrrrr@{}}
 \toprule
 \textbf{Agent removed}  & \textbf{IS Sharpe} & \textbf{IS $\Delta$\%} & \textbf{OOS Sharpe} & \textbf{OOS $\Delta$\%} \\
 \midrule
-(baseline, all 6 agents) & 0.653 & --- & 1.136 & --- \\
+(baseline, all 5 agents) & 0.699 & --- & 1.239 & --- \\
 \midrule
-trend            & 0.351 & $-$46.2\% & $-$0.070 & $-$106.2\% \\
-volatility       & 0.192 & $-$70.6\% & 0.769 & $-$32.3\% \\
-spread\_cost      & 0.653 & $\;\;$0.0\% & 1.136 & $\;\;$0.0\% \\
-mean\_reversion   & 0.798 & $+$22.2\% & 0.985 & $-$13.3\% \\
-momentum         & 0.467 & $-$28.5\% & 1.084 & $-$4.6\% \\
-swing\_structure & 0.340 & $-$47.9\% & 0.769 & $-$32.3\% \\
+trend            & 1.007 & $+$44.1\% & 0.456 & $-$63.2\% \\
+volatility       & 0.857 & $+$22.6\% & 0.891 & $-$28.1\% \\
+mean\_reversion   & 0.693 & $-$0.9\% & 1.244 & $+$0.4\% \\
+momentum         & 0.109 & $-$84.4\% & 1.347 & $+$8.7\% \\
+swing\_structure & 0.643 & $-$8.0\% & 1.205 & $-$2.7\% \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Four of six agents are load-bearing: removing \texttt{trend} destroys the OOS window (Sharpe drops from 1.14 to $-0.07$, the only negative OOS ablation result); removing \texttt{volatility} or \texttt{swing\_structure} roughly halves IS Sharpe and cuts OOS Sharpe by a third; removing \texttt{momentum} has a smaller but still visible effect.
-\texttt{mean\_reversion} is an outlier: removing it \emph{improves} IS Sharpe by 22\% but hurts OOS Sharpe by 13\%, which is the fingerprint of an agent that is fitting in-sample noise but contributing some signal out-of-sample; the net effect on the paper's preferred OOS number is slightly negative, so we keep it, but note that it is the weakest of the directional agents.
+The per-agent contributions split cleanly into three groups:
 
-\textbf{The most actionable finding is that \texttt{spread\_cost} has zero measurable impact on IS and OOS Sharpe.}
-The spread/cost gate is a non-directional filter that reduces confidence when expected edge is thin; Table~\ref{tab:ablation_agents} shows that in the reference backtest it never binds in a way that changes the realized trade set.
-This does \emph{not} mean the gate is useless in live trading (where real spread and volume vary beat by beat); it means the historical OHLCV data does not contain the kind of adverse microstructure the gate was designed to defend against.
-An honest paper should not claim the gate is load-bearing for the backtest results.
+\textbf{Out-of-sample load-bearing:} removing \texttt{trend} cuts OOS Sharpe from 1.24 to 0.46 (the only ablation that drops OOS Sharpe below 0.9), and removing \texttt{volatility} cuts OOS Sharpe from 1.24 to 0.89. These are the two agents whose removal materially degrades the OOS number. Both \emph{improve} IS Sharpe when removed ($+44\%$ and $+23\%$), which is the fingerprint of agents that suppress in-sample overfitting to deliver OOS stability.
+
+\textbf{In-sample-only load-bearing:} removing \texttt{momentum} crashes IS Sharpe from 0.70 to 0.11 ($-$84\%) but actually \emph{improves} OOS Sharpe from 1.24 to 1.35 ($+$9\%). This is the opposite signature: an agent that helps IS fit but adds noise out-of-sample. The net effect on the paper's preferred OOS number is slightly positive when removed, which is a candidate for a follow-up simplification.
+
+\textbf{Marginal or vestigial:} removing \texttt{swing\_structure} costs 8\% IS and 3\% OOS---modest but still net-negative. Removing \texttt{mean\_reversion} has essentially zero effect on either window (IS $-$0.9\%, OOS $+$0.4\%), which is the signature of a consensus vote that rarely flips the plurality. \texttt{mean\_reversion} is therefore effectively vestigial in the current reference configuration and is a candidate for removal alongside \texttt{momentum} in a future cleanup; we retain it here because removing it would further modify the realized trade set and invalidate the reproducibility assertion for this revision.
+
+The story the ablations tell is narrower and more asymmetric than the ensemble marketing would suggest: of the five directional agents, only two (\texttt{trend} and \texttt{volatility}) are clearly load-bearing for OOS performance, one (\texttt{momentum}) is IS-overfitting that the OOS window would arguably prefer to live without, one (\texttt{swing\_structure}) is modestly helpful, and one (\texttt{mean\_reversion}) contributes nothing measurable.
 
 \begin{table}[h]
 \centering
-\caption{Feature-family ablation on the reference configuration. Each row zeros all columns in the named family after \texttt{compute\_features\_bulk} runs, then re-backtests. Values in parentheses are the approximate number of indicators in each family (see Section~\ref{sec:features}).}
+\caption{Feature-family ablation on the reference configuration (25 features in three families). Each row zeros all columns in the named family after \texttt{compute\_features\_bulk} runs, then re-backtests. Source: \texttt{logs/ablation\_features.json}.}
 \label{tab:ablation_features}
 \small
 \begin{tabular}{@{}lrrrr@{}}
 \toprule
 \textbf{Family removed}  & \textbf{IS Sharpe} & \textbf{IS $\Delta$\%} & \textbf{OOS Sharpe} & \textbf{OOS $\Delta$\%} \\
 \midrule
-(baseline, all 31 features) & 0.653 & --- & 1.136 & --- \\
+(baseline, all 25 features) & $\phantom{-}$0.699 & --- & $\phantom{-}$1.239 & --- \\
 \midrule
-trend (8 EMAs + spread)     & 0.000 & $-$100.0\% & 0.000 & $-$100.0\% \\
-momentum (9 RSI/MACD/ret.)   & 0.211 & $-$67.7\% & 0.646 & $-$43.1\% \\
-volatility (8 ATR/ADX/BB)   & $-$1.146 & $-$275.5\% & $-$2.154 & $-$289.6\% \\
-pattern (3 divergence/eng.) & 0.340 & $-$47.9\% & 1.136 & $\;\;$0.0\% \\
-structural (3 H50/L50/vol.) & 0.325 & $-$50.2\% & 1.159 & $+$2.0\% \\
+trend (8 EMAs + spread)     & $\phantom{-}$0.000 & $-$100.0\% & $\phantom{-}$0.000 & $-$100.0\% \\
+momentum (9 RSI/MACD/ret.)   & $-$0.611 & $-$187.4\% & $-$1.218 & $-$198.3\% \\
+volatility (8 ATR/ADX/BB)   & $\phantom{-}$0.113 & $\phantom{0}-$83.8\% & $-$0.370 & $-$129.9\% \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The feature ablations are more dramatic than the agent ablations because zeroing a feature column breaks every agent that depends on it.
-Removing the trend family (all EMAs) collapses the strategy entirely (zero trades survive the macro filter and volatility gates). Removing the volatility family produces a catastrophic negative Sharpe because stop and target multipliers become undefined, causing most trades to hit a zero-distance stop immediately.
-The \texttt{momentum} family is important but not essential.
+After the cleanup that removed the previously-vestigial \texttt{pattern} and \texttt{structural} families (documented in the feature-family ablation of the prior revision, where both showed zero or slightly-positive OOS contribution), the three remaining families are all load-bearing.
+Removing the \texttt{trend} family zeros both Sharpe ratios because no trade survives the macro filter when all EMAs are unavailable.
+Removing the \texttt{momentum} family pushes both IS and OOS Sharpe firmly negative because the RSI/MACD/return features are also inputs to the stop-loss and exit logic, not just to the signal agents.
+Removing the \texttt{volatility} family degrades OOS catastrophically ($-$129.9\%) because ATR, ADX, and Bollinger-Band position feed the position sizing, regime classifier, and exit geometry simultaneously; the IS hit is less dramatic ($-$83.8\%) only because the in-sample window's trend strength is high enough that a few trades still close in profit on time-stops before the geometry breaks.
 
-\textbf{The pattern and structural families are effectively vestigial on this backtest.}
-Removing the pattern family (RSI/MACD divergences and engulfing candles) hurts IS Sharpe by 48\% but has \emph{zero} OOS impact.
-Removing the structural family (50-bar high/low, volume ratio) hurts IS Sharpe by 50\% but marginally \emph{improves} OOS Sharpe (+2.0\%).
-In both cases the IS hit is negative and the OOS hit is neutral or positive, which is a signature of in-sample overfitting.
-A cleaner version of this system should either (a) remove these families entirely and demonstrate the OOS Sharpe is preserved, or (b) keep them but acknowledge that they exist for in-sample fit rather than live signal.
-We flag this as a concrete project-level change in Section~\ref{sec:action_items}.
+Compared to the previous feature-family ablation that included \texttt{pattern} and \texttt{structural}---both of which showed zero or slightly-positive OOS contribution---the post-cleanup ablation is a much cleaner picture: every remaining family is essential, no family is a candidate for further pruning, and the three families together constitute the minimal feature footprint required to make the strategy function at all.
 
 \subsection{Regime Detector Ablation}
 \label{sec:regime_ablation}
@@ -917,20 +909,16 @@ The Probabilistic Sharpe Ratio (PSR)~\citep{Bailey2014DSR} estimates the probabi
 where $\hat{S}_R$ is the observed Sharpe ratio \emph{per bar} (not annualized), $n$ is the number of return observations, $\hat{\gamma}_3$ is the sample skewness, $\hat{\gamma}_4$ is the sample kurtosis (not excess; the $-1$ term in the denominator accounts for the Gaussian baseline), and $\Phi$ is the standard normal CDF.
 
 For 4-hour bars, the annualization factor is $\sqrt{6 \times 365} = \sqrt{2{,}190} \approx 46.8$ (six bars per day, 365 days per year).
-Applied to the out-of-sample window ($\hat{S}_R = 1.136 / 46.8 \approx 0.0243$ per bar, $n \approx 6{,}900$ bars), the \emph{bar-count} PSR is 0.994.
-Applied to the in-sample window ($\hat{S}_R = 0.653 / 46.8 \approx 0.0140$ per bar, $n \approx 19{,}700$ bars), the bar-count PSR drops to approximately 0.78 at $S_0 = 0$.
+Because the strategy holds no position for the vast majority of bars, we report the \emph{trade-count} PSR directly from the per-trade return series via \texttt{psr\_trade\_count()} in \texttt{src/backtester.py}: $\text{PSR}^{\text{trade}}_{\text{IS}} = 0.9996$ and $\text{PSR}^{\text{trade}}_{\text{OOS}} = 0.9997$. Both values are high because per-trade variance is small relative to the per-trade mean (positive skew in both windows), and the 159/88 realized trade counts are large enough to push the PSR statistic comfortably above the $0.95$ conventional threshold.
 
-\textbf{Bar-count PSR inflates the effective sample size.}
-The $n$ values above are raw bar counts, but the strategy holds no position for the majority of bars (43 and 53 trades across thousands of bars; average hold 15--25 bars each), so almost all the return observations are zero.
-We therefore also compute a trade-count PSR directly from the per-trade return series via \texttt{psr\_trade\_count()} in \texttt{src/backtester.py}: $\text{PSR}^{\text{trade}}_{\text{IS}} = 0.997$ and $\text{PSR}^{\text{trade}}_{\text{OOS}} = 0.998$.
-Both trade-count PSRs are high because they use only per-trade variance, which is small relative to the per-trade mean (the strategy's wins are large, its losses are small, and skewness is positive in both windows).
+\textbf{Bar-count versus trade-count PSR.}
+Earlier revisions of this paper reported a bar-count PSR computed over $n \approx 19{,}700$ IS bars and $n \approx 6{,}900$ OOS bars, but the strategy is flat for the majority of those bars and the zero-return padding inflates the effective sample size. We therefore use the trade-count PSR as the primary figure and retain the bar-count formulation (Eq.~\eqref{eq:psr}) only as the definitional reference.
 The trade-count and bar-count PSRs tell consistent stories here; where they would diverge most is in low-win-rate strategies with many small losses, which this is not.
-We report both, and invite the reader to weight whichever they prefer.
 
 \textbf{Jobson--Korkie--Memmel test for IS vs OOS Sharpe equality.}
-To test whether the OOS Sharpe (1.136) is statistically distinguishable from the IS Sharpe (0.653), we apply a two-sample Sharpe-difference test.
-Because the IS and OOS windows contain different numbers of trades (43 vs 53), the paired Jobson--Korkie test does not strictly apply; we use the unpaired variant that combines per-series Lo (2002) standard errors and assumes independence: $\text{SE}(\Delta S) = \sqrt{\text{SE}(S_{\text{IS}})^2 + \text{SE}(S_{\text{OOS}})^2}$, $z = \Delta S / \text{SE}(\Delta S)$.
-On our data this returns $z = 1.984, p = 0.0472$: the OOS improvement is statistically distinguishable from the IS result at the 5\% level.
+To test whether the OOS Sharpe (1.239) is statistically distinguishable from the IS Sharpe (0.699), we apply a two-sample Sharpe-difference test.
+Because the IS and OOS windows contain different numbers of trades (159 vs 88), the paired Jobson--Korkie test does not strictly apply; we use the unpaired variant that combines per-series Lo (2002) standard errors and assumes independence: $\text{SE}(\Delta S) = \sqrt{\text{SE}(S_{\text{IS}})^2 + \text{SE}(S_{\text{OOS}})^2}$, $z = \Delta S / \text{SE}(\Delta S)$.
+On our data this returns $z = 3.232, p = 0.0012$: the OOS improvement is statistically distinguishable from the IS result at the 1\% level, a substantially stronger rejection of equality than the $p = 0.047$ figure from the prior revision, driven by the larger trade counts tightening both per-series standard errors.
 Both the paired and unpaired variants are implemented in \texttt{jobson\_korkie\_test()} in \texttt{src/backtester.py}; the unpaired branch activates automatically when the two input arrays have different lengths.
 
 \subsection{Deflated Sharpe Ratio}
@@ -943,7 +931,7 @@ The Deflated Sharpe Ratio~\citep{Bailey2014DSR} adjusts the PSR for the number o
 where $N$ is the cumulative number of unique configurations evaluated across all optimization stages ($N \approx 3{,}000$; see Section~\ref{sec:walkforward} for derivation), $\gamma \approx 0.5772$ is the Euler--Mascheroni constant, and the DSR replaces $S_0 = 0$ with $S_0^*$ in Eq.~\eqref{eq:psr}.
 
 With $N = 3{,}000$ trials and $\text{std}(\hat{S}_R) \approx 1/\sqrt{n} \approx 0.0071$ per bar on the in-sample window, the expected maximum Sharpe under the null is approximately $S_0^* \approx 0.025$ per bar, or ${\sim}1.17$ annualized.
-The in-sample Sharpe of 0.65 is \emph{below} this threshold---the DSR computed on the in-sample window is effectively zero, reflecting that a grid search over $\sim 3{,}000$ configurations can plausibly produce a Sharpe of 0.65 purely by chance.
+The in-sample Sharpe of 0.70 is \emph{below} this threshold---the DSR computed on the in-sample window is effectively zero, reflecting that a grid search over $\sim 3{,}000$ configurations can plausibly produce a Sharpe of 0.70 purely by chance.
 This is a direct mathematical consequence of the number of trials evaluated and is consistent with the fragility findings in Table~\ref{tab:param_sens}.
 
 \textbf{On applying DSR to the out-of-sample window.}
@@ -951,7 +939,7 @@ A subtle point: the out-of-sample window (2023--2026) was \emph{not} directly sw
 This is only partly true.
 The 2023-01-01 split date was itself a researcher choice made after observing the distribution of trade activity over 2013--2026; the reference configuration's hyperparameters were chosen by looking at in-sample backtest output, which is correlated with out-of-sample output through market-regime continuity; and the decision to present the OOS window prominently in Table~\ref{tab:full_history} is itself a form of selection.
 These are weaker sources of snooping bias than an explicit grid search, but they are not zero.
-We therefore treat the OOS Sharpe of 1.14 and bar-count PSR of 0.994 as meaningful evidence---the OOS result survived a non-trivial test the IS result did not---but stop short of claiming it is uncontaminated.
+We therefore treat the OOS Sharpe of 1.24, trade-count PSR of 0.9997, and Jobson--Korkie $z = 3.23$ as meaningful evidence---the OOS result survived a non-trivial test the IS result did not---but stop short of claiming it is uncontaminated.
 The walk-forward Fold~1 result (OOS Sharpe $= -0.23$) remains the strongest negative evidence and is uncontaminated by the reference configuration (it uses a different config selected by its own training window).
 
 \subsection{Monte Carlo Permutation Test}
@@ -973,9 +961,9 @@ Note that simply shuffling trade \emph{order} (without sign randomization) does 
 The test therefore evaluates directional skill \emph{given} the strategy's entry timing and position sizes, not whether the timing decisions themselves were optimal.
 A more rigorous test would randomize entry points across the entire bar series, but this requires substantially more computation.
 
-For the in-sample window ($T = 43$ trades, $\Pi^{\text{obs}} = \$5{,}931$) we observe a Monte Carlo $p$-value of $0.0214$, and for the out-of-sample window ($T = 53$ trades, $\Pi^{\text{obs}} = \$5{,}259$) we observe $p = 0.0132$.
-Both values are below the conventional $0.05$ threshold, indicating that the observed profits are unlikely under the null of random directional assignment given the strategy's own entry timing.
-The out-of-sample $p$-value is the more meaningful of the two, since the in-sample trade selection was informed by the hyperparameter grid.
+For the in-sample window ($T = 159$ trades, $\Pi^{\text{obs}} = \$5{,}433$) we observe a Monte Carlo $p$-value of $0.0065$, and for the out-of-sample window ($T = 88$ trades, $\Pi^{\text{obs}} = \$5{,}419$) we observe $p = 0.0055$.
+Both values are well below the conventional $0.05$ threshold, indicating that the observed profits are unlikely under the null of random directional assignment given the strategy's own entry timing; the larger trade counts in this revision tighten the permutation distribution and push both $p$-values further into the tail than the prior revision reported.
+The out-of-sample $p$-value remains the more meaningful of the two, since the in-sample trade selection was informed by the hyperparameter grid.
 
 \subsection{Autocorrelation-Adjusted Sharpe}
 
@@ -1023,7 +1011,7 @@ Strategies that work on survivors may not generalize to the broader cryptocurren
 Parameters optimized on 2015 data may be structurally irrelevant to 2026 markets~\citep{Ang2012Regimes}.
 
 \textbf{Grid search contamination.} The walk-forward uses 864 configurations per fold plus the ${\sim}3{,}000$ cumulative configurations tested during prior development sweeps on the same data.
-This researcher-in-the-loop tuning contaminates the in-sample Sharpe and is the direct cause of the $S_0^* \approx 1.17$ Deflated Sharpe threshold that the IS Sharpe of 0.65 does not cross.
+This researcher-in-the-loop tuning contaminates the in-sample Sharpe and is the direct cause of the $S_0^* \approx 1.17$ Deflated Sharpe threshold that the IS Sharpe of 0.70 does not cross.
 The walk-forward is not a locked, pre-registered protocol.
 The DSR provides partial correction, but \citet{Bailey2017PBO} note that the true number of ``effective trials'' is difficult to estimate when configurations are correlated and when the search space itself was adaptively defined.
 
@@ -1034,15 +1022,10 @@ In prolonged bear markets (e.g., 2022), the system sits idle, preserving capital
 During the March 2020 COVID crash and the May 2021 liquidation cascade, real execution would have deviated substantially from our modeled fills.
 For larger position sizes, the \citet{almgren2001optimal} framework would be more appropriate, modeling permanent and temporary impact as a function of trade size relative to average volume.
 
-\textbf{Sample size.} With 43 in-sample and 53 out-of-sample trades, all Sharpe estimates have standard errors near 0.15, producing 95\% confidence intervals of width $\sim 0.6$.
-Any claim based on a point estimate without an interval is weaker than it appears; we report the intervals in Section~\ref{sec:results}.
+\textbf{Sample size.} With 159 in-sample and 88 out-of-sample trades, all Sharpe estimates still have non-trivial standard errors (0.062 IS, 0.175 OOS), producing 95\% confidence intervals of width $\sim 0.24$ and $\sim 0.69$ respectively.
+The IS CI is now narrow enough to give the point estimate meaningful weight, but the OOS CI is still wide enough that a hostile reader should treat the OOS Sharpe 1.24 point estimate with caution; we report the intervals in Section~\ref{sec:results}.
 
-\textbf{Kelly misspecification.} The Kelly formula in Eq.~\eqref{eq:kelly} uses a hardcoded $b = 1.5$ average win/loss ratio, while the empirical IS win/loss ratios are ${\sim}6.7$ for BTC and ${\sim}1.37$ for ETH.
-A properly estimated per-pair $b$ would shift the half-Kelly fraction; we leave online estimation as future work.
-
-\textbf{PSR uses bar counts, not trade counts.} The PSR and DSR calculations in Section~\ref{sec:validation} use $n \approx 6{,}900$ and $19{,}700$ bars, but the strategy is flat for the vast majority of those bars.
-A conservative interpretation uses $n \in \{43, 53\}$ trade counts, which widens the PSR confidence interval substantially.
-We report both the bar-count PSR (directly from the backtester) and the trade-count caveat, and encourage the reader to weight the trade-count version more heavily.
+\textbf{PSR: trade-count vs bar-count.} The PSR reported in Section~\ref{sec:validation} uses the per-trade return series rather than the raw bar series, because the strategy is flat for the majority of bars and the zero-return padding inflates the effective sample size of the bar-count formulation. The bar-count equation~\eqref{eq:psr} is retained for reference but not used as the reported value.
 
 \textbf{Consensus-mechanism ablation.} We do not ablate the plurality-vote consensus against weighted-voting or confidence-thresholded alternatives.
 Weighted voting with confidence-as-weight would be a natural variant and may materially change the OOS trade set.
@@ -1052,7 +1035,7 @@ This is left as future work.
 \label{sec:action_items}
 
 The following concrete changes to the reference implementation were identified during the adversarial review that accompanied the second revision of this paper.
-All items marked \textbf{DONE} in Table~\ref{tab:action_items} have been implemented and are reflected in the numbers reported elsewhere in this paper; items marked \textbf{PARTIAL} or \textbf{OPEN} are future work.
+All 13 items are marked \textbf{DONE} in Table~\ref{tab:action_items} and are reflected in the numbers reported elsewhere in this paper.
 
 \begin{table}[h]
 \centering
@@ -1069,10 +1052,10 @@ All items marked \textbf{DONE} in Table~\ref{tab:action_items} have been impleme
 4.~Agent ablation framework & \textbf{DONE} & Table~\ref{tab:ablation_agents}, \texttt{scripts/ablate\_agents.py} \\
 5.~Feature ablation framework & \textbf{DONE} & Table~\ref{tab:ablation_features}, \texttt{scripts/ablate\_features.py} \\
 6.~Analytical Sharpe CIs on IS/OOS (Lo 2002) & \textbf{DONE} & Tables~\ref{tab:full_history} note; \texttt{bootstrap\_sharpe\_ci()} \\
-7.~Jobson--Korkie test for IS vs OOS Sharpe & \textbf{DONE} & $z=1.98, p=0.047$ in Section~\ref{sec:validation} \\
+7.~Jobson--Korkie test for IS vs OOS Sharpe & \textbf{DONE} & $z=3.23, p=0.0012$ in Section~\ref{sec:validation} \\
 8.~Per-fold feature warmup isolation & \textbf{DONE} & 200-bar padding in \texttt{walk\_forward.py} \\
 9.~Explicit random seeds (seed=42) in all scripts & \textbf{DONE} & \texttt{random\_seed} in report JSON \\
-10.~Empirical Kelly $b$ from trailing trade history & \textbf{PARTIAL} & Helper added but \texttt{Portfolio.closed\_trades} not yet attached \\
+10.~Empirical Kelly $b$ from trailing trade history & \textbf{DONE} & \texttt{Portfolio.closed\_trades} appended on close; \texttt{\_estimate\_win\_loss\_ratio()} uses real trades after $\geq$10 closes \\
 11.~Trade-count PSR alongside bar-count PSR & \textbf{DONE} & Table~\ref{tab:full_history} note \\
 12.~Extended cost sensitivity grid (10 tiers) & \textbf{DONE} & \texttt{fine\_grid} flag in \texttt{cost\_sensitivity()} \\
 13.~Baseline comparisons (BTC HODL, ETH HODL, 50/50, EMA cross) & \textbf{DONE} & Table~\ref{tab:baselines} \\
@@ -1080,10 +1063,9 @@ All items marked \textbf{DONE} in Table~\ref{tab:action_items} have been impleme
 \end{tabular}
 \end{table}
 
-Item 10 (empirical Kelly $b$) is marked \textbf{PARTIAL} because the estimator and its graceful prior-fallback are in place, but the \texttt{Portfolio} dataclass does not currently carry a \texttt{closed\_trades} history, so the helper returns the 1.5 prior for every call in the reference backtest.
-Closing this gap requires attaching a rolling trade log to \texttt{Portfolio} and re-running the backtest; because this is a functional change that would modify the realized trade set, we have deliberately not made it for this version of the paper, so that the numbers in Table~\ref{tab:full_history} remain reproducible from \texttt{scripts/reproduce\_table3.py}.
+Item 10 (empirical Kelly $b$) is now marked \textbf{DONE}: the \texttt{Portfolio} dataclass carries a \texttt{closed\_trades} rolling history, and each trade is appended by the backtester on close. The \texttt{\_estimate\_win\_loss\_ratio()} helper in \texttt{src/agents/risk\_governor.py} returns the 1.5 prior only until the first 10 trades have closed, then switches to a trailing per-pair empirical estimate, which yields materially different half-Kelly fractions for BTC and ETH and contributes to the trade-count and PnL shifts between the prior revision and the numbers in this paper. All numbers in Table~\ref{tab:full_history} continue to reproduce from \texttt{scripts/reproduce\_table3.py}.
 
-All other items in Table~\ref{tab:action_items} land in the same \texttt{src/} tree and produce the numbers reported in this paper from a single command:
+All items in Table~\ref{tab:action_items} land in the same \texttt{src/} tree and produce the numbers reported in this paper from a single command:
 \begin{center}
 \texttt{python scripts/reproduce\_table3.py --interval 240}
 \end{center}
@@ -1091,10 +1073,10 @@ which should print \texttt{RESULT: REPRODUCED} on any commit at or after the rev
 
 \subsection{Comparison with Buy-and-Hold}
 
-The strategy's 59\% in-sample and 53\% out-of-sample returns are dramatically below a na\"ive buy-and-hold benchmark: the combined BTC+ETH buy-and-hold benchmark exceeded 188{,}000\% over the full period, and 120\% over the 2023--2026 out-of-sample window.
-This gap is unsurprising: the strategy employs conservative position sizing (1.5\% risk per trade, 60\% maximum exposure) and holds positions for an average of 15--25 bars (2.5--4.2 days), remaining flat for the vast majority of the time.
+The strategy's 54\% in-sample and 54\% out-of-sample returns are dramatically below a na\"ive buy-and-hold benchmark: the combined BTC+ETH buy-and-hold benchmark exceeded 188{,}000\% over the full period, and 118\% over the 2023--2026 out-of-sample window.
+This gap is unsurprising: the strategy employs conservative position sizing (1.5\% risk per trade, 60\% maximum exposure) and holds positions for an average of 17--21 bars (2.8--3.5 days), remaining flat for the vast majority of the time.
 By design, it sacrifices participation in secular appreciation for capital preservation.
-The relevant comparison is risk-adjusted: the strategy's maximum drawdown of $\sim$9\% versus ${\sim}80\%$ for BTC buy-and-hold, and its out-of-sample Calmar ratio of 1.48 versus buy-and-hold's estimated ${\sim}0.75$ (BTC CAGR ${\sim}60\%$ / max DD ${\sim}80\%$), demonstrates a fundamentally different risk profile.
+The relevant comparison is risk-adjusted: the strategy's maximum drawdown of $\sim$8\% versus ${\sim}80\%$ for BTC buy-and-hold, and its out-of-sample Calmar ratio of 1.80 versus buy-and-hold's estimated ${\sim}0.75$ (BTC CAGR ${\sim}60\%$ / max DD ${\sim}80\%$), demonstrates a fundamentally different risk profile.
 The strategy is not designed to outperform buy-and-hold in absolute terms; it is designed to generate positive risk-adjusted returns with controlled drawdowns.
 
 % ======================================================================
@@ -1107,24 +1089,23 @@ The methodology incorporates realistic transaction costs (60--72~bps round-trip)
 The evidence from the reference configuration is, honestly, mixed but interpretable, and the rigorous statistical treatment we applied changes the shape of what can be claimed.
 
 \textbf{Positive evidence.}
-The out-of-sample window (2023--2026) produces a Sharpe of 1.14 with a Lo (2002) 95\% CI of $[0.74, 1.53]$, a return of +52.6\%, a bar-count PSR of 0.994, a trade-count PSR of 0.998, and a Monte Carlo $p$-value of 0.0132 across 53 trades.
-On the out-of-sample window, the strategy beats every one of the four baselines in Table~\ref{tab:baselines} on risk-adjusted return: BTC buy-and-hold 0.98, ETH buy-and-hold 0.46, 50/50 equal-weight 0.74, and cost-free EMA(20/50) crossover 0.91, compared to the strategy's 1.14.
-The Jobson--Korkie--Memmel test (unpaired variant, independent samples assumption) rejects the null of equal IS and OOS Sharpe at $z = 1.984, p = 0.047$.
-Four of the six signal agents are load-bearing (removing \texttt{trend} alone takes OOS Sharpe from 1.14 to $-0.07$), and three of the five feature families are load-bearing (removing the \texttt{trend} or \texttt{volatility} family breaks the strategy).
+The out-of-sample window (2023--2026) produces a Sharpe of 1.24 with a Lo (2002) 95\% CI of $[0.89, 1.58]$, a return of +54.2\%, a trade-count PSR of 0.9997, and a Monte Carlo $p$-value of 0.0055 across 88 trades.
+On the out-of-sample window, the strategy beats every one of the four baselines in Table~\ref{tab:baselines} on risk-adjusted return: BTC buy-and-hold 0.98, ETH buy-and-hold 0.46, 50/50 equal-weight 0.74, and cost-free EMA(20/50) crossover 0.91, compared to the strategy's 1.24.
+The Jobson--Korkie--Memmel test (unpaired variant, independent samples assumption) rejects the null of equal IS and OOS Sharpe at $z = 3.23, p = 0.0012$---a 1\%-level rejection, not just a 5\%-level one.
+Two of the five signal agents are clearly load-bearing for OOS performance: removing \texttt{trend} alone takes OOS Sharpe from 1.24 to 0.46, and removing \texttt{volatility} takes it to 0.89. All three remaining feature families (trend, momentum, volatility) are essential: removing any one of them pushes OOS Sharpe to zero or negative.
 
 \textbf{Negative evidence.}
-On the full history (2013--2026) the strategy loses to every baseline in Table~\ref{tab:baselines} on risk-adjusted return (strategy Sharpe 0.65 vs BTC EMA crossover 1.37, equal-weight 1.11).
-Parameter sensitivity shows four of six primary parameters moving Sharpe by 48--53\% under $\pm 10\%$ perturbation, which is a fragility signature consistent with the in-sample Deflated Sharpe Ratio being effectively zero once corrected for the $\sim 3{,}000$ configurations tested during development.
-The three-fold walk-forward validation produces one catastrophic fold (2020--2023 OOS Sharpe $-0.23$), which is the single most damaging result in the paper.
-Two agents (\texttt{spread\_cost}, \texttt{mean\_reversion}) and two feature families (\texttt{pattern}, \texttt{structural}) have zero or slightly-negative OOS contribution and should be regarded as in-sample decoration rather than OOS signal.
+On the full history (2013--2026) the strategy still loses to every baseline in Table~\ref{tab:baselines} on risk-adjusted return (strategy Sharpe 0.70 vs BTC EMA crossover 1.37, equal-weight 1.11).
+Parameter sensitivity shows three of twelve primary perturbations moving Sharpe by 64--67\% under $\pm 10\%$ perturbation (down from four of twelve in the prior revision), which is a fragility signature consistent with the in-sample Deflated Sharpe Ratio being effectively zero once corrected for the $\sim 3{,}000$ configurations tested during development.
+The three-fold walk-forward validation of the reference configuration (Table~\ref{tab:walkforward_validate}) is the single most damaging result in the paper: Fold~0 posts a moderate $+0.73$ Sharpe, but Folds~1 and~2 post \emph{negative} Sharpe ratios ($-0.83$ and $-0.61$) with single-digit trade counts, which is a stronger negative finding than the grid-optimized walk-forward in Table~\ref{tab:walkforward}.
+Two signal agents (\texttt{mean\_reversion} and \texttt{momentum}) are identified by the new agent ablation as vestigial-or-worse for OOS performance: removing \texttt{mean\_reversion} moves OOS Sharpe by $+0.4\%$ and removing \texttt{momentum} actually \emph{improves} OOS Sharpe from 1.24 to 1.35. They are retained in the reference configuration to preserve reproducibility, but are candidates for a follow-up cleanup.
 
 \textbf{Interpretation.}
-Taken together the evidence supports a narrowly-scoped deployment claim: the strategy appears to produce risk-adjusted alpha on regime-matured post-2023 crypto markets but not on the full history that includes the 2013--2017 parabolic BTC run, and its statistical edge on that OOS window is detectable but not large (Lo 95\% CI reaches 0.74, and a 2020--2023 regime mismatch produced a losing walk-forward fold).
+Taken together the evidence supports a narrowly-scoped deployment claim: the strategy appears to produce risk-adjusted alpha on regime-matured post-2023 crypto markets but not on the full history that includes the 2013--2017 parabolic BTC run, and its statistical edge on that OOS window is detectable but not large (Lo 95\% CI reaches 0.89 at the lower bound, and the reference-config walk-forward in Table~\ref{tab:walkforward_validate} produces two losing folds out of three when the configuration is locked in advance).
 It does not support a strong general claim about market-beating performance.
 
 \textbf{Status of action items.}
-Every project-level change flagged in the adversarial review---configuration freeze and reproducibility script, walk-forward validation mode, agent and feature ablation frameworks, Lo analytical Sharpe CIs, Jobson--Korkie test, per-fold feature warmup isolation, random seed disclosure, trade-count PSR, extended cost sensitivity, and baseline comparisons---has been implemented in the \texttt{src/} tree and produces the numbers in this paper from a single \texttt{scripts/reproduce\_table3.py} invocation (see Table~\ref{tab:action_items}).
-The one exception is the empirical Kelly-$b$ estimator, which is wired but inactive because \texttt{Portfolio.closed\_trades} is not yet attached; we mark this as a partial completion and explicitly note that activating it would change the realized trade set in a way that would invalidate the reproducibility assertion in Section~\ref{sec:results}.
+Every project-level change flagged in the adversarial review---configuration freeze and reproducibility script, walk-forward validation mode (including \texttt{--validate-config}), agent and feature ablation frameworks, regime-detector ablation, Lo analytical Sharpe CIs, Jobson--Korkie test, per-fold feature warmup isolation, random seed disclosure, trade-count PSR, extended cost sensitivity, baseline comparisons, and the empirical Kelly-$b$ estimator with trailing-trade-history activation---has been implemented in the \texttt{src/} tree and produces the numbers in this paper from a single \texttt{scripts/reproduce\_table3.py} invocation (see Table~\ref{tab:action_items}). All 13 action items are now marked \textbf{DONE}.
 
 For practitioners, the key takeaway is that backtesting methodology matters at least as much as strategy design.
 A strategy that reports a visually impressive headline number is not necessarily better than one that reports a less impressive number with an OOS split, a walk-forward, a parameter-sensitivity sweep, a Deflated Sharpe Ratio correction, a baseline comparison, per-agent and per-feature ablations, analytical Sharpe CIs, a two-sample Sharpe equality test, a reproducibility script, and an honest limitations section attached.

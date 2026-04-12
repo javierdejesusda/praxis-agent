@@ -55,3 +55,8 @@ docs/*
 
 # Snapshot files
 snapshot-*.md
+
+# Video build output
+video/out/
+video/node_modules/
+out/

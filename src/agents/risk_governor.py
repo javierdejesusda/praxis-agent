@@ -55,16 +55,74 @@ def _check_kill_criteria(
     return violations
 
 
-def _compute_kelly(portfolio: Portfolio, signal_confidence: float) -> float:
+def _estimate_win_loss_ratio(
+    portfolio: Portfolio,
+    pair: str,
+    prior_b: float = 1.5,
+    prior_n: int = 30,
+) -> float:
+    """Estimate the average win/loss ratio (b) from recent closed trades.
+
+    Pulls the trailing ``prior_n`` closed trades for ``pair`` from
+    ``portfolio.closed_trades`` (if present) and computes the ratio of the
+    mean winning trade percent to the mean losing trade percent. The result
+    is blended with a conservative prior of ``prior_b`` using a linear weight
+    that grows with the number of observed trades, so thin histories remain
+    anchored to the prior.
+
+    Args:
+        portfolio: Current portfolio state. May or may not expose a
+            ``closed_trades`` iterable of trade records with ``pair`` and
+            ``pnl_pct`` attributes.
+        pair: Trading pair to filter trade history by (e.g. ``"BTCUSD"``).
+        prior_b: Prior average win/loss ratio used when history is missing
+            or too thin. Defaults to ``1.5``.
+        prior_n: Number of trailing trades to consider and the denominator
+            for the blending weight. Defaults to ``30``.
+
+    Returns:
+        Blended win/loss ratio clipped to the range ``[0.5, 10.0]``. Returns
+        ``prior_b`` when ``portfolio.closed_trades`` is missing, empty, or
+        contains fewer than 5 qualifying trades for ``pair``, or when the
+        window lacks either wins or losses.
+    """
+    closed_trades = getattr(portfolio, "closed_trades", []) or []
+    pair_trades = [
+        t for t in closed_trades if getattr(t, "pair", None) == pair
+    ][-prior_n:]
+
+    wins = [t.pnl_pct for t in pair_trades if t.pnl_pct > 0]
+    losses = [abs(t.pnl_pct) for t in pair_trades if t.pnl_pct < 0]
+
+    if len(pair_trades) < 5 or not wins or not losses:
+        return prior_b
+
+    empirical_b = (sum(wins) / len(wins)) / (sum(losses) / len(losses))
+    empirical_b = max(0.5, min(10.0, empirical_b))
+
+    weight = min(1.0, len(pair_trades) / prior_n)
+    return weight * empirical_b + (1 - weight) * prior_b
+
+
+def _compute_kelly(
+    portfolio: Portfolio,
+    signal_confidence: float,
+    pair: str | None = None,
+) -> float:
     """Compute half-Kelly position fraction from trade history and signal quality.
 
     Uses signal confidence as a proxy for win probability when trade history
     is insufficient (< 10 trades). With enough history, blends historical
-    win rate with signal confidence.
+    win rate with signal confidence. When ``pair`` is provided, the average
+    win/loss ratio is estimated empirically from the trailing closed trades
+    on that pair and blended with a ``1.5`` prior; otherwise the legacy
+    hardcoded ``1.5`` is used for backward compatibility.
 
     Args:
         portfolio: Current portfolio with trade count and PnL.
         signal_confidence: Average aligned signal confidence (0-100).
+        pair: Optional trading pair whose closed trade history is used to
+            estimate the empirical win/loss ratio. Defaults to ``None``.
 
     Returns:
         Half-Kelly fraction (capped at 3% for safety).
@@ -78,10 +136,15 @@ def _compute_kelly(portfolio: Portfolio, signal_confidence: float) -> float:
         ))
         win_prob = 0.5 * win_prob + 0.5 * historical_win_rate
 
-    avg_win_loss_ratio = 1.5
+    if pair is not None:
+        avg_win_loss_ratio = _estimate_win_loss_ratio(portfolio, pair)
+    else:
+        avg_win_loss_ratio = 1.5
 
     kelly = win_prob - (1 - win_prob) / avg_win_loss_ratio
-    kelly = max(0.0, kelly)
+
+    if kelly <= 0.0:
+        return 0.0
 
     half_kelly = kelly / 2.0
     return min(half_kelly, 0.03)
@@ -254,14 +317,26 @@ def evaluate_risk(
             )
             return decision, None
 
-    kelly_fraction = _compute_kelly(portfolio, avg_confidence)
-    risk_pct = max(RISK.risk_per_trade_pct, kelly_fraction)
+    kelly_fraction = _compute_kelly(portfolio, avg_confidence, pair=features.pair)
+    if kelly_fraction <= 0.0:
+        decision = RiskDecision(
+            approved=False,
+            reason_codes=["NO_EDGE"],
+            daily_pnl=portfolio.daily_pnl,
+            drawdown_pct=drawdown,
+        )
+        return decision, None
+
+    risk_pct = min(max(kelly_fraction, 0.0), 0.03)
     risk_amount = portfolio.equity * risk_pct
     max_size = portfolio.equity * RISK.max_position_pct
-    size_usd = min(risk_amount / (features.atr_20 / features.ema_21)
-                   if features.ema_21 > 0 and features.atr_20 > 0
-                   else risk_amount,
-                   max_size)
+    stop_mult_val = RISK.stop_mult
+    if features.ema_21 > 0 and features.atr_20 > 0:
+        denom = stop_mult_val * (features.atr_20 / features.ema_21)
+        raw_size = risk_amount / denom if denom > 0 else risk_amount
+    else:
+        raw_size = risk_amount
+    size_usd = min(raw_size, max_size)
     size_usd = max(10.0, size_usd)
 
     atr = features.atr_20
