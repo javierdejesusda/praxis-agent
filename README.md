@@ -16,24 +16,24 @@ Built for the [lablab.ai AI Trading Agents Hackathon](https://lablab.ai/ai-hacka
 
 | Metric | Value |
 |---|---|
-| Sharpe Ratio | **1.136** |
-| CAGR | **14.21%** |
-| Total Return | **+52.59%** |
-| Calmar Ratio | **1.479** |
-| Max Drawdown | **9.61%** |
-| Total Trades | 53 (31W / 22L) |
-| Win Rate | 58.5% |
-| Profit Factor | 2.648 |
-| Expectancy | $114.00/trade |
-| MC p-value | 0.013 |
-| PSR | 99.4% |
+| Sharpe Ratio | **1.239** |
+| CAGR | **14.59%** |
+| Total Return | **+54.19%** |
+| Calmar Ratio | **1.80** |
+| Max Drawdown | **8.11%** |
+| Total Trades | 88 (41W / 47L) |
+| Win Rate | 46.6% |
+| Profit Factor | 2.536 |
+| Expectancy | $75.02/trade |
+| MC p-value | 0.0055 |
+| PSR | 99.97% |
 
 ### Methodology
 
 - **12+ years of FMP data** — BTC/USD (2013-2026) and ETH/USD (2015-2026) on 4h candles.
 - **Strict IS/OOS separation** — parameters optimized on pre-2023 data only. OOS window never touched by any optimizer. All sweep scripts enforce this boundary.
 - **Realistic execution** — next-bar open fills, 0.26% Kraken taker fees, vol-scaled slippage.
-- **Statistical validation** — Monte Carlo permutation test (p=0.013), Probabilistic Sharpe Ratio (99.4%), Deflated Sharpe Ratio applied to IS with n=3,000 trial correction.
+- **Statistical validation** — Monte Carlo permutation test (p=0.0055), Probabilistic Sharpe Ratio (99.97%), Deflated Sharpe Ratio applied to IS with n=3,000 trial correction.
 - **Robustness tested** — cost sensitivity across 4 fee tiers, parameter sensitivity at +/-10% perturbation, regime-specific analysis.
 
 Regenerate: `python scripts/final_report.py`
@@ -221,14 +221,13 @@ src/
 dashboard/              Next.js 16 UI
 
 scripts/
-  final_report.py       IS/OOS backtest with robustness analyses
-  preflight.py          Pre-launch health check
-  force_trade.py        End-to-end trade path verification
-  walk_forward.py       Walk-forward cross-validation
-  sweep_optimize.py     Parameter grid search
+  final_report.py           IS/OOS backtest with robustness analyses
+  reproduce_table3.py       Reproduce paper Table 3 metrics
+  walk_forward.py           Walk-forward cross-validation
+  preflight.py              Pre-launch health check
   download_fmp_history.py   Historical data from FMP API
-  register_agent.py     On-chain agent registration
-  start.sh              Production entry point (Docker)
+  register_agent.py         On-chain agent registration
+  start.sh                  Production entry point (Docker)
 
 tests/                  pytest suite
 ```

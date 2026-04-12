@@ -21,6 +21,8 @@ build/
 .venv/
 venv/
 
+.tex 
+
 # Backup files
 *_original.py
 
@@ -59,7 +61,14 @@ docs/*
 # Snapshot files
 snapshot-*.md
 
-# Video build output
-video/out/
-video/node_modules/
+# Remotion video workspace (dev-only, not shipped with the project)
+/video/
 out/
+
+# Dev screenshots and LaTeX build byproducts
+/*.png
+/*.log
+!README*.png
+
+# pytest cache
+.pytest_cache/

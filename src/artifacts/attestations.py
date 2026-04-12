@@ -1,9 +1,9 @@
 """Persistent on-chain attestation log.
 
 Single source of truth for recording validation, reputation, and trade
-intent transactions produced by RiskRouterAdapter. The orchestrator and
-the force_trade test harness both write through this module so the
-dashboard and /api/attestations endpoint see a unified stream.
+intent transactions produced by RiskRouterAdapter. The orchestrator
+writes through this module so the dashboard and /api/attestations
+endpoint see a unified stream.
 """
 
 import asyncio
