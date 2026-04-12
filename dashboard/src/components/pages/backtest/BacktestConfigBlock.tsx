@@ -2,11 +2,29 @@
 
 import { KeyValueGrid } from "@/components/ui/KeyValueGrid";
 import { NumericValue } from "@/components/ui/NumericValue";
+import { SkeletonText } from "@/components/ui/Skeleton";
 import { fmtTimestamp } from "@/lib/format";
 import { useBacktestReport } from "@/lib/hooks";
 
 export function BacktestConfigBlock() {
-  const { data } = useBacktestReport();
+  const { data, isLoading } = useBacktestReport();
+
+  if (isLoading) {
+    return (
+      <div className="space-y-5">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.12em] text-[color:var(--color-muted)] font-medium mb-3">
+            Backtest Period
+          </div>
+          <SkeletonText
+            lines={6}
+            widths={["40%", "40%", "30%", "50%", "45%", "55%"]}
+          />
+        </div>
+      </div>
+    );
+  }
+
   if (!data) return null;
 
   const config = data.config;

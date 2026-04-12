@@ -4,6 +4,7 @@ import { usePortfolio } from "@/lib/hooks";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { NumericValue } from "@/components/ui/NumericValue";
 import { StatusPill } from "@/components/ui/StatusPill";
+import { SkeletonRow } from "@/components/ui/Skeleton";
 
 type Position = {
   side: string;
@@ -26,7 +27,32 @@ function optionalUsd(value: number | undefined) {
 }
 
 export function PositionsTable() {
-  const { data: portfolio } = usePortfolio();
+  const { data: portfolio, isLoading } = usePortfolio();
+
+  if (isLoading && !portfolio) {
+    return (
+      <div className="overflow-x-auto">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Pair</th>
+              <th>Side</th>
+              <th className="num">Size USD</th>
+              <th className="num">Entry</th>
+              <th className="num">ATR Stop</th>
+              <th className="num">ATR Target</th>
+            </tr>
+          </thead>
+          <tbody>
+            <SkeletonRow cols={6} />
+            <SkeletonRow cols={6} />
+            <SkeletonRow cols={6} />
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
   const rows: Row[] = Object.entries(
     (portfolio?.positions ?? {}) as Record<string, Position>,
   );
@@ -75,11 +101,13 @@ export function PositionsTable() {
   ];
 
   return (
-    <DataTable<Row>
-      rows={rows}
-      columns={columns}
-      rowKey={([pair]) => pair}
-      emptyLabel="No open positions"
-    />
+    <div style={{ maxHeight: 320, overflowY: "auto" }}>
+      <DataTable<Row>
+        rows={rows}
+        columns={columns}
+        rowKey={([pair]) => pair}
+        emptyLabel="No open positions"
+      />
+    </div>
   );
 }

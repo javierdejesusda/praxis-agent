@@ -1,14 +1,23 @@
 "use client";
 
-import { Fragment, useState } from "react";
-import { ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowUpRight, ArrowDownRight, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { useTrades } from "@/lib/hooks";
 import type { Artifact } from "@/lib/api";
 import { NumericValue } from "@/components/ui/NumericValue";
 import { StatusPill, type PillTone } from "@/components/ui/StatusPill";
-import { KeyValueGrid } from "@/components/ui/KeyValueGrid";
-import { fmtHashShort, fmtTimestamp } from "@/lib/format";
+import { CopyButton } from "@/components/ui/CopyButton";
+import { SkeletonRow } from "@/components/ui/Skeleton";
+import { formatTimestamp, useTimezoneMode } from "@/lib/timezone";
+import { shortHash } from "@/lib/chain";
+
+const PAGE_SIZE = 25;
+
+type TradesTableProps = {
+  onSelect?: (artifact: Artifact) => void;
+  selectedKey?: string | null;
+};
 
 function sideTone(side: string | undefined): PillTone {
   const s = (side || "").toLowerCase();
@@ -29,161 +38,76 @@ function isCloseArtifact(artifact: Artifact): boolean {
   return artifact.type === "position-close";
 }
 
-function buildDetails(artifact: Artifact) {
-  const payload = artifact.payload;
-  const intent = payload.intent;
-  const receipt = payload.receipt;
-  const decision = payload.risk_decision;
-  const analyst = payload.analyst;
-  const isClose = isCloseArtifact(artifact);
-
-  const items: Array<{ k: string; v: React.ReactNode }> = [];
-
-  if (isClose) {
-    const p = payload as Record<string, unknown>;
-    if (p.entry_price != null) {
-      items.push({
-        k: "Entry Price",
-        v: <NumericValue value={p.entry_price as number} kind="usd" />,
-      });
-    }
-    if (p.exit_price != null) {
-      items.push({
-        k: "Exit Price",
-        v: <NumericValue value={p.exit_price as number} kind="usd" />,
-      });
-    }
-    if (p.pnl_usd != null) {
-      items.push({
-        k: "P&L",
-        v: <NumericValue value={p.pnl_usd as number} kind="usd" color="auto" sign="always" />,
-      });
-    }
-    if (p.pnl_pct != null) {
-      items.push({
-        k: "Return",
-        v: <NumericValue value={p.pnl_pct as number} kind="pct" color="auto" sign="always" />,
-      });
-    }
-    if (p.close_reason) {
-      items.push({
-        k: "Close Reason",
-        v: (
-          <span className="uppercase tracking-[0.06em] text-[color:var(--color-ink-soft)]">
-            {String(p.close_reason).replace(/_/g, " ")}
-          </span>
-        ),
-      });
-    }
-  } else {
-    if (intent?.intent_id) {
-      items.push({
-        k: "Intent ID",
-        v: <span className="num">{fmtHashShort(intent.intent_id, 8)}</span>,
-      });
-    }
-    if (receipt?.fill_price != null) {
-      items.push({
-        k: "Fill Price",
-        v: <NumericValue value={receipt.fill_price} kind="usd" />,
-      });
-    }
-    if (receipt?.fees_usd != null) {
-      items.push({
-        k: "Fees",
-        v: <NumericValue value={receipt.fees_usd} kind="usd" />,
-      });
-    }
-    if (receipt?.status) {
-      items.push({
-        k: "Receipt Status",
-        v: <span className="uppercase tracking-[0.06em]">{receipt.status}</span>,
-      });
-    }
-    if (receipt?.order_id) {
-      items.push({
-        k: "Order ID",
-        v: <span className="num">{fmtHashShort(receipt.order_id, 8)}</span>,
-      });
-    }
-    if (decision?.final_size_usd != null) {
-      items.push({
-        k: "Final Size",
-        v: <NumericValue value={decision.final_size_usd} kind="usd" />,
-      });
-    }
-    if (decision?.drawdown_pct != null) {
-      items.push({
-        k: "Drawdown",
-        v: <NumericValue value={decision.drawdown_pct} kind="pct" />,
-      });
-    }
-    if (decision?.reason_codes && decision.reason_codes.length > 0) {
-      items.push({
-        k: "Reason Codes",
-        v: (
-          <span className="text-[color:var(--color-ink-soft)]">
-            {decision.reason_codes.join(", ")}
-          </span>
-        ),
-      });
-    }
-    if (analyst?.conviction != null) {
-      items.push({
-        k: "Analyst Conviction",
-        v: <NumericValue value={analyst.conviction} kind="int" />,
-      });
-    }
-    if (analyst?.regime_assessment) {
-      items.push({
-        k: "Regime",
-        v: (
-          <span className="uppercase tracking-[0.06em] text-[color:var(--color-ink-soft)]">
-            {analyst.regime_assessment}
-          </span>
-        ),
-      });
-    }
-  }
-
-  if (artifact.hash) {
-    items.push({
-      k: "Artifact Hash",
-      v: <span className="num">{fmtHashShort(artifact.hash, 10)}</span>,
-    });
-  }
-
-  return items;
-}
-
 function TypeBadge({ isClose }: { isClose: boolean }) {
   if (isClose) {
     return (
       <span
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-[0.04em] text-white"
-        style={{ background: "#FF9100" }}
+        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-[0.06em]"
+        style={{
+          background: "var(--color-warn-soft)",
+          color: "var(--color-warn)",
+          border: "1px solid var(--color-warn)",
+        }}
       >
-        <ArrowDownRight size={14} strokeWidth={2.5} />
+        <ArrowDownRight size={12} strokeWidth={2.5} />
         EXIT
       </span>
     );
   }
   return (
     <span
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-[0.04em] text-white"
-      style={{ background: "#2979FF" }}
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-[0.06em]"
+      style={{
+        background: "var(--color-accent-soft)",
+        color: "var(--color-accent)",
+        border: "1px solid var(--color-accent)",
+      }}
     >
-      <ArrowUpRight size={14} strokeWidth={2.5} />
+      <ArrowUpRight size={12} strokeWidth={2.5} />
       ENTRY
     </span>
   );
 }
 
-export function TradesTable() {
-  const { data: trades } = useTrades();
-  const [expanded, setExpanded] = useState<string | null>(null);
+export function TradesTable({ onSelect, selectedKey }: TradesTableProps) {
+  const { data: trades, isLoading } = useTrades();
+  const [pageIndex, setPageIndex] = useState(0);
+  const tzMode = useTimezoneMode();
 
-  const rows = trades ?? [];
+  const rows = useMemo(() => trades ?? [], [trades]);
+
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const safePage = Math.min(pageIndex, totalPages - 1);
+  const pageRows = useMemo(
+    () => rows.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE),
+    [rows, safePage],
+  );
+
+  if (isLoading && rows.length === 0) {
+    return (
+      <div className="overflow-x-auto">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Time</th>
+              <th>Pair</th>
+              <th>Side</th>
+              <th className="num">Size USD</th>
+              <th className="num">Price</th>
+              <th>Status</th>
+              <th>Hash</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonRow key={i} cols={8} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
 
   if (rows.length === 0) {
     return (
@@ -193,72 +117,87 @@ export function TradesTable() {
     );
   }
 
+  const handleActivate = (artifact: Artifact) => {
+    if (onSelect) onSelect(artifact);
+  };
+
   return (
-    <div className="overflow-x-auto">
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>Type</th>
-            <th>Time</th>
-            <th>Pair</th>
-            <th>Side</th>
-            <th className="num">Size USD</th>
-            <th className="num">Price</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((artifact, idx) => {
-            const key = artifact.hash || `${artifact.timestamp}-${idx}`;
-            const isOpen = expanded === key;
-            const payload = artifact.payload;
-            const isClose = isCloseArtifact(artifact);
-            const p = payload as Record<string, unknown>;
+    <div>
+      <div className="overflow-x-auto">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Time</th>
+              <th>Pair</th>
+              <th>Side</th>
+              <th className="num">Size USD</th>
+              <th className="num">Price</th>
+              <th>Status</th>
+              <th>Hash</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pageRows.map((artifact, idx) => {
+              const key = artifact.hash || `${artifact.timestamp}-${idx}`;
+              const payload = artifact.payload;
+              const isClose = isCloseArtifact(artifact);
+              const p = payload as Record<string, unknown>;
 
-            const pair = isClose
-              ? (p.pair as string) || "\u2014"
-              : payload.pair || payload.intent?.pair || "\u2014";
+              const pair = isClose
+                ? (p.pair as string) || "\u2014"
+                : payload.pair || payload.intent?.pair || "\u2014";
 
-            const side = isClose
-              ? (p.side as string | undefined)
-              : payload.intent?.side;
+              const side = isClose
+                ? (p.side as string | undefined)
+                : payload.intent?.side;
 
-            const size = isClose
-              ? (p.size_usd as number | undefined)
-              : payload.intent?.size_usd;
+              const size = isClose
+                ? (p.size_usd as number | undefined)
+                : payload.intent?.size_usd;
 
-            const price = isClose
-              ? (p.exit_price as number | undefined)
-              : payload.receipt?.fill_price;
+              const price = isClose
+                ? (p.exit_price as number | undefined)
+                : payload.receipt?.fill_price;
 
-            const status = isClose
-              ? "closed"
-              : payload.receipt?.status;
+              const status = isClose ? "closed" : payload.receipt?.status;
+              const pnlUsd = isClose
+                ? (p.pnl_usd as number | undefined)
+                : undefined;
 
-            const pnlUsd = isClose ? (p.pnl_usd as number | undefined) : undefined;
-            const details = buildDetails(artifact);
+              const isSelected = selectedKey === key;
+              const rowBg = isSelected
+                ? "var(--color-hover)"
+                : "transparent";
+              const borderLeft = isClose
+                ? "3px solid var(--color-warn)"
+                : "3px solid var(--color-accent)";
 
-            const rowBg = isClose
-              ? "rgba(255, 145, 0, 0.06)"
-              : "rgba(41, 121, 255, 0.04)";
-
-            const borderLeft = isClose
-              ? "4px solid #FF9100"
-              : "4px solid #2979FF";
-
-            return (
-              <Fragment key={key}>
+              return (
                 <tr
-                  onClick={() => setExpanded(isOpen ? null : key)}
-                  className="cursor-pointer"
-                  style={{ background: rowBg }}
+                  key={key}
+                  onClick={() => handleActivate(artifact)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleActivate(artifact);
+                    }
+                  }}
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`Open detail for ${pair} trade`}
+                  className="cursor-pointer outline-none focus-visible:ring-2"
+                  style={{
+                    background: rowBg,
+                    transition: "background 150ms ease",
+                  }}
                 >
                   <td style={{ borderLeft, paddingLeft: 12 }}>
                     <TypeBadge isClose={isClose} />
                   </td>
                   <td>
                     <span className="num text-[12px] text-[color:var(--color-ink)]">
-                      {fmtTimestamp(artifact.timestamp)}
+                      {formatTimestamp(artifact.timestamp, tzMode)}
                     </span>
                   </td>
                   <td>
@@ -308,32 +247,96 @@ export function TradesTable() {
                       )}
                     </div>
                   </td>
+                  <td onClick={(e) => e.stopPropagation()}>
+                    {artifact.hash ? (
+                      <CopyButton
+                        value={artifact.hash}
+                        label={shortHash(artifact.hash, 6, 4)}
+                      />
+                    ) : (
+                      <span className="text-[color:var(--color-muted)]">{"\u2014"}</span>
+                    )}
+                  </td>
                 </tr>
-                {isOpen && (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      style={{
-                        background: "var(--color-paper)",
-                        padding: "16px 20px",
-                        borderLeft,
-                      }}
-                    >
-                      {details.length > 0 ? (
-                        <KeyValueGrid items={details} columns={2} />
-                      ) : (
-                        <div className="text-[12px] text-[color:var(--color-muted)]">
-                          No detail payload available.
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                )}
-              </Fragment>
-            );
-          })}
-        </tbody>
-      </table>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {rows.length > PAGE_SIZE && (
+        <div
+          className="flex items-center justify-between text-[11px]"
+          style={{
+            padding: "10px 16px",
+            borderTop: "1px solid var(--color-rule)",
+            color: "var(--color-muted)",
+          }}
+        >
+          <span>
+            Showing{" "}
+            <span
+              className="num"
+              style={{ color: "var(--color-ink-soft)" }}
+            >
+              {safePage * PAGE_SIZE + 1}–
+              {Math.min((safePage + 1) * PAGE_SIZE, rows.length)}
+            </span>{" "}
+            of{" "}
+            <span
+              className="num"
+              style={{ color: "var(--color-ink-soft)" }}
+            >
+              {rows.length}
+            </span>
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPageIndex((p) => Math.max(0, p - 1))}
+              disabled={safePage === 0}
+              aria-label="Previous page"
+              className="inline-flex items-center gap-1 rounded-md disabled:opacity-40"
+              style={{
+                padding: "4px 8px",
+                border: "1px solid var(--color-rule)",
+                color: "var(--color-ink-soft)",
+                background: "transparent",
+                cursor: safePage === 0 ? "not-allowed" : "pointer",
+              }}
+            >
+              <ChevronLeft size={12} />
+              Prev
+            </button>
+            <span
+              className="num"
+              style={{ color: "var(--color-ink-soft)" }}
+            >
+              {safePage + 1} / {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() =>
+                setPageIndex((p) => Math.min(totalPages - 1, p + 1))
+              }
+              disabled={safePage >= totalPages - 1}
+              aria-label="Next page"
+              className="inline-flex items-center gap-1 rounded-md disabled:opacity-40"
+              style={{
+                padding: "4px 8px",
+                border: "1px solid var(--color-rule)",
+                color: "var(--color-ink-soft)",
+                background: "transparent",
+                cursor:
+                  safePage >= totalPages - 1 ? "not-allowed" : "pointer",
+              }}
+            >
+              Next
+              <ChevronRight size={12} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

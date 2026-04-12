@@ -1,9 +1,9 @@
 "use client";
 
 import { useKillCriteria, usePortfolio } from "@/lib/hooks";
-import { DataTable, type Column } from "@/components/ui/DataTable";
 import { NumericValue } from "@/components/ui/NumericValue";
 import { StatusPill } from "@/components/ui/StatusPill";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 const STALE_DATA_SECONDS = 7200;
 const MAX_DAILY_LOSS_PCT = 0.03;
@@ -26,11 +26,36 @@ function formatStaleWindow(seconds: number): string {
 }
 
 export function KillCriteriaTable() {
-  const { data: kill } = useKillCriteria();
-  const { data: portfolio } = usePortfolio();
+  const { data: kill, isLoading: killLoading } = useKillCriteria();
+  const { data: portfolio, isLoading: portfolioLoading } = usePortfolio();
+  const loading = killLoading || portfolioLoading;
+
+  if (loading) {
+    return (
+      <div
+        role="region"
+        aria-label="Kill criteria status"
+        aria-busy="true"
+        className="px-5 pb-4"
+      >
+        <div className="grid grid-cols-[1.3fr_1fr_1fr_auto] gap-x-6 gap-y-3 pt-3">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div key={i} className="contents">
+              <Skeleton width="70%" height={12} />
+              <Skeleton width="55%" height={12} />
+              <Skeleton width="45%" height={12} />
+              <Skeleton width={48} height={18} radius={9} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   const dailyPnlRatio =
-    portfolio && portfolio.equity > 0 ? portfolio.daily_pnl / portfolio.equity : null;
+    portfolio && portfolio.equity > 0
+      ? portfolio.daily_pnl / portfolio.equity
+      : null;
 
   const rows: Row[] = [
     {
@@ -94,39 +119,59 @@ export function KillCriteriaTable() {
     },
   ];
 
-  // Suppress unused-constant warnings — MAX_CONSECUTIVE_LOSSES is documented
-  // here intentionally alongside the other config thresholds even though the
-  // current backend KillCriteria payload does not expose a dedicated row.
   void MAX_CONSECUTIVE_LOSSES;
 
-  const columns: Column<Row>[] = [
-    {
-      id: "criterion",
-      header: "Criterion",
-      accessor: (r) => r.criterion,
-      align: "left",
-    },
-    {
-      id: "threshold",
-      header: "Threshold",
-      accessor: (r) => <span className="num">{r.threshold}</span>,
-      align: "left",
-    },
-    {
-      id: "current",
-      header: "Current",
-      accessor: (r) => r.current,
-      align: "right",
-    },
-    {
-      id: "status",
-      header: "Status",
-      accessor: (r) => (
-        <StatusPill tone={r.tripped ? "crit" : "ok"} label={r.tripped ? "TRIP" : "OK"} />
-      ),
-      align: "right",
-    },
-  ];
-
-  return <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} />;
+  return (
+    <div
+      role="region"
+      aria-label="Kill criteria status"
+      className="px-5 pb-4 overflow-x-auto"
+    >
+      <table className="w-full text-[13px]">
+        <thead>
+          <tr className="border-b border-[color:var(--color-rule-strong)]">
+            <th className="py-2 pr-4 text-left text-[10px] uppercase tracking-[0.08em] text-[color:var(--color-muted)] font-medium">
+              Criterion
+            </th>
+            <th className="py-2 px-4 text-left text-[10px] uppercase tracking-[0.08em] text-[color:var(--color-muted)] font-medium">
+              Threshold
+            </th>
+            <th className="py-2 px-4 text-right text-[10px] uppercase tracking-[0.08em] text-[color:var(--color-muted)] font-medium">
+              Current
+            </th>
+            <th className="py-2 pl-4 text-right text-[10px] uppercase tracking-[0.08em] text-[color:var(--color-muted)] font-medium">
+              Status
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr
+              key={r.id}
+              role="status"
+              aria-live="polite"
+              aria-label={`${r.criterion}: ${r.tripped ? "tripped" : "ok"}`}
+              className="border-b border-[color:var(--color-rule)] last:border-b-0"
+            >
+              <td className="py-2 pr-4 text-[color:var(--color-ink)]">
+                {r.criterion}
+              </td>
+              <td className="py-2 px-4 num text-[color:var(--color-ink-soft)]">
+                {r.threshold}
+              </td>
+              <td className="py-2 px-4 num text-right text-[color:var(--color-ink-soft)]">
+                {r.current}
+              </td>
+              <td className="py-2 pl-4 text-right">
+                <StatusPill
+                  tone={r.tripped ? "crit" : "ok"}
+                  label={r.tripped ? "TRIP" : "OK"}
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }

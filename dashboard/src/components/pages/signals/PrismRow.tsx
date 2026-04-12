@@ -7,31 +7,31 @@ import { StatusPill } from "@/components/ui/StatusPill";
 import { NumericValue } from "@/components/ui/NumericValue";
 import { KeyValueGrid } from "@/components/ui/KeyValueGrid";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { colors } from "@/lib/tokens";
+import { Skeleton, SkeletonText } from "@/components/ui/Skeleton";
 
 function ScoreBar({
   label,
   score,
   max = 4,
-  color,
+  variant,
 }: {
   label: string;
   score: number;
   max?: number;
-  color: string;
+  variant: "gain" | "loss";
 }) {
   const pct = Math.max(0, Math.min(100, (score / max) * 100));
+  const bg =
+    variant === "gain" ? "var(--color-gain)" : "var(--color-loss)";
   return (
     <div className="flex items-center gap-2.5">
       <span className="text-[10px] uppercase tracking-[0.08em] text-[color:var(--color-muted)] w-10 font-medium">
         {label}
       </span>
-      <div
-        className="flex-1 h-2 bg-[color:var(--color-paper)] border border-[color:var(--color-rule)] rounded-full"
-      >
+      <div className="flex-1 h-2 bg-[color:var(--color-paper)] border border-[color:var(--color-rule)] rounded-full">
         <div
           className="h-full rounded-full"
-          style={{ width: `${pct}%`, backgroundColor: color }}
+          style={{ width: `${pct}%`, backgroundColor: bg }}
         />
       </div>
       <span className="num text-[11px] text-[color:var(--color-ink)] w-6 text-right font-medium">
@@ -42,7 +42,38 @@ function ScoreBar({
 }
 
 function PrismCard({ symbol }: { symbol: string }) {
-  const { data: prism } = usePrism(symbol);
+  const { data: prism, isLoading } = usePrism(symbol);
+
+  if (isLoading) {
+    return (
+      <HairlineCard>
+        <SectionHeader
+          title={symbol}
+          rightSlot={<Skeleton width={60} height={18} radius={9} />}
+        />
+        <div className="space-y-5">
+          <Skeleton width={140} height={28} />
+          <div className="space-y-2">
+            <div className="flex items-center gap-2.5">
+              <Skeleton width={40} height={10} />
+              <Skeleton width="100%" height={8} radius={9999} />
+              <Skeleton width={24} height={11} />
+            </div>
+            <div className="flex items-center gap-2.5">
+              <Skeleton width={40} height={10} />
+              <Skeleton width="100%" height={8} radius={9999} />
+              <Skeleton width={24} height={11} />
+            </div>
+          </div>
+          <SkeletonText
+            lines={6}
+            widths={["45%", "50%", "55%", "40%", "48%", "52%"]}
+          />
+        </div>
+      </HairlineCard>
+    );
+  }
+
   const sig = prism?.signals?.data?.[0];
   const risk = prism?.risk;
 
@@ -67,8 +98,8 @@ function PrismCard({ symbol }: { symbol: string }) {
             <NumericValue value={sig.current_price} kind="usd" />
           </div>
           <div className="space-y-2">
-            <ScoreBar label="Bull" score={sig.bullish_score} color={colors.gain} />
-            <ScoreBar label="Bear" score={sig.bearish_score} color={colors.loss} />
+            <ScoreBar label="Bull" score={sig.bullish_score} variant="gain" />
+            <ScoreBar label="Bear" score={sig.bearish_score} variant="loss" />
           </div>
           <KeyValueGrid
             items={[

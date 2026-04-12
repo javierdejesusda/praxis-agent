@@ -2,14 +2,33 @@
 
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { NumericValue } from "@/components/ui/NumericValue";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { useBacktestReport } from "@/lib/hooks";
 import type { BacktestReport } from "@/lib/api";
 
 type PerPairRow = NonNullable<BacktestReport["per_pair"]>[number];
 
 export function PerPairTable() {
-  const { data } = useBacktestReport();
+  const { data, isLoading } = useBacktestReport();
   const rows: PerPairRow[] = data?.per_pair ?? [];
+
+  if (isLoading) {
+    return (
+      <div className="px-5 pb-4 space-y-2">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-4 py-2">
+            <Skeleton width={60} height={12} />
+            <Skeleton width={140} height={12} />
+            <Skeleton width={40} height={12} />
+            <Skeleton width={48} height={12} />
+            <Skeleton width={56} height={12} />
+            <Skeleton width={40} height={12} />
+            <Skeleton width={48} height={12} />
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   const hasField = (field: keyof PerPairRow) =>
     rows.some((r) => r[field] != null);

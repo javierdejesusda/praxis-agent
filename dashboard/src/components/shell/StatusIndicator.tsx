@@ -1,5 +1,3 @@
-import { colors } from "@/lib/tokens";
-
 export function StatusIndicator({
   tone,
   label,
@@ -7,9 +5,20 @@ export function StatusIndicator({
   tone: "ok" | "warn" | "crit";
   label: string;
 }) {
-  const color = tone === "ok" ? colors.gain : tone === "warn" ? colors.warn : colors.loss;
+  const color =
+    tone === "ok"
+      ? "var(--color-gain)"
+      : tone === "warn"
+        ? "var(--color-warn)"
+        : "var(--color-loss)";
+  const toneWord = tone === "ok" ? "Healthy" : tone === "warn" ? "Warning" : "Critical";
   return (
-    <div className="flex items-center gap-2">
+    <div
+      role="status"
+      aria-live="polite"
+      aria-label={`${toneWord}: ${label}`}
+      className="flex items-center gap-2"
+    >
       <span
         className={`inline-block w-2 h-2 rounded-full ${tone === "ok" ? "live-dot" : ""}`}
         style={{ background: color }}

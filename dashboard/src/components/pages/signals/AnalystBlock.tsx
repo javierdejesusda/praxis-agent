@@ -6,6 +6,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { StatusPill, type PillTone } from "@/components/ui/StatusPill";
 import { NumericValue } from "@/components/ui/NumericValue";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Skeleton, SkeletonText } from "@/components/ui/Skeleton";
 
 function directionTone(direction: string): PillTone {
   const d = direction?.toLowerCase();
@@ -15,7 +16,24 @@ function directionTone(direction: string): PillTone {
 }
 
 export function AnalystBlock() {
-  const { data } = useArtifacts(1);
+  const { data, isLoading } = useArtifacts(1);
+
+  if (isLoading) {
+    return (
+      <HairlineCard>
+        <SectionHeader title="LLM Analyst Report" />
+        <div className="space-y-4">
+          <div className="flex items-baseline gap-3">
+            <Skeleton width={64} height={18} radius={9} />
+            <Skeleton width={48} height={14} />
+            <Skeleton width={96} height={10} />
+          </div>
+          <SkeletonText lines={4} widths={["100%", "96%", "88%", "70%"]} />
+        </div>
+      </HairlineCard>
+    );
+  }
+
   const analyst = data?.[0]?.payload?.analyst;
 
   return (
@@ -50,9 +68,7 @@ export function AnalystBlock() {
             {analyst.rationale}
           </p>
           {analyst.key_risks && analyst.key_risks.length > 0 && (
-            <div
-              className="bg-[color:var(--color-loss-soft)] px-4 py-3 border border-[color:var(--color-loss)]/15 rounded-lg"
-            >
+            <div className="bg-[color:var(--color-loss-soft)] px-4 py-3 border border-[color:var(--color-loss)]/15 rounded-lg">
               <SectionHeader title="Key Risks" />
               <ul
                 className="text-[12px] text-[color:var(--color-ink-soft)] pl-5 space-y-1"

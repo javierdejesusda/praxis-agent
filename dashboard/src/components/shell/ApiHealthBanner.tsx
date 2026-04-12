@@ -15,7 +15,10 @@ export function ApiHealthBanner() {
   );
   if (!error) return null;
   return (
-    <div className="bg-[color:var(--color-loss-soft)] border-b border-[color:var(--color-loss)]/20 px-5 py-2 text-[12px] text-[color:var(--color-loss)] font-medium">
+    <div
+      role="alert"
+      className="bg-[color:var(--color-loss-soft)] border-b border-[color:var(--color-loss)]/20 px-5 py-2 text-[12px] text-[color:var(--color-loss)] font-medium"
+    >
       BACKEND UNREACHABLE {"\u2014"} {API_BASE} {"\u2014"} verify FastAPI is running on port 8001.
     </div>
   );

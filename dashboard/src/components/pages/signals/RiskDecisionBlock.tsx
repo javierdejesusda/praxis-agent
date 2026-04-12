@@ -7,9 +7,25 @@ import { StatusPill } from "@/components/ui/StatusPill";
 import { NumericValue } from "@/components/ui/NumericValue";
 import { KeyValueGrid } from "@/components/ui/KeyValueGrid";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Skeleton, SkeletonText } from "@/components/ui/Skeleton";
 
 export function RiskDecisionBlock() {
-  const { data } = useArtifacts(1);
+  const { data, isLoading } = useArtifacts(1);
+
+  if (isLoading) {
+    return (
+      <HairlineCard>
+        <SectionHeader
+          title="Risk Decision"
+          rightSlot={<Skeleton width={80} height={18} radius={9} />}
+        />
+        <div className="space-y-4">
+          <SkeletonText lines={4} widths={["70%", "60%", "65%", "55%"]} />
+        </div>
+      </HairlineCard>
+    );
+  }
+
   const decision = data?.[0]?.payload?.risk_decision;
 
   return (
@@ -33,7 +49,7 @@ export function RiskDecisionBlock() {
             items={[
               {
                 k: "Final Side",
-                v: (decision.final_side || "—").toUpperCase(),
+                v: (decision.final_side || "\u2014").toUpperCase(),
               },
               {
                 k: "Final Size USD",

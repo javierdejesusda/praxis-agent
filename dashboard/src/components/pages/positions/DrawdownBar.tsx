@@ -1,17 +1,26 @@
 "use client";
 
+import { memo, useMemo } from "react";
+
 import { usePortfolio } from "@/lib/hooks";
 import { NumericValue } from "@/components/ui/NumericValue";
-import { colors } from "@/lib/tokens";
 
 const MAX_DRAWDOWN = 0.08;
 
-export function DrawdownBar() {
+function DrawdownBarImpl() {
   const { data: portfolio } = usePortfolio();
   const drawdown = portfolio?.drawdown_pct ?? 0;
-  const ratio = Math.max(0, Math.min(1, drawdown / MAX_DRAWDOWN));
-  const widthPct = ratio * 100;
-  const barColor = ratio < 0.4 ? colors.gain : ratio < 0.7 ? colors.warn : colors.loss;
+
+  const { widthPct, barColor } = useMemo(() => {
+    const ratio = Math.max(0, Math.min(1, drawdown / MAX_DRAWDOWN));
+    const color =
+      ratio < 0.4
+        ? "var(--color-gain)"
+        : ratio < 0.7
+          ? "var(--color-warn)"
+          : "var(--color-loss)";
+    return { widthPct: ratio * 100, barColor: color };
+  }, [drawdown]);
 
   return (
     <div className="space-y-3">
@@ -26,10 +35,10 @@ export function DrawdownBar() {
       </div>
       <div
         className="relative h-2.5 w-full rounded-full"
-        style={{ background: colors.rule }}
+        style={{ background: "var(--color-rule)" }}
       >
         <div
-          className="absolute left-0 top-0 h-full rounded-full"
+          className="absolute left-0 top-0 h-full rounded-full transition-[width] duration-500 ease-out"
           style={{
             width: `${widthPct}%`,
             background: barColor,
@@ -43,3 +52,5 @@ export function DrawdownBar() {
     </div>
   );
 }
+
+export const DrawdownBar = memo(DrawdownBarImpl);

@@ -28,12 +28,12 @@ export function LeftRail() {
   const pathname = usePathname();
   return (
     <nav
-      className="w-[220px] shrink-0"
+      aria-label="Primary"
+      className="w-[220px] shrink-0 border-r border-[color:var(--color-rule)]"
       style={{
-        background: "rgba(255, 255, 255, 0.6)",
+        background: "var(--color-surface)",
         backdropFilter: "saturate(180%) blur(20px)",
         WebkitBackdropFilter: "saturate(180%) blur(20px)",
-        borderRight: "1px solid rgba(0, 0, 0, 0.06)",
       }}
     >
       <div className="px-4 pt-5 pb-3">
@@ -49,10 +49,12 @@ export function LeftRail() {
             <li key={item.href}>
               <Link
                 href={item.href}
+                aria-label={item.label}
+                aria-current={active ? "page" : undefined}
                 className={`group flex items-center gap-3 px-3 py-2.5 text-[13px] cursor-pointer rounded-[10px] ${
                   active
                     ? "bg-[color:var(--color-accent)] text-white font-medium shadow-[0_1px_3px_rgba(0,122,255,0.3)]"
-                    : "text-[color:var(--color-ink-soft)] hover:bg-black/[0.04]"
+                    : "text-[color:var(--color-ink-soft)] hover:bg-[color:var(--color-hover)]"
                 }`}
               >
                 <Icon size={16} strokeWidth={active ? 2 : 1.5} className={active ? "" : "group-hover:scale-110 transition-transform duration-200"} />

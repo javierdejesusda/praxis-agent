@@ -1,44 +1,73 @@
 "use client";
 
-import { usePrism, useQuote } from "@/lib/hooks";
-import { fmtUsd } from "@/lib/format";
-import { CryptoIcon } from "@/components/ui/CryptoIcon";
+import { ArrowDown, ArrowUp } from "lucide-react";
 
-function TickerItem({ symbol }: { symbol: string }) {
-  const { data: quoteData } = useQuote(`${symbol}USD`);
-  const { data: prismData } = usePrism(symbol);
-  const sig = prismData?.signals?.data?.[0];
-  const price = quoteData?.price ?? sig?.current_price ?? 0;
-  const bull = sig?.bullish_score ?? 0;
-  const bear = sig?.bearish_score ?? 0;
-  const bias = bull - bear;
-  const color =
-    bias > 0
-      ? "text-[color:var(--color-gain)]"
-      : bias < 0
+import { fmtTickerPrice, useMarketTickers, type MarketTicker } from "@/lib/market";
+
+function TickerItem({ t }: { t: MarketTicker }) {
+  const up = t.change24h > 0;
+  const down = t.change24h < 0;
+  const tone = up
+    ? "text-[color:var(--color-gain)]"
+    : down
       ? "text-[color:var(--color-loss)]"
       : "text-[color:var(--color-muted)]";
   return (
-    <div className="flex items-center gap-2.5">
-      <CryptoIcon symbol={symbol} size={20} />
-      <span className="num text-[11px] uppercase tracking-wider text-[color:var(--color-muted)] font-medium">
-        {symbol}
+    <div className="flex items-center gap-2">
+      <span className="num text-[11px] uppercase tracking-[0.08em] text-[color:var(--color-muted)] font-medium">
+        {t.symbol}
       </span>
-      <span className="num text-[13px] font-semibold text-[color:var(--color-ink)]">
-        {price > 0 ? fmtUsd(price, { decimals: 2 }) : "\u2014"}
+      <span className="num text-[12px] font-semibold text-[color:var(--color-ink)]">
+        ${fmtTickerPrice(t.price)}
       </span>
-      <span className={`num text-[10px] font-medium ${color}`}>
-        {sig?.overall_signal?.toUpperCase() ?? ""}
+      <span className={`num inline-flex items-center gap-0.5 text-[11px] font-semibold ${tone}`}>
+        {up ? (
+          <ArrowUp size={11} strokeWidth={2.75} />
+        ) : down ? (
+          <ArrowDown size={11} strokeWidth={2.75} />
+        ) : null}
+        {t.change24h >= 0 ? "+" : ""}
+        {t.change24h.toFixed(2)}%
       </span>
     </div>
   );
 }
 
 export function TickerTape() {
+  const { data, isLoading } = useMarketTickers();
+  const ready = (data ?? []).some((t) => t.price > 0);
+  const tickers = ready ? (data as MarketTicker[]) : [];
+
+  if (!ready) {
+    return (
+      <div
+        aria-hidden="true"
+        className="flex-1 flex items-center px-5 border-l border-r border-[color:var(--color-rule)] overflow-hidden"
+      >
+        <span className="text-[11px] uppercase tracking-[0.08em] text-[color:var(--color-muted)]">
+          {isLoading ? "Loading markets…" : "Markets unavailable"}
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex items-center gap-8 px-5 h-full border-l border-r border-[color:var(--color-rule)]">
-      <TickerItem symbol="BTC" />
-      <TickerItem symbol="ETH" />
+    <div
+      aria-hidden="true"
+      className="group flex-1 flex items-center h-full border-l border-r border-[color:var(--color-rule)] overflow-hidden"
+    >
+      <div
+        className="ticker-tape-scroll flex items-center whitespace-nowrap will-change-transform group-hover:[animation-play-state:paused]"
+        style={{ width: "max-content" }}
+      >
+        {[0, 1].map((copy) => (
+          <div key={copy} className="flex items-center gap-8 pr-8" aria-hidden={copy === 1}>
+            {tickers.map((t) => (
+              <TickerItem key={`${copy}-${t.symbol}`} t={t} />
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

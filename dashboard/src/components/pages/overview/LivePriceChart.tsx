@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -16,9 +16,9 @@ import { HairlineCard } from "@/components/ui/HairlineCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { StatusPill, type PillTone } from "@/components/ui/StatusPill";
 import { CryptoIcon } from "@/components/ui/CryptoIcon";
+import { SkeletonChart } from "@/components/ui/Skeleton";
 import { usePrices, useQuote, useTrades } from "@/lib/hooks";
 import { fmtUsd, fmtRelative } from "@/lib/format";
-import { colors } from "@/lib/tokens";
 import type { Artifact } from "@/lib/api";
 
 type TradeMarker = {
@@ -31,15 +31,61 @@ type TradeMarker = {
   price: number;
 };
 
+type ResolvedPalette = {
+  ink: string;
+  muted: string;
+  gain: string;
+  loss: string;
+  gainSoft: string;
+  lossSoft: string;
+  surface: string;
+  rule: string;
+};
+
+function readVar(el: HTMLElement, name: string): string {
+  return getComputedStyle(el).getPropertyValue(name).trim();
+}
+
+function usePalette(): ResolvedPalette | null {
+  const [palette, setPalette] = useState<ResolvedPalette | null>(null);
+  useEffect(() => {
+    const read = () => {
+      const el = document.documentElement;
+      setPalette({
+        ink: readVar(el, "--color-ink"),
+        muted: readVar(el, "--color-muted"),
+        gain: readVar(el, "--color-gain"),
+        loss: readVar(el, "--color-loss"),
+        gainSoft: readVar(el, "--color-gain-soft"),
+        lossSoft: readVar(el, "--color-loss-soft"),
+        surface: readVar(el, "--color-surface-solid"),
+        rule: readVar(el, "--color-rule"),
+      });
+    };
+    read();
+    const mo = new MutationObserver(read);
+    mo.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "data-theme"],
+    });
+    return () => mo.disconnect();
+  }, []);
+  return palette;
+}
+
 function classifySide(side: string | undefined): TradeMarker["kind"] | null {
   if (!side) return null;
   const s = side.toLowerCase();
   if (s.startsWith("close_")) return "close";
-  if (s === "long" || s === "short" || s === "buy" || s === "sell") return "open";
+  if (s === "long" || s === "short" || s === "buy" || s === "sell")
+    return "open";
   return null;
 }
 
-function toneFor(side: string, kind: TradeMarker["kind"]): TradeMarker["tone"] {
+function toneFor(
+  side: string,
+  kind: TradeMarker["kind"],
+): TradeMarker["tone"] {
   if (kind === "close") return "muted";
   const s = side.toLowerCase();
   if (s === "long" || s === "buy") return "gain";
@@ -47,10 +93,13 @@ function toneFor(side: string, kind: TradeMarker["kind"]): TradeMarker["tone"] {
   return "muted";
 }
 
-function markerColor(tone: TradeMarker["tone"]): string {
-  if (tone === "gain") return colors.gain;
-  if (tone === "loss") return colors.loss;
-  return colors.muted;
+function markerColor(
+  tone: TradeMarker["tone"],
+  palette: ResolvedPalette,
+): string {
+  if (tone === "gain") return palette.gain;
+  if (tone === "loss") return palette.loss;
+  return palette.muted;
 }
 
 function buildMarkers(trades: Artifact[], pair: string): TradeMarker[] {
@@ -82,24 +131,31 @@ function buildMarkers(trades: Artifact[], pair: string): TradeMarker[] {
 
 function formatClock(t: number): string {
   const d = new Date(t * 1000);
-  return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
-export function LivePriceChart({
+export const LivePriceChart = React.memo(function LivePriceChart({
   pair,
   display,
 }: {
   pair: string;
   display?: string;
 }) {
-  const { data: series } = usePrices(pair, 60, 120);
+  const { data: series, isLoading: pricesLoading } = usePrices(pair, 60, 120);
   const { data: quote } = useQuote(pair);
   const { data: tradesData } = useTrades();
+  const palette = usePalette();
 
   const candles = useMemo(() => series?.candles ?? [], [series?.candles]);
   const source = series?.source;
   const trades = useMemo(() => tradesData ?? [], [tradesData]);
-  const markers = useMemo(() => buildMarkers(trades, pair), [trades, pair]);
+  const markers = useMemo(
+    () => buildMarkers(trades, pair),
+    [trades, pair],
+  );
   const quotePrice = quote?.price;
   const quoteTsRaw = quote?.ts;
   const quoteError = quote?.error;
@@ -138,18 +194,30 @@ export function LivePriceChart({
   const lastChartPoint = chartData[chartData.length - 1];
   const change = first && livePrice ? (livePrice - first) / first : 0;
   const tone: PillTone = change > 0 ? "ok" : change < 0 ? "crit" : "neutral";
-  const stroke = change >= 0 ? colors.gain : colors.loss;
-  const fill = change >= 0 ? colors.gainSoft : colors.lossSoft;
+  const stroke = palette
+    ? change >= 0
+      ? palette.gain
+      : palette.loss
+    : "";
+  const fill = palette
+    ? change >= 0
+      ? palette.gainSoft
+      : palette.lossSoft
+    : "";
   const lastTickLabel = quoteTsRaw ? fmtRelative(quoteTsRaw) : "\u2014";
+
+  const showSkeleton =
+    palette == null || (pricesLoading && candles.length === 0);
+
+  // When showSkeleton is false, palette is guaranteed resolved.
+  const p = palette as ResolvedPalette;
 
   return (
     <HairlineCard padded={false}>
       <div className="px-5 pt-4 pb-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <CryptoIcon symbol={pair} size={24} />
-          <h3
-            className="text-[14px] font-semibold uppercase tracking-[0.08em] text-[color:var(--color-ink)]"
-          >
+          <h3 className="text-[14px] font-semibold uppercase tracking-[0.08em] text-[color:var(--color-ink)]">
             {label}
           </h3>
           <span className="num text-[22px] font-semibold text-[color:var(--color-ink)] leading-none tracking-[-0.02em]">
@@ -169,18 +237,25 @@ export function LivePriceChart({
             <span
               className={`inline-block w-2 h-2 rounded-full ${quoteFresh ? "live-dot" : ""}`}
               style={{
-                background: quoteFresh ? colors.gain : colors.muted,
+                background: quoteFresh
+                  ? "var(--color-gain)"
+                  : "var(--color-muted)",
               }}
             />
             <span
               className="text-[9px] uppercase tracking-[0.12em] font-medium"
-              style={{ color: quoteFresh ? colors.gain : colors.muted }}
+              style={{
+                color: quoteFresh
+                  ? "var(--color-gain)"
+                  : "var(--color-muted)",
+              }}
             >
               {quoteFresh ? "LIVE" : "STALE"}
             </span>
           </span>
           <span className="text-[9px] uppercase tracking-[0.12em] text-[color:var(--color-muted)]">
-            {lastTickLabel}{" \u00B7 "}1h bars{source ? ` \u00B7 ${source}` : ""}
+            {lastTickLabel}
+            {" \u00B7 "}1h bars{source ? ` \u00B7 ${source}` : ""}
           </span>
         </div>
       </div>
@@ -188,7 +263,11 @@ export function LivePriceChart({
         <SectionHeader title="Price" count={markers.length || undefined} />
       </div>
       <div className="px-3 pb-4" style={{ height: 240 }}>
-        {candles.length === 0 ? (
+        {showSkeleton ? (
+          <div className="h-full w-full px-2">
+            <SkeletonChart height={224} />
+          </div>
+        ) : candles.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center gap-1.5 text-center px-4">
             <span className="text-[12px] text-[color:var(--color-muted)]">
               No price data yet.
@@ -227,15 +306,15 @@ export function LivePriceChart({
               />
               <Tooltip
                 contentStyle={{
-                  background: "rgba(255, 255, 255, 0.82)",
+                  background: p.surface,
                   backdropFilter: "saturate(180%) blur(20px)",
                   WebkitBackdropFilter: "saturate(180%) blur(20px)",
-                  border: "1px solid rgba(0, 0, 0, 0.06)",
+                  border: `1px solid ${p.rule}`,
                   borderRadius: 12,
                   fontSize: 12,
-                  color: colors.ink,
+                  color: p.ink,
                   fontFamily: "var(--font-mono)",
-                  boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                  boxShadow: `0 4px 16px ${p.rule}`,
                 }}
                 labelFormatter={(t) =>
                   new Date(Number(t) * 1000).toLocaleString()
@@ -257,12 +336,12 @@ export function LivePriceChart({
                   y={lastChartPoint.c}
                   r={4}
                   fill={stroke}
-                  stroke="#FFFFFF"
+                  stroke={p.surface}
                   strokeWidth={2}
                 />
               )}
               {markers.map((m) => {
-                const color = markerColor(m.tone);
+                const color = markerColor(m.tone, p);
                 return (
                   <ReferenceLine
                     key={m.key}
@@ -289,21 +368,21 @@ export function LivePriceChart({
           <span className="flex items-center gap-2">
             <span
               className="inline-block w-3 h-[2px] rounded-full"
-              style={{ background: colors.gain }}
+              style={{ background: "var(--color-gain)" }}
             />
             Long entry
           </span>
           <span className="flex items-center gap-2">
             <span
               className="inline-block w-3 h-[2px] rounded-full"
-              style={{ background: colors.loss }}
+              style={{ background: "var(--color-loss)" }}
             />
             Short entry
           </span>
           <span className="flex items-center gap-2">
             <span
               className="inline-block w-3 h-[2px] border-t border-dashed"
-              style={{ borderColor: colors.muted }}
+              style={{ borderColor: "var(--color-muted)" }}
             />
             Close
           </span>
@@ -311,4 +390,4 @@ export function LivePriceChart({
       )}
     </HairlineCard>
   );
-}
+});

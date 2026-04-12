@@ -3,10 +3,46 @@
 import { HairlineCard } from "@/components/ui/HairlineCard";
 import { MetricCell } from "@/components/ui/MetricCell";
 import { NumericValue } from "@/components/ui/NumericValue";
+import { SkeletonMetric } from "@/components/ui/Skeleton";
 import { useBacktestReport } from "@/lib/hooks";
 
+function SkeletonStrip({ label, cols }: { label: string; cols: number }) {
+  return (
+    <HairlineCard>
+      <div className="text-[10px] uppercase tracking-[0.12em] text-[color:var(--color-muted)] font-medium mb-4">
+        {label}
+      </div>
+      <div
+        className="grid gap-6"
+        style={{
+          gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+        }}
+      >
+        {Array.from({ length: cols }).map((_, i) => (
+          <div key={i} className="space-y-2">
+            <span className="block text-[10px] uppercase tracking-[0.12em] text-[color:var(--color-muted)]">
+              &nbsp;
+            </span>
+            <SkeletonMetric width={110} />
+          </div>
+        ))}
+      </div>
+    </HairlineCard>
+  );
+}
+
 export function BacktestCombinedStrip() {
-  const { data } = useBacktestReport();
+  const { data, isLoading } = useBacktestReport();
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <SkeletonStrip label="Performance" cols={7} />
+        <SkeletonStrip label="Risk-Adjusted Ratios" cols={6} />
+      </div>
+    );
+  }
+
   const oos = data?.out_of_sample;
   const c = oos ?? data?.combined;
   if (!c) return null;
@@ -107,17 +143,23 @@ export function BacktestCombinedStrip() {
           <MetricCell
             label="Sharpe"
             emphasis="strong"
-            value={<NumericValue value={c.sharpe ?? 0} kind="ratio" decimals={3} />}
+            value={
+              <NumericValue value={c.sharpe ?? 0} kind="ratio" decimals={3} />
+            }
           />
           <MetricCell
             label="Sortino"
             emphasis="strong"
-            value={<NumericValue value={c.sortino ?? 0} kind="ratio" decimals={3} />}
+            value={
+              <NumericValue value={c.sortino ?? 0} kind="ratio" decimals={3} />
+            }
           />
           <MetricCell
             label="Calmar"
             emphasis="strong"
-            value={<NumericValue value={c.calmar ?? 0} kind="ratio" decimals={3} />}
+            value={
+              <NumericValue value={c.calmar ?? 0} kind="ratio" decimals={3} />
+            }
           />
           <MetricCell
             label="Profit Factor"

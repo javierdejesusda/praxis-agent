@@ -1,11 +1,31 @@
 export type PillTone = "ok" | "warn" | "crit" | "neutral" | "info";
 
 const TONES: Record<PillTone, { bg: string; fg: string; dot: string }> = {
-  ok:      { bg: "#00C853",           fg: "text-white",                        dot: "bg-white" },
-  warn:    { bg: "#FF9100",           fg: "text-white",                        dot: "bg-white" },
-  crit:    { bg: "#FF1744",           fg: "text-white",                        dot: "bg-white" },
-  neutral: { bg: "rgba(0, 0, 0, 0.06)", fg: "text-[color:var(--color-muted)]", dot: "bg-[color:var(--color-muted)]" },
-  info:    { bg: "#2979FF",           fg: "text-white",                        dot: "bg-white" },
+  ok: {
+    bg: "var(--color-gain)",
+    fg: "text-white",
+    dot: "bg-white",
+  },
+  warn: {
+    bg: "var(--color-warn)",
+    fg: "text-white",
+    dot: "bg-white",
+  },
+  crit: {
+    bg: "var(--color-loss)",
+    fg: "text-white",
+    dot: "bg-white",
+  },
+  neutral: {
+    bg: "var(--color-rule-strong)",
+    fg: "text-[color:var(--color-ink-soft)]",
+    dot: "bg-[color:var(--color-muted)]",
+  },
+  info: {
+    bg: "var(--color-accent)",
+    fg: "text-white",
+    dot: "bg-white",
+  },
 };
 
 export function StatusPill({
@@ -20,6 +40,8 @@ export function StatusPill({
   const t = TONES[tone];
   return (
     <span
+      role="status"
+      aria-live="polite"
       className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.04em] rounded-full ${t.fg}`}
       style={{
         background: t.bg,
