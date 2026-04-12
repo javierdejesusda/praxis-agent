@@ -420,6 +420,10 @@ class RiskRouterAdapter:
                     self._agent_id, checkpoint_hash, score, notes
                 )
             )
+            if receipt["status"] != 1:
+                tx_hash = receipt["transactionHash"].hex()
+                logger.error("Validation reverted on-chain: tx=%s", tx_hash)
+                return None
             tx_hash = receipt["transactionHash"].hex()
             logger.info("Validation posted: score=%d tx=%s", score, tx_hash)
             return tx_hash
@@ -436,6 +440,14 @@ class RiskRouterAdapter:
     ) -> Optional[str]:
         """Post reputation feedback to the ReputationRegistry.
 
+        The hackathon ReputationRegistry blocks self-rating at the contract
+        level: operator, NFT owner, and agentWallet are all forbidden from
+        calling ``submitFeedback`` for their own agent, and each rater wallet
+        may only post once per agent. Our operator wallet is all three roles
+        for agent 35, so every call from this process reverts. We short-circuit
+        here to avoid burning gas on guaranteed reverts; reputation must come
+        from external counterparty or validator wallets.
+
         Args:
             score: Reputation score 0-100.
             outcome_ref: 32-byte reference hash.
@@ -443,24 +455,20 @@ class RiskRouterAdapter:
             feedback_type: 0=TRADE_EXECUTION, 1=RISK_MANAGEMENT, 2=STRATEGY_QUALITY.
 
         Returns:
-            Transaction hash or None on failure.
+            Always ``None`` — kept for API compatibility with callers that
+            check a truthy tx hash before recording an attestation.
         """
         if not self._enabled or self._agent_id is None:
             return None
 
-        try:
-            score = max(0, min(100, score))
-            receipt = self._send_tx(
-                self._reputation.functions.submitFeedback(
-                    self._agent_id, score, outcome_ref, comment, feedback_type
-                )
-            )
-            tx_hash = receipt["transactionHash"].hex()
-            logger.info("Reputation posted: score=%d tx=%s", score, tx_hash)
-            return tx_hash
-        except Exception as e:
-            logger.error("Reputation post failed: %s", e)
-            return None
+        logger.debug(
+            "Reputation skipped: self-rating not permitted by ReputationRegistry "
+            "(agent=%d score=%d type=%d)",
+            self._agent_id,
+            score,
+            feedback_type,
+        )
+        return None
 
     def get_validation_score(self) -> int:
         """Get current average validation score for our agent."""
