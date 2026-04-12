@@ -1,3 +1,4 @@
+import { CommandHint } from "@/components/cmdk/CommandHint";
 import { CommandPalette } from "@/components/cmdk/CommandPalette";
 import { AppShell } from "@/components/shell/AppShell";
 import { SwrProvider } from "@/components/providers/SwrProvider";
@@ -12,6 +13,7 @@ export default function DashboardLayout({
     <SwrProvider>
       <ToastBridge />
       <CommandPalette />
+      <CommandHint />
       <AppShell>{children}</AppShell>
     </SwrProvider>
   );

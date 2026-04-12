@@ -4,6 +4,7 @@ import {useMemo} from "react";
 
 import {AttestationsTable} from "@/components/attestations/AttestationsTable";
 import {AttestationsTrendline} from "@/components/attestations/AttestationsTrendline";
+import {HackathonVaultBadge} from "@/components/attestations/HackathonVaultBadge";
 import {HairlineCard} from "@/components/ui/HairlineCard";
 import {MetricCell} from "@/components/ui/MetricCell";
 import {NumericValue} from "@/components/ui/NumericValue";
@@ -96,6 +97,8 @@ export default function AttestationsPage() {
             />
           </div>
         </HairlineCard>
+
+        <HackathonVaultBadge />
 
         <HairlineCard>
           <SectionHeader title="Legend" />

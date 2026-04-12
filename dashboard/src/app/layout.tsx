@@ -49,6 +49,8 @@ export const metadata: Metadata = {
   },
 };
 
+const noFlashScript = `(function(){try{var t=localStorage.getItem("praxis-theme");var d=t==="dark"||(t==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches)||(!t&&window.matchMedia("(prefers-color-scheme: dark)").matches);if(d)document.documentElement.classList.add("dark");}catch(e){}})();`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
@@ -56,6 +58,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
       className={`${plexSans.variable} ${plexMono.variable} ${plexSerif.variable} antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: noFlashScript }} />
+      </head>
       <body suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
