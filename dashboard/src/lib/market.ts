@@ -4,9 +4,14 @@ import useSWR from "swr";
 
 export type MarketTicker = {
   symbol: string;
+  icon: string;
   price: number;
   change24h: number;
 };
+
+function iconUrl(symbol: string): string {
+  return `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/svg/color/${symbol.toLowerCase()}.svg`;
+}
 
 type BinanceRow = {
   symbol: string;
@@ -60,6 +65,7 @@ async function fetchBinance(): Promise<MarketTicker[]> {
       if (!row) return null;
       return {
         symbol: c.display,
+        icon: iconUrl(c.display),
         price: Number(row.lastPrice) || 0,
         change24h: Number(row.priceChangePercent) || 0,
       };
@@ -78,6 +84,7 @@ async function fetchCoinGecko(): Promise<MarketTicker[]> {
       if (!row) return null;
       return {
         symbol: c.display,
+        icon: iconUrl(c.display),
         price: Number(row.current_price) || 0,
         change24h: Number(row.price_change_percentage_24h ?? 0),
       };
@@ -95,6 +102,7 @@ async function fetchMarkets(): Promise<MarketTicker[]> {
 
 const FALLBACK: MarketTicker[] = COINS.map((c) => ({
   symbol: c.display,
+  icon: iconUrl(c.display),
   price: 0,
   change24h: 0,
 }));

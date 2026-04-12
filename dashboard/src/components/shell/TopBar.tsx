@@ -9,7 +9,6 @@ import { toggleTimezoneMode, useTimezoneMode } from "@/lib/timezone";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { LastUpdated } from "./LastUpdated";
 import { StatusIndicator } from "./StatusIndicator";
-import { TickerTape } from "./TickerTape";
 
 const EMPTY = () => () => {};
 const getTrue = () => true;
@@ -49,8 +48,8 @@ export function TopBar() {
           Trading
         </span>
       </div>
-      <TickerTape />
-      <div className="flex-1 flex items-center justify-end gap-4 px-5">
+      <div className="flex-1" />
+      <div className="flex items-center justify-end gap-4 px-5">
         <StatusIndicator tone={killTone} label={killLabel} />
         <StatusPill tone="neutral" label={regime?.regime?.toUpperCase() || "UNKNOWN"} />
         <StatusPill tone="info" label="PAPER" />
