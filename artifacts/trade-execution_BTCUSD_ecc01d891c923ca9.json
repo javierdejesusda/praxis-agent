@@ -1,0 +1,46 @@
+{
+  "agent_id": "",
+  "hash": "ecc01d891c923ca918c15461219cdc7535333e451a77614cd3c35b5b4f4164f8",
+  "payload": {
+    "intent": {
+      "atr_stop": null,
+      "atr_target": null,
+      "erc_eligible": true,
+      "intent_id": "forcetrade-2eeac1b4a83a",
+      "limit_price": null,
+      "order_type": "market",
+      "pair": "BTCUSD",
+      "side": "long",
+      "signal_score": 88.0,
+      "size_usd": 15.0
+    },
+    "onchain_receipt": {
+      "adapter": "risk_router",
+      "error": null,
+      "fees_usd": 0.0,
+      "fill_price": null,
+      "intent_id": "forcetrade-2eeac1b4a83a",
+      "order_id": "4425c14d0b71953a7343225bc16b0bf0dd7f4c5ae184b640d1f9d3142f13f37d",
+      "raw_output": null,
+      "status": "approved"
+    },
+    "pair": "BTCUSD",
+    "receipt": {
+      "adapter": "kraken_paper",
+      "error": null,
+      "fees_usd": 0.039,
+      "fill_price": 71911.1,
+      "intent_id": "forcetrade-2eeac1b4a83a",
+      "order_id": "paper-forcetrade-2eeac1b4a83a",
+      "raw_output": null,
+      "status": "filled"
+    },
+    "source": "force_trade_test_harness",
+    "ticker": {
+      "ask": 71911.1,
+      "bid": 71911.0
+    }
+  },
+  "timestamp": "2026-04-09T18:40:48.260727+00:00",
+  "type": "trade-execution"
+}

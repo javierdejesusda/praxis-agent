@@ -332,17 +332,19 @@ function AttestationStep({
             >
               {fmtHashShort(attestation.tx_hash, 6)}
             </span>
-            <a
-              href={etherscanTx(attestation.tx_hash)}
-              target="_blank"
-              rel="noreferrer"
+            <button
+              type="button"
               aria-label="View transaction on Etherscan"
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.open(etherscanTx(attestation.tx_hash), "_blank", "noopener,noreferrer");
+              }}
+              className="inline-flex items-center cursor-pointer bg-transparent border-0 p-0"
               style={{ color: "var(--color-accent)" }}
             >
               <ExternalLink size={12} />
-            </a>
+            </button>
           </div>
           <div className="flex flex-col gap-1 text-[11px]">
             <div className="flex items-center justify-between">

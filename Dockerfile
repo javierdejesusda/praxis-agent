@@ -22,6 +22,8 @@ RUN pip install --no-cache-dir .
 
 COPY scripts/ scripts/
 COPY data/ data/
+COPY state/ state/
+COPY artifacts/ artifacts/
 RUN chmod +x scripts/start.sh
 
 RUN mkdir -p state artifacts logs

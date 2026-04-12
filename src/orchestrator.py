@@ -20,7 +20,7 @@ from src.agents.signals import (
 )
 from src.artifacts.attestations import record_attestation_async
 from src.artifacts.hasher import artifact_hash, build_artifact, canonical_json
-from src.config import ARTIFACTS_DIR, COMPETITION_MODE, RISK, STATE_DIR, STRATEGY
+from src.config import ARTIFACTS_DIR, RISK, STATE_DIR, STRATEGY
 from src.execution.kraken_adapter import (
     close_paper_position,
     execute_paper_trade,
@@ -811,9 +811,8 @@ async def main_loop() -> None:
         ],
     )
 
-    mode = "COMPETITION" if COMPETITION_MODE else "DEFAULT"
     exec_mode = RISK.execution_mode
-    logger.info("Praxis Agent starting in %s mode, execution=%s (log: %s)", mode, exec_mode, log_file)
+    logger.info("Praxis Agent starting, execution=%s (log: %s)", exec_mode, log_file)
     logger.info("Risk params: paper>=%d shorts=%s consec=%d stop=%.1f trail=%.1f dd_sf=%.3f",
                 RISK.min_signal_score_paper, RISK.shorts_enabled,
                 RISK.max_consecutive_losses, RISK.stop_mult, RISK.trail_mult,

@@ -1,0 +1,4015 @@
+[
+  {
+    "kind": "validation",
+    "tx_hash": "0x441baac591074359f9b19430ff54e7a0b386c61c162b5cfc967e49efba50c7f2",
+    "artifact_hash": "2d5b81c17c16a7434cd078cc378f2926876fd4926e4985460eded4584691b2bc",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T18:38:01.589457+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x00fdf602a17ebea0c94f5fd90dc324c29562c46804ce02344b256b867744a999",
+    "artifact_hash": "2d5b81c17c16a7434cd078cc378f2926876fd4926e4985460eded4584691b2bc",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T18:38:12.042465+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xfbcf7eff91970d1ce2cb8f8d20018e00981d6ec602a0c46f6e710de378a279e6",
+    "artifact_hash": "4a3284c8cfe80ba9736078a302d5a7d12a6fb4afddd62fcc3a123c7024b57a04",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T18:38:23.967859+00:00",
+    "score": 90
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x846c16830f65be6516a12cdcf5fc68dc68721c50c559c8c9b2f736f2c476cb26",
+    "artifact_hash": "4a3284c8cfe80ba9736078a302d5a7d12a6fb4afddd62fcc3a123c7024b57a04",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T18:38:36.477680+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "trade_intent",
+    "tx_hash": "0x4425c14d0b71953a7343225bc16b0bf0dd7f4c5ae184b640d1f9d3142f13f37d",
+    "artifact_hash": "ecc01d891c923ca918c15461219cdc7535333e451a77614cd3c35b5b4f4164f8",
+    "artifact_type": "trade-execution",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T18:40:48.260727+00:00",
+    "intent_id": "forcetrade-2eeac1b4a83a",
+    "side": "long",
+    "size_usd": 15.0,
+    "status": "approved",
+    "source": "force_trade_script"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x7cef4964ea0b2d056021c37061494937da9dfa0f60b3c9e4c4ab681a6956d6fb",
+    "artifact_hash": "a64acd2888f1d31736a66bf70c1db4d69e78cfbc996df1b3c46077139afb3b43",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T18:41:24.789648+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xf6e60e9511fc29101c5ddad6d687e4c90f6851ff25e4a4661fb22c4a1a962557",
+    "artifact_hash": "a64acd2888f1d31736a66bf70c1db4d69e78cfbc996df1b3c46077139afb3b43",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T18:41:48.152431+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x8235d191b5d961747ce2e898cc9b4f91ffbcf90582badddb354638f4ef5f40f4",
+    "artifact_hash": "1278f2d13c838c179f6d22c9487f516ffe228ee956aac20d65b563ed589fc4cb",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T18:42:00.419341+00:00",
+    "score": 90
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xca3ad4333befb5f8d7d8143c46f19ba1db23160154e1f16042b319365379daf7",
+    "artifact_hash": "1278f2d13c838c179f6d22c9487f516ffe228ee956aac20d65b563ed589fc4cb",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T18:42:11.955724+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xa85b84269a32ef83f9b1bce17e3ca686d4a275ff335516b1aff2f83b9729ecaa",
+    "artifact_hash": "3108bd90af609b94feb3e4b48fa2ec46d43c13908f483907674f98db99a9882f",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T18:56:24.447742+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x9ac8c34a2f2cfc416faf4169f172f89865079d58c8c0bc78e0571f4e14004614",
+    "artifact_hash": "3108bd90af609b94feb3e4b48fa2ec46d43c13908f483907674f98db99a9882f",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T18:56:36.019934+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x3ff1b41eb0e134015631c10966ec72c123552a2d93ae04ce936a057a7d8e7379",
+    "artifact_hash": "5e2ded46a9007e503597d70543e0a6f48374c3acfe663617d793aee4f5a4780d",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T18:56:47.992565+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xf652565fa6e8eff0e519ec6b73e7ee5bbd58d9e59869c825b1dbc29f2d6069dd",
+    "artifact_hash": "5e2ded46a9007e503597d70543e0a6f48374c3acfe663617d793aee4f5a4780d",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T18:57:00.538980+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x1a5470c3180ccdcfa263167635f504654052836ecfaaf33d5050cb3939aefe0c",
+    "artifact_hash": "f2329946bdefb71f1c5b1cef3065629c3eb4422ad324191202edb86af3e67825",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T19:12:24.334474+00:00",
+    "score": 95
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xbdca26a583f93370edb489ce79f64f3acb3d2d4b87bcced810c4745057364c85",
+    "artifact_hash": "f2329946bdefb71f1c5b1cef3065629c3eb4422ad324191202edb86af3e67825",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T19:12:44.717774+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:BELOW_THRESHOLD"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x0d9fcaed4e290e6b39aefbeebaad1cd3998b92ff7e0e13560db4012949b7d95d",
+    "artifact_hash": "fe054a6008b64a8bf47f57cca0453f396d91b99d859be4df1c6a184885a6cc2d",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T19:13:00.106057+00:00",
+    "score": 90
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xdacf112e80bf86a5d1b6a1c5a40c1fdec3f8857b34224e54450d13c18895fb10",
+    "artifact_hash": "fe054a6008b64a8bf47f57cca0453f396d91b99d859be4df1c6a184885a6cc2d",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T19:13:12.023512+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x9c72d51dbba5c511db59b5c7c60ad0173e01b5b62d3ec444fb4bd0d884cb0612",
+    "artifact_hash": "7bf3fdcbe20cd7f9d0ee80f9a445dc7a59539b124de7790edcdc77ca84ea3430",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T19:27:24.821036+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x232f28c94c5038884879f749707f45580e0e9299154415ed507f6ead7686bcee",
+    "artifact_hash": "7bf3fdcbe20cd7f9d0ee80f9a445dc7a59539b124de7790edcdc77ca84ea3430",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T19:27:36.105391+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xa8aebe37f520f2268263347db0365104f1d732bd722d12095c60b8290bb9dd25",
+    "artifact_hash": "1679a7c6d30be75bac09250bc159ab9afa5ef02d54ccd75dd6528de0f8ea04c9",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T19:27:48.005380+00:00",
+    "score": 90
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x99a07dfacb901dbfeb7243ce89ef1f5cea2b3d62fb28a4940982f811b2004a8b",
+    "artifact_hash": "1679a7c6d30be75bac09250bc159ab9afa5ef02d54ccd75dd6528de0f8ea04c9",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T19:28:00.078822+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_CONSENSUS"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x4f1d210892179e13cce14b9270b875c32afbf5b0574522895f084425b58e3cf3",
+    "artifact_hash": "6a9f3134d179aba12035f23ced23ddfadd513d7e8d28e9b5c58f714f2c27524a",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T19:43:12.048406+00:00",
+    "score": 95
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x482dbdbbd24e2da4b224cd1dbbbc7ecb66964830eeed8f095fb5102c05eaf3c2",
+    "artifact_hash": "6a9f3134d179aba12035f23ced23ddfadd513d7e8d28e9b5c58f714f2c27524a",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T19:43:24.226319+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:BELOW_THRESHOLD"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xfdf1edd39d2666879a7f4a035d81a596b458b78af90f9768c177c5a58b1413ea",
+    "artifact_hash": "0aab245eca33226787c890655215b4eb3701a84f0abcceb026dfeb69fb00da35",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T19:43:36.079085+00:00",
+    "score": 90
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x52ae1c3799193745ea4837eb1af5c281d70a086f9eeeba035dbafacff051efd2",
+    "artifact_hash": "0aab245eca33226787c890655215b4eb3701a84f0abcceb026dfeb69fb00da35",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T19:43:48.066528+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x51d0c88789da50a7adf4ee962dd2b9fd0da3e03fc4b37da1064bab63c30ea257",
+    "artifact_hash": "3272b7eba9034012e6f26b6832bd874edf756715c59223e7f2f5d19681e85b93",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T19:59:01.714065+00:00",
+    "score": 95
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xa0eb24c9bebba865a086bf6543cf60315f25d8ec8d33ac2e5fe3e2915708bb75",
+    "artifact_hash": "3272b7eba9034012e6f26b6832bd874edf756715c59223e7f2f5d19681e85b93",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T19:59:12.455307+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:BELOW_THRESHOLD"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xde108eb6dd7f821fd29a2d442fe330e47d640588c52adaa15a28ce265a0c5b18",
+    "artifact_hash": "49ffdac6e6932ff85e556e364abacae0b3e7b2838c047aa71797f58180e66d87",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T19:59:24.051879+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x4a1a1c0e3500140d0137716280148afd9cb9ce85a5175ab95a9a610db01fc481",
+    "artifact_hash": "49ffdac6e6932ff85e556e364abacae0b3e7b2838c047aa71797f58180e66d87",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T19:59:36.024885+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xb6ace9678ab22b1afb62ee4fdb37f0d4945e9da0875e99510e17deca55a88d72",
+    "artifact_hash": "5f0a578deefe522a90777b641d28e5bb19607fa23301a0c6dff17062695f2b84",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T20:14:48.535421+00:00",
+    "score": 94
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xae56e09f6a7e7189beffa6607edda12acbf0e01d0860eca00d3dab015834dc8f",
+    "artifact_hash": "5f0a578deefe522a90777b641d28e5bb19607fa23301a0c6dff17062695f2b84",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T20:15:00.654772+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xda4e71886f0225fd4fa983eb294302cb8f99b14e9d4add617c1a9cd5644e47eb",
+    "artifact_hash": "0ec3d89e7a2cd09779ec360221150ec59f2fc0f534e746d1914761b4f6088880",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T20:15:12.140701+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xb975f6289ca2bdbd8265202734f58b4131d88e8c74323e559df5ac49cc9aab9b",
+    "artifact_hash": "0ec3d89e7a2cd09779ec360221150ec59f2fc0f534e746d1914761b4f6088880",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T20:15:24.182776+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x8afaf8d005d573eca03000893868468dce8457446ccf5daadc9b486926caf667",
+    "artifact_hash": "f58a51580b16918100eeef5dcea6e256078170b0341b71061b5fcb730a5ab583",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T20:30:36.210911+00:00",
+    "score": 95
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xba396cb77ff072ca0b08fef997768c6240f01014fb84d2e77ad333b44409f0df",
+    "artifact_hash": "f58a51580b16918100eeef5dcea6e256078170b0341b71061b5fcb730a5ab583",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T20:30:48.147377+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x306ae882193950f40703800e85dd5cb8cc5a6834ec8f8293836c965ae2ec8ea1",
+    "artifact_hash": "453c60c4cd2bd495510e32dd2305a3f715ed37d84b19632a4ca05e7de1c41dc2",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T20:31:01.160730+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x35d4de9c11fe8ff0abae7d249a0780068d504fbb523f6ab0cfdfdbe030952f4a",
+    "artifact_hash": "453c60c4cd2bd495510e32dd2305a3f715ed37d84b19632a4ca05e7de1c41dc2",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T20:31:12.865090+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xbfaf45c20f0014f52d9f02458ae8685c273afd7463e35b79404882b4892a382f",
+    "artifact_hash": "8bec685596785802322df6a8da3e8f0cea7fc650d07233f04f31b5183eb3b8f6",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T20:46:25.655585+00:00",
+    "score": 96
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x7e54b9709fd19371f59cf24bb52264dbef4acaa00023dac3594f667a6c0c1390",
+    "artifact_hash": "8bec685596785802322df6a8da3e8f0cea7fc650d07233f04f31b5183eb3b8f6",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T20:46:37.705879+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:BELOW_THRESHOLD"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xc27f66e567b60f342d38ba578424c032216ef552f9e34c5f5f10beacf7a8279f",
+    "artifact_hash": "bba1cb39188fd179f8d497ca76805bc0d780fdf71c399b935ec00a66a2a4c8be",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T20:46:48.177408+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xbf186732de16ad82c1b57eafa98477076e4e02da377b512e18279bbea82ef6cf",
+    "artifact_hash": "bba1cb39188fd179f8d497ca76805bc0d780fdf71c399b935ec00a66a2a4c8be",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T20:47:00.867195+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xb0f46919fc0c60eba314dd7c8b60ec548ef248d75fd01411de2cab5d3ca44ecb",
+    "artifact_hash": "85dab56e27e176e3dc68e86dd547b79b47743469e042a8ca5e8fc8b21861acd9",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T21:02:12.258774+00:00",
+    "score": 95
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xa7d0168072221906615c4fdfcac0f81ad1023d4bc3e280aca641cfd20c36b504",
+    "artifact_hash": "85dab56e27e176e3dc68e86dd547b79b47743469e042a8ca5e8fc8b21861acd9",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T21:02:24.529188+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x5b4995ad9ec09bd0264dda1a8a6e2ad7bdf46c7fca08b3deb618c84a88fee4d1",
+    "artifact_hash": "1d57640af1cfdec9bb21d0cc9ae6872ebdc52f54dc2e7f6161c9a77a0c446743",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T21:02:36.373532+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xfbbc3c5fd9b94f80a3d37e074da5764d069fae308a75ba8c2795df24ce479ef4",
+    "artifact_hash": "1d57640af1cfdec9bb21d0cc9ae6872ebdc52f54dc2e7f6161c9a77a0c446743",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T21:02:48.099850+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x65473b98cf83cbe69ba3a25f5aeb5d79636d384b195fc460517f397fbfb9fe84",
+    "artifact_hash": "9beed9bd9a4e9eda1e81865f5030571daa6d53054011fa925865d82fd8533e7e",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T21:18:00.391751+00:00",
+    "score": 95
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x1162a7184a36bcf6b36eed7c34f11c7b42982a2cc2e27d8a006db7de7e96df2d",
+    "artifact_hash": "9beed9bd9a4e9eda1e81865f5030571daa6d53054011fa925865d82fd8533e7e",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T21:18:12.655374+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xc18e9764a252941c0dba3eee75794ae6bb394a1a1e320e12a841f0cf08ae1cff",
+    "artifact_hash": "d6cfa91a742efaea447a309e08ee1e16168de41779aaa3d7d4e2b4cfbe60b0cb",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T21:18:24.972111+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xe8ffad527acf92f92f4162c33ed5f41f617e3350dfec95c7d39b88a763b58805",
+    "artifact_hash": "d6cfa91a742efaea447a309e08ee1e16168de41779aaa3d7d4e2b4cfbe60b0cb",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T21:18:36.382492+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x3d76756c866eccc0c9eef61fe3d4eb71e71cf1629a130e0d3dc5e88535899744",
+    "artifact_hash": "4eb8f4cccdab4122f2333b8dfc781ecff6c8d0f6a995adad396529666d9155a0",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T21:33:48.351166+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xe1234402fcd9873ac43a84bcb382c008c36774be2c5acef9886b3e4262f80ad6",
+    "artifact_hash": "4eb8f4cccdab4122f2333b8dfc781ecff6c8d0f6a995adad396529666d9155a0",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T21:34:00.497029+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xe5e55be0ae8dd9e3ae28ff84ee4d21a9448b67cd7fd35d2f94b19bbef7880cd6",
+    "artifact_hash": "b274d6bf0bb7625b24ac5f0d1a601e1a25fd0058148bad53675184819cc237f0",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T21:34:12.167693+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xb12f7216218514faf007cd43a14c04f5e8ca2d4e0ab175c1e182684d610843c1",
+    "artifact_hash": "b274d6bf0bb7625b24ac5f0d1a601e1a25fd0058148bad53675184819cc237f0",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T21:34:24.450212+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x22d58d2aee261f85b037e19a05044cc015c3cf2e3b6388f4cf47ed1bcd600e6b",
+    "artifact_hash": "ef6734c27b6eb5ccd391be23fa4399261f3564410eb3ef780bc4ea93f82c3599",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T21:49:37.060170+00:00",
+    "score": 95
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x4c93e67f2f6c8a7d1038d774be3084d54b2e06a26b48afdf2f86770edc12f143",
+    "artifact_hash": "ef6734c27b6eb5ccd391be23fa4399261f3564410eb3ef780bc4ea93f82c3599",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T21:49:48.361178+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x70c733c3364eba8667ba4e88196fbb98054ed55ba04a07cdfb5d7a7d59c0d96d",
+    "artifact_hash": "99b1877e2e6cc18db4c685b46e6b515131fac36d3677268d3e1acbf6481ac6aa",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T21:50:12.678171+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x4bded39588e9fb79f9af0bcec5d0daa1cce63a76c85494c60b14b3b3bf0f4368",
+    "artifact_hash": "99b1877e2e6cc18db4c685b46e6b515131fac36d3677268d3e1acbf6481ac6aa",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T21:50:24.274957+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x2978bd5cf6c96df06477ff99bb3b2b52daa2d7074e19850e1216c3547d153c6d",
+    "artifact_hash": "b6c1b7c021e8f9bf785c2697488ef5915fa09554d0bc14f77d7a987dd63cb4e2",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T22:05:37.829318+00:00",
+    "score": 96
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xe0d065c35301ab76d03614c2cb697474495a982f04137d3fcef204a887c8ae3d",
+    "artifact_hash": "b6c1b7c021e8f9bf785c2697488ef5915fa09554d0bc14f77d7a987dd63cb4e2",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T22:05:48.344086+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:BELOW_THRESHOLD"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xef548312ebd6cbdd9a3574f8d3cc9944818a0ab089896e31d2b2efb0d18f69d7",
+    "artifact_hash": "a8a124b0d170b375dbd761faf3935b2abe7502fc3f1e3c231bc738cbf4662e9c",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T22:06:00.314418+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x9bc3796216c2896bb9494a4906d67725edf319183ce27d77f4bcb0be404d395e",
+    "artifact_hash": "a8a124b0d170b375dbd761faf3935b2abe7502fc3f1e3c231bc738cbf4662e9c",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T22:06:13.018576+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x632b4af2f9603715654431ad1a854976c018516f44c05f2f166db4110571cc06",
+    "artifact_hash": "2ce560d22a5d9a863084c15fd0cdfc1d12f3fac9de4c7e5f280cd88ff1aef220",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T22:21:25.473792+00:00",
+    "score": 96
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xaf06e10e31eebbf684a1c49bdfe74b4924ed58fcb292b804ec67a4bbec68ec00",
+    "artifact_hash": "2ce560d22a5d9a863084c15fd0cdfc1d12f3fac9de4c7e5f280cd88ff1aef220",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T22:21:36.286454+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:BELOW_THRESHOLD"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x0bbb8721918d619079c4fabb66b3ebf7cbbbc42e62fbcb6069ddee78be91a140",
+    "artifact_hash": "814c5ac188226baa71e25b80ce499afbf9e19d0da2d5e7fca126e060c8af35d2",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T22:21:48.553399+00:00",
+    "score": 94
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x70e498391673273c5d6eb960932289137fcaf74719560291ad29a0cdd3743965",
+    "artifact_hash": "814c5ac188226baa71e25b80ce499afbf9e19d0da2d5e7fca126e060c8af35d2",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T22:22:00.327025+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xcad88dafa3d1efa30ffdb55bd6f70b0ecdb79443d7702db6cedfb097d7a6405d",
+    "artifact_hash": "183a44bffcebf77d77cf45f3599fb8635fc82120e8815276cb2945031ed38020",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T22:37:12.427260+00:00",
+    "score": 96
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xd4157c9669e9e3f19ff1d38f2db6a1871ee90e312c3c5cd79bfff92235c66f3c",
+    "artifact_hash": "183a44bffcebf77d77cf45f3599fb8635fc82120e8815276cb2945031ed38020",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T22:37:36.727682+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:BELOW_THRESHOLD"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xd69df5f3e7f6629adf426ed7adf2a75aee0b50568ec4337c33ea79105e042ba2",
+    "artifact_hash": "cd23a00acb20eeacb0fa537429cd7ba0c2ff5d7222e2d87de639203635c3bc1c",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T22:37:48.346069+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xe2eb52f0d3497bdca4fd7b981960ab1a8d64ca529829d6fc1ffd04657682eb67",
+    "artifact_hash": "cd23a00acb20eeacb0fa537429cd7ba0c2ff5d7222e2d87de639203635c3bc1c",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T22:38:02.078813+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xaa9730465681b42a8ebe0a98d65d8329985a6dfd3f50bbbdd43a601fa9dfdc12",
+    "artifact_hash": "11343cfdd268a6e7ff043b9ff27c21cf73329c06761b2038950d2c9b214d315b",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T22:52:12.560489+00:00",
+    "score": 94
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xc5f200341bebb58d36175ce03b0a90fc9923014003077a647d341ade8a8322d0",
+    "artifact_hash": "11343cfdd268a6e7ff043b9ff27c21cf73329c06761b2038950d2c9b214d315b",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T22:52:24.334166+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xbabea537a8fe9ebb4811de70e936e18ab51aa92fbee95cbf6004374776c80c31",
+    "artifact_hash": "7f735f60bafcf5fdecc0486ba08f9936e1ab17cefc2817e9324b3cedeeb93acb",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T22:52:48.469497+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x146cfb78ae5a74c0f2d42d21e484e9e05bde4af9852fe3c2b73403bec0c3d06e",
+    "artifact_hash": "7f735f60bafcf5fdecc0486ba08f9936e1ab17cefc2817e9324b3cedeeb93acb",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T22:53:00.521043+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xf600fc673e661e2ea1213aeae730ae483593187343dd08a7672f741b739cd28f",
+    "artifact_hash": "7c632e67f61ade3bf95495466aa6e0cc6a5f6df8413ebb2a5fce9326c320ad47",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T22:56:50.024947+00:00",
+    "score": 92
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x8bdd21ab3cee359ef340e3455b31cd795cd0847e224540efcd7bf7ebc795a020",
+    "artifact_hash": "7c632e67f61ade3bf95495466aa6e0cc6a5f6df8413ebb2a5fce9326c320ad47",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T22:57:00.237251+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x8589fd0e32d4e2173e046d3f8c605f98d9e697295a9fd6ea39116d9dd0bca876",
+    "artifact_hash": "695b73bc5049e25e477cec0537d1b4aa0ceefbfd4d1d8f325fcf60f86bf38161",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T22:57:14.302568+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x6a1d9a0b1ce8b9f1ef8996c88734955e99f679d4b7f65c64b21315cc642a9439",
+    "artifact_hash": "695b73bc5049e25e477cec0537d1b4aa0ceefbfd4d1d8f325fcf60f86bf38161",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T22:57:24.630790+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x9c5bc9144adb9babf55ed04ab9273cf678b991a5671a7b4efd8c428e2eb15e26",
+    "artifact_hash": "7e65bee580131aad3558a33c650628f5e53d64033d259acb693d78bad81c1e1c",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T23:08:25.176832+00:00",
+    "score": 95
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x1636bbbb5685655e0795cb4b436ad45242e159b1000174d3840e91e3650c9702",
+    "artifact_hash": "7e65bee580131aad3558a33c650628f5e53d64033d259acb693d78bad81c1e1c",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T23:08:36.557572+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:BELOW_THRESHOLD"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xbe8d3487b7d39f69025d0b03ff7f7ecc11c93dd9c457f3fb43a63903505a4169",
+    "artifact_hash": "b843edab5c0e7d70772f6e9310d65459284910389493753c714a7d21be2bc62c",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T23:08:48.378726+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x49712496091dbeb7120729996d2c286ba525941acca7c55ccea414c90a1c7e92",
+    "artifact_hash": "b843edab5c0e7d70772f6e9310d65459284910389493753c714a7d21be2bc62c",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T23:09:01.214195+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x9a2e09b4cae5cb5c1fedba8a11a54fddb0bbbac4b4b2ebac17af500ef4d6ab98",
+    "artifact_hash": "76b5127b05cf70d0a24091bb87320cd05ab8c834e33fbde04c22a11b7b7aae6c",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T23:18:00.535472+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x1a4b4eec967b870c21f2d02490ca3671cf857f4301a82f61250298526d84080a",
+    "artifact_hash": "76b5127b05cf70d0a24091bb87320cd05ab8c834e33fbde04c22a11b7b7aae6c",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T23:18:12.507961+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x1115a46a43b05b6403d9e3a8881d770e8a2768fd4b1e1ac7ab0f148e411d9cd1",
+    "artifact_hash": "b47716dbcf0c4e26e1808b624dd57fa6df6372f45f44150c4bd5dfb1d710d9e5",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T23:18:24.527720+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x157d12a10c19e22c3bf1e2b1b295fde323c288b49736657ff667fefec053c153",
+    "artifact_hash": "b47716dbcf0c4e26e1808b624dd57fa6df6372f45f44150c4bd5dfb1d710d9e5",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T23:18:36.280925+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x64d450f28c75c1c623c8eba2b5a30e225a40dc7bc0710c8536a3e69a8debe71d",
+    "artifact_hash": "48da9fb0bdeecb0d7fbb3275d8c560906b33e4a1e9e131476bf20db21da9bfdc",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T23:25:24.501350+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x128552bc0359f34b032bcbc159473711695b2841a0c0f6b566ee80b179037cd5",
+    "artifact_hash": "48da9fb0bdeecb0d7fbb3275d8c560906b33e4a1e9e131476bf20db21da9bfdc",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T23:25:36.515565+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xaea6f6f9c65a1fe7868ccbc8f25b83c6a00e458e344a334be7dc740a21182232",
+    "artifact_hash": "fcffa78ebe448ac35c08bf9dc894c7209e03cc6c0a3a5cb9084fe454975e09b7",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T23:25:49.043745+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x9e610730cd7640684013714e08c4d8919fe9d89a3beb621ee49c6c87cf60b2e5",
+    "artifact_hash": "fcffa78ebe448ac35c08bf9dc894c7209e03cc6c0a3a5cb9084fe454975e09b7",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T23:26:00.400863+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xed115772ea32ee581e86e26427da2bf51094286d5dfa6a51b6f048f53039f983",
+    "artifact_hash": "7be79da31e0d1de69c866b7effa886b46ce5bf2a26ad8592dc2ae55e4530f7ac",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T23:32:37.885515+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x98692a5cb0333c7d0720e819c505dc0a61a8bffd916817975e06f38d3df1dc05",
+    "artifact_hash": "7be79da31e0d1de69c866b7effa886b46ce5bf2a26ad8592dc2ae55e4530f7ac",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T23:32:48.351078+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x4707e92e916ec0831178dc872cd77850fa8abdb125270ab8a21d309abf0df8a1",
+    "artifact_hash": "9d1118a5a0e833d85f69577488fdb60696fdf2a3e19def3f367ee1563ab27041",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T23:33:01.045295+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xb84c3a3fbdf96b4b43c21f0a4934f090e45a2bd92b430d1745fd6c99f7806118",
+    "artifact_hash": "9d1118a5a0e833d85f69577488fdb60696fdf2a3e19def3f367ee1563ab27041",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T23:33:12.928030+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x69a8417010d4d3d02fd56f1d04960e9699ef048f76aabcecff7ea0a53d4199fb",
+    "artifact_hash": "973c8ea5d5e7bb956742432ae2ca50f3668c83b16f3b353538701bf038824bd4",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T23:33:36.836624+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x1607d6827fc2f1fec1bdf3630ec5735f3d81ff74a2b1e11a6d37a209df842cb2",
+    "artifact_hash": "973c8ea5d5e7bb956742432ae2ca50f3668c83b16f3b353538701bf038824bd4",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T23:34:12.675866+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xba7889c01a1165f831b8d259adbc40d37a7470a388a97f4c6ea28763b78e2632",
+    "artifact_hash": "4dee29974a21b521ef9ec7100d6ec715889c30594cb94a7953d4bf61ac5b82f5",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T23:34:24.418565+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x86add6c79bdda4fc6d88b191d17eda0acbaf9c5a4aa9fe6de4209da66824bd01",
+    "artifact_hash": "4dee29974a21b521ef9ec7100d6ec715889c30594cb94a7953d4bf61ac5b82f5",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T23:34:48.461147+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x6576ffe64c607cb43282ce944e9173e6b52f3daa6b2f90f48fd6e5f628931a11",
+    "artifact_hash": "8482ba1f2943442a3bf22ced1a5435568571b7038518d47d131a1ea8af61da6b",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T23:35:01.094994+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x7edf0bd403f83815073210f19c2d8bc558f652ef9f988075400167d828581208",
+    "artifact_hash": "8482ba1f2943442a3bf22ced1a5435568571b7038518d47d131a1ea8af61da6b",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T23:35:12.655662+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xb9a55121665ffe0a777300f059b19c74db347bc5619a3c1364d34f2ad8ffed2c",
+    "artifact_hash": "a9556414ac8d39e670f60068b08350f3c60f15fe4bb1522a403b83fea0ef2947",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T23:35:24.745474+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xbe3ab13abe6087690baa454a1c8c36bd5a165fffbb7f0dfcbb287f9967cf4dd3",
+    "artifact_hash": "a9556414ac8d39e670f60068b08350f3c60f15fe4bb1522a403b83fea0ef2947",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T23:35:36.854948+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x2bca76c8fa9e68a7c48cad244d0628dce7d472652a3ac5ac1932c8fe61f2478d",
+    "artifact_hash": "98ac9615322295bc53393dad3573d8d2a0c1507152c8e6bcfc8e79173e9a0213",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T23:50:01.007486+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xbd05a16d08f3b39ff5cbc55ed1715202840bc038121980565be3a8ff6d447238",
+    "artifact_hash": "98ac9615322295bc53393dad3573d8d2a0c1507152c8e6bcfc8e79173e9a0213",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-09T23:50:12.484471+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xf7f1a851099cbcf4fd3b69b23cb2b8dbe7836975db3dfe2080c19739460c6389",
+    "artifact_hash": "f9c9b1ebd2826ee3c948866c3df38db40fdb3736bdb1f436b22c4fd48f376e42",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T23:50:37.556319+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x93b6e708007e1e145ae3bc0465093804fd978866638caa0c6dc323623230b8b8",
+    "artifact_hash": "f9c9b1ebd2826ee3c948866c3df38db40fdb3736bdb1f436b22c4fd48f376e42",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-09T23:50:48.428444+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xbe050130767e86915c86493097b996d8f10eff404d97fc5e999d8cf47a9a3e1f",
+    "artifact_hash": "0295f76934155b38e0044a51167732f6df6991c3ebb2dc23a066b9d34d57dbde",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T00:06:00.622837+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x3e65830d41d17d9985a9088e4c5cc3f42554cf401d668e600e5ba2c72bfb6119",
+    "artifact_hash": "0295f76934155b38e0044a51167732f6df6991c3ebb2dc23a066b9d34d57dbde",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T00:06:12.543345+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x01785fddd2f6f2e4df78bb7b8d34b03ba792f1ec7483ccb120ce1a1bbbb15608",
+    "artifact_hash": "445153e433eaf1ddc54fe25465a521ecb3df0d9d0a91d09405ff43e9b08bcba8",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T00:06:36.527538+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x5688f5797c6c76f38310aa28637201a4a725a16f9619a42b93aec3f5293b3225",
+    "artifact_hash": "445153e433eaf1ddc54fe25465a521ecb3df0d9d0a91d09405ff43e9b08bcba8",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T00:06:48.821958+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x16085aca69e87f48e252c558c39d428344fefcf0eb21edd5633f552bd5356c4d",
+    "artifact_hash": "20905696f6f5e4259c0dcc697b18d65e7e9aee8ea8466767f2272690f498af31",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T00:21:01.949828+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x62e8fadd3f3297f076f0ef48990b3d1d547ca8df85b3f8e07b2bf69a0bfc1dae",
+    "artifact_hash": "20905696f6f5e4259c0dcc697b18d65e7e9aee8ea8466767f2272690f498af31",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T00:21:12.462484+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x4476a488bc99531f6bba3b51da559d2c0258351362a6ec30602b09e3b8a67d51",
+    "artifact_hash": "0ba2f3886b158927ead00e54595ba0e4861e893a8c7adc8947bde621e65acc31",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T00:21:25.781374+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xd180e90b2f4b339471c0034b327b84ebb307969f0376ac4b07a0243ba8abaefe",
+    "artifact_hash": "0ba2f3886b158927ead00e54595ba0e4861e893a8c7adc8947bde621e65acc31",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T00:21:36.431578+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x56a98f7522bf042ea5d1a4c7718a15b1a3f405f37f8aa5805284ddfbcbf5cc72",
+    "artifact_hash": "100cdde22794554a6259c1f4a03296734ce5993dfc9bc6f232b4f589cd663003",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T00:28:24.694191+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xe83bd4ca91bf4bbe49109fb982dff2ba356164813ba8e326fd48228640f30b75",
+    "artifact_hash": "100cdde22794554a6259c1f4a03296734ce5993dfc9bc6f232b4f589cd663003",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T00:28:36.490390+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x4c31d8056ad6a8c4b5a76654d8af124c2d0205aa6228924e52c24a2505aa8eab",
+    "artifact_hash": "b4d618ceb9879c83fb123c98f1f33fc27ea057946da55cf01df8524a7f4e2e81",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T00:28:48.897206+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xe82a1804033d40222768daf967ca25b94f2995824c25512d10f6fd5cc75bd4f7",
+    "artifact_hash": "b4d618ceb9879c83fb123c98f1f33fc27ea057946da55cf01df8524a7f4e2e81",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T00:29:00.813339+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xaf8a56c2c107d2d8be0e7e354ca51770e8d1ed65e149034ca85ce0ace63426d6",
+    "artifact_hash": "9f767bfa1f719d59ae2aa6fe2d3f5a741b5205169ea5e9157ac18f184a9afefb",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T00:44:12.476231+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x757d5d7a1ac267be9ab4c94c236a20c96a6d09f34bc02dfdb972f6410f903ade",
+    "artifact_hash": "9f767bfa1f719d59ae2aa6fe2d3f5a741b5205169ea5e9157ac18f184a9afefb",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T00:44:24.490507+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x0e767d02a6d97482e674b7fd8796488e1c8af3dc584f992b1b660c59f8afe734",
+    "artifact_hash": "54f7e67fa24880b484d9a05fca111973daf4390bc4fa416c4bd8c6a80a41d4fa",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T00:44:37.648408+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x79b14402cdca99aac6f7ffa675f763dd16da8db2fe3416ff9201e42f6b50a7e8",
+    "artifact_hash": "54f7e67fa24880b484d9a05fca111973daf4390bc4fa416c4bd8c6a80a41d4fa",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T00:44:48.948003+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x02ff04735b05ba1933936dc2379b42a26ba432a740d9b9db591bb3f8c6006794",
+    "artifact_hash": "4f23d9955c4aaba694f8a2ca23fd33841174624d851feb762161592b86073a71",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T00:49:49.997746+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xaf6a9beae46f8f0e4271fd8344418bedf53266391af91deb5836e42ab5e8e94d",
+    "artifact_hash": "4f23d9955c4aaba694f8a2ca23fd33841174624d851feb762161592b86073a71",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T00:50:00.659049+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x8f052b5367df8bd2dda13b540e84b3eea561f885109eca6223af5fc2fa34c977",
+    "artifact_hash": "f5aab06d2d5f14141025241e2a02f651047ef81c1be270cd3f5900340999d6bd",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T00:50:12.876776+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xd176710ca528b9cafdf3d5d6bff8d7a8b5b8074776d489f7f2e09b353e7ba8cb",
+    "artifact_hash": "f5aab06d2d5f14141025241e2a02f651047ef81c1be270cd3f5900340999d6bd",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T00:50:25.272559+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xb124e8f5f0649c648cc4262dc32e672a55beb0b3e02ab1bf4a8c7f0ce74d73ce",
+    "artifact_hash": "c4f3a4f7b1f02cf52fbbe1af63d895df3836755217d265ba75e2e4e92747ce24",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T01:05:36.638854+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x953c17bf2b29248b1bb99b421a0849aa1cca550d29fc750d83fc6451ffc77460",
+    "artifact_hash": "c4f3a4f7b1f02cf52fbbe1af63d895df3836755217d265ba75e2e4e92747ce24",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T01:06:00.879342+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xb80a4625463775d5ea23efd48fbffb75ad90e0d269aed19fb18f7c9c67a45bff",
+    "artifact_hash": "8696cc54582a5e6435abd1f8780f7716afa5a31e385e8b001d48b7a560651f99",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T01:06:12.781888+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x1d1cc781c89a277bbd358877bb27dd00f532eb1fa389e497e6c4f241d4820fe1",
+    "artifact_hash": "8696cc54582a5e6435abd1f8780f7716afa5a31e385e8b001d48b7a560651f99",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T01:06:25.191197+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x053ada412fd903c5cf8a14a51c7535fbdb30564d78d35817b06b7e06c0354573",
+    "artifact_hash": "d8150d5a2551d8f3bc6ef6f89794445bf1e8e1c280f869839d5a42ac4061e34a",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T01:09:36.506959+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x0c4f872229446c39e569ce904a7f9a42fbac1b5b069728594f4449a2bae3b919",
+    "artifact_hash": "d8150d5a2551d8f3bc6ef6f89794445bf1e8e1c280f869839d5a42ac4061e34a",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T01:09:48.480320+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x705b2fec66b31307b97bcf27d09284147b7eb2880df5da09879a70b8706f8177",
+    "artifact_hash": "00d889ec46b18da7ce5c056315e7c7efcd8efdc799fb987d3f4b58ec77c4c8e0",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T01:10:00.685264+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x308084649c263f89170da91dc8fc6524d816b59bc8e52da304fdbeb10c3c1697",
+    "artifact_hash": "00d889ec46b18da7ce5c056315e7c7efcd8efdc799fb987d3f4b58ec77c4c8e0",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T01:10:12.612533+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x866c9daddd5a94d5124d95602a219b08527e5174229289a955c7d7e2205bdbe7",
+    "artifact_hash": "ac79b8632a8710b4a997c839599ab3471f563e3752cd6d110c7fb88fccd499c7",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T01:25:24.613000+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x44f01d57e020500b9b2b3a357ed66e391e0e5e69506c65273a2e5ccfd064a9e9",
+    "artifact_hash": "ac79b8632a8710b4a997c839599ab3471f563e3752cd6d110c7fb88fccd499c7",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T01:25:36.472970+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x94d048a81e3addbd3d59b6f7aeb2508aa46450ffa9f82322221e3406bae4391e",
+    "artifact_hash": "c2582e35d5d893afcc99dd85c7ab245a69a9b049a072d88d7d434b461fd14746",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T01:25:48.631293+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xb03758f0e561a9708c5811879e861ec965f0e286638fe2196a4dc2cb12a5cf7e",
+    "artifact_hash": "c2582e35d5d893afcc99dd85c7ab245a69a9b049a072d88d7d434b461fd14746",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T01:26:00.600913+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xfac334065a8b7f6a869b6517ef98798c7f2abdcd4a064ca280d3886ab539b1c2",
+    "artifact_hash": "90a252a3130f580a942b794d0ecdb162ab98a4c0cab4657e6cc94cb4bc4125d6",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T01:41:12.626446+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xbb2d2db7c23ab24d80fee6ff570858be3694fb879b217908d1e7dbf4e6605a23",
+    "artifact_hash": "90a252a3130f580a942b794d0ecdb162ab98a4c0cab4657e6cc94cb4bc4125d6",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T01:41:24.545773+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x892e58d0d7013a4433f638e83ab0a73193d80c4f73b4df1930dc86e73aa7b0af",
+    "artifact_hash": "d01cac3347682ae8b69766710ac16c7dd73b2d02dcdf5721dddd55848c323f7a",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T01:41:36.478798+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x7e72563566a388ee556eb43188c8f2c626e11c3cb969d9914dacea9476f4c853",
+    "artifact_hash": "d01cac3347682ae8b69766710ac16c7dd73b2d02dcdf5721dddd55848c323f7a",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T01:41:48.756817+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xe6ece170dfd9f0cc6f0eab86e826cd9b00e2b0ceae4497892de645b7ac56fa11",
+    "artifact_hash": "84812117e281fb4ac54d9b0b17486479b9c118380ed8cb262848fc402ca48c7f",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T01:57:00.743339+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x20b03fcebc436190491782acf45367dce1d148af85a27d1883aba93f1f3a7597",
+    "artifact_hash": "84812117e281fb4ac54d9b0b17486479b9c118380ed8cb262848fc402ca48c7f",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T01:57:12.606751+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xe4c245dab2237f2453fbe569ce8ebce683db3abe858bad9c7717d14a60602dab",
+    "artifact_hash": "2febd993159ebf2d4e581fdb56f6c82515218db52feeacd2f185b665546813a9",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T01:57:24.607182+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xbc8693b08168dee6d01beef61fcd03016db7f6347e2cbb21d792116f583b071f",
+    "artifact_hash": "2febd993159ebf2d4e581fdb56f6c82515218db52feeacd2f185b665546813a9",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T01:57:36.665637+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x72485c4998d264db8c54d6dca88b54bd21130e003ec49e7ac2cfa30fdf759ea4",
+    "artifact_hash": "82ec45222a7c16a58cad265c8ed01832f9d32ecc82cbe9733db518cbce30975f",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T02:12:48.744229+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x60f78ca737ec92ba5701f6f0953c19a63a3f2ea034b696a400db47029494e650",
+    "artifact_hash": "82ec45222a7c16a58cad265c8ed01832f9d32ecc82cbe9733db518cbce30975f",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T02:13:00.676621+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x470b8e675e71ac18088729246b6bb23e84b7e3b6fd1015932257d5e7a59a84e9",
+    "artifact_hash": "2acbd48f7c3ebddfe12afc7d4753466478ba15aa7a81b0a45c5a0e4ae84334cb",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T02:13:12.777293+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x618d1dfd94449830ceaa3e99fd82b198d4d5d6fdcb707b19c88da28d59db1077",
+    "artifact_hash": "2acbd48f7c3ebddfe12afc7d4753466478ba15aa7a81b0a45c5a0e4ae84334cb",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T02:13:25.978621+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x0b26739696e4ac6a7d54808c817b2f9da8cc38d818b4f6e9f0fd4cab835a9a71",
+    "artifact_hash": "f2234ff74e74ef422e8a87d413504c8a0e62e6743475a3e7ffd95cf085a69437",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T02:28:36.908687+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x7b6c88a92f449c5e0f3224010f47e09137dbd72d04638f6ce4b67b03b5ff53c1",
+    "artifact_hash": "f2234ff74e74ef422e8a87d413504c8a0e62e6743475a3e7ffd95cf085a69437",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T02:28:48.746702+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xcf9417f2e2233aaebddbf3b43a507ef0d808b9419323a16b8069b77a60a751f0",
+    "artifact_hash": "4b4295f0a6a69a55e83fea4b6ff43a7ec136ea7c8c1b98e7a0927b341a8fe862",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T02:29:00.754144+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xcf9d4130f0c97dec30adc1c2c2682b512f8125283d0dbabbacac0894238a5abd",
+    "artifact_hash": "4b4295f0a6a69a55e83fea4b6ff43a7ec136ea7c8c1b98e7a0927b341a8fe862",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T02:29:12.532304+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x5f6ac9d830d2725361f3bdcc9d7e3435373e81ccb7a37f95ce9c2d82bdf577f0",
+    "artifact_hash": "77e15feebdf5b065b4e502d27807cc1bafb22ef3e73331590406e4eeeaeaa2d7",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T02:44:25.241426+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xedf3d523d22a7e5590de5829c118d94a1ca9b9a80767e3ae63bac0609b0aa8ab",
+    "artifact_hash": "77e15feebdf5b065b4e502d27807cc1bafb22ef3e73331590406e4eeeaeaa2d7",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T02:44:36.558300+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xc7a61566a4547cff5f038591c9e76bd03fa3c5351574ff541fe2cc8fd1ee236f",
+    "artifact_hash": "c97d200ab59145adeae9d4fae10bb1e7ef87a604deaebfbbe46cf2d78fbe3519",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T02:45:00.746162+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x9de51843919dd4316e08db60b31a05650f1559126da647cf717aa8df847a25ee",
+    "artifact_hash": "c97d200ab59145adeae9d4fae10bb1e7ef87a604deaebfbbe46cf2d78fbe3519",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T02:45:12.618864+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x0b86de287211cc503292448084f69bf294bddb946e10bddfc028f690d4ce5636",
+    "artifact_hash": "7c71a65a28eccf81e56602ec0d0870d061de399e6cac8bee3612ca91ff503e1f",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T02:59:25.103598+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x5e2749bdaa7bfff5bb4a7dd88c8a219bf2a9c28e390e9eb0870114e6b2f48356",
+    "artifact_hash": "7c71a65a28eccf81e56602ec0d0870d061de399e6cac8bee3612ca91ff503e1f",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T02:59:36.895353+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xedfa17412d387cade6f7faffe8a87ee3f9fc2b406e63ac18f2e95413b557464a",
+    "artifact_hash": "d577a696fa3ddf085991b252ea4e55b97b3a1140369f54283242147eab65c26a",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T02:59:49.681527+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xd0eaff4d798515031154e9cf1028f536244e626993c68ddb92ce621e9190a9e1",
+    "artifact_hash": "d577a696fa3ddf085991b252ea4e55b97b3a1140369f54283242147eab65c26a",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T03:00:00.755854+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xe3bf67c8a275f79e2c35d80870fbaff41a5be1659f700ea00c5894317d36e693",
+    "artifact_hash": "8af2ce9dab2303bebe0a29b3936ce1454ce1fac1eb4bd95aa436e63e5729e510",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T03:15:12.885146+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xbe57121436bc8e92cd8ded9a7f9870d0d4cd41a290eb72e02b49d128318ec158",
+    "artifact_hash": "8af2ce9dab2303bebe0a29b3936ce1454ce1fac1eb4bd95aa436e63e5729e510",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T03:15:36.944811+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x2f41c0107fd98acc5473a251022b44cc1c577c44715f60a672dda9cc9280662c",
+    "artifact_hash": "535d31868acea2a102513970ee8f67d20fe513874eb846fbf0a1fa3f4c67fa97",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T03:15:48.803786+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xe0d2b39c56b1adee9564685149df4bb285a05944f3ab5d073b5775d77bb371c7",
+    "artifact_hash": "535d31868acea2a102513970ee8f67d20fe513874eb846fbf0a1fa3f4c67fa97",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T03:16:00.914943+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x9b629147f8a8c2114c4ac23e82dfebf4cdb71378a93d2941e7dc37da0b4f44bd",
+    "artifact_hash": "f789c4f3afe32445851caae00dc5ce13e761e5ab50130822542ec786caa1b04a",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T03:30:12.787843+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x4ef4b6f49eb9d71adc913e1fc6665860500682195a3e2179ea8cba43eafe4e0f",
+    "artifact_hash": "f789c4f3afe32445851caae00dc5ce13e761e5ab50130822542ec786caa1b04a",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T03:30:24.791697+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x21ac5af24d99f0102d26aed3d86987012d4660bdf3796e4127716a17da791fd9",
+    "artifact_hash": "e5aa66442db5b53a638e3f98b3e44043939fb36c63194915cf01af162477e675",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T03:30:37.473765+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x9c0e3e0207d488599cb2aa8b037f1a9230ff485a74617bad89ba3e894c1ebf4c",
+    "artifact_hash": "e5aa66442db5b53a638e3f98b3e44043939fb36c63194915cf01af162477e675",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T03:30:49.889657+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xdf25da81208a6dae3a9a175604b3bd868b6f969a8bcef83a9f4b054466c7d307",
+    "artifact_hash": "ede7884aeff8b6b3f716b3ac765f9b1bbce7fcf82a28c41a3981c5ece9d3d36c",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T03:46:00.737416+00:00",
+    "score": 91
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xb45b22c119c57a020d8744df155eb657d09e06f111f57d9aae9c15b2b4b0cba5",
+    "artifact_hash": "ede7884aeff8b6b3f716b3ac765f9b1bbce7fcf82a28c41a3981c5ece9d3d36c",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T03:46:12.741774+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x89d1d46de8260da488aa179e445ab2fe9d5a9ae925c43700d295884ca5898551",
+    "artifact_hash": "06c7b084c5dbc2843e664bbbb265a857e1911a337fbac2f433faba709be1047d",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T03:46:24.853327+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x5378c1a2a8a562155fecaaf97b4d34f8ccb32d6910548677d0a4d5e375012f2d",
+    "artifact_hash": "06c7b084c5dbc2843e664bbbb265a857e1911a337fbac2f433faba709be1047d",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T03:46:36.832327+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x1e110de91ce38cad3867ec55f1840b93b8b035d1b673844dfeb8d4f107eee2bf",
+    "artifact_hash": "599a35ee6c9030a33c5fb15033cf8050d8e3e0b589bbf6e452d0b168253c1632",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T04:01:49.365862+00:00",
+    "score": 94
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xe5cde580a0d5b7867e29184f6e16955ae4fef52c5c4682bc2488e3b4b55597df",
+    "artifact_hash": "599a35ee6c9030a33c5fb15033cf8050d8e3e0b589bbf6e452d0b168253c1632",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T04:02:01.094493+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:BELOW_THRESHOLD"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xcab11504304484795a06fef14c8ba172a367ac9f30f09204b5126418bffb9b8a",
+    "artifact_hash": "6a3557827ea169d42965f3f1246631d18f3ec33caae540b250fc55b1afad3c08",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T04:02:13.106464+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x4c7e7960f5c482d850bf44fef8dd87df1ed61d21a59f69af382f8467eeeb41ab",
+    "artifact_hash": "6a3557827ea169d42965f3f1246631d18f3ec33caae540b250fc55b1afad3c08",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T04:02:24.737978+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xa52a3a8c13d70fc740ec2aa09316ef36fac2c2cc715e8ea790c5cf9a769e9a55",
+    "artifact_hash": "5c0c5edd755633076b9d4b9653f1254dee8c257af27a862c015bb3f3be60be36",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T04:17:37.253261+00:00",
+    "score": 94
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x1a576966f5a71f2985b84ebeb7171cc5f7b491d801ae959bab63f23161a9c2bf",
+    "artifact_hash": "5c0c5edd755633076b9d4b9653f1254dee8c257af27a862c015bb3f3be60be36",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T04:17:49.101822+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:BELOW_THRESHOLD"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x54d38a7178d1345ef7deb2cc0a9782f937470ffe9c435de5f04973a8e20e8cdf",
+    "artifact_hash": "c7c9822addfd2964e030fc4971136f213924cbb3be0fa8038a04bc7a89232ab8",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T04:18:00.907475+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x1c3e1d4bf73404b1e44379f3b36bbf81a32d338fabddd625aae61ae0d2e5de3c",
+    "artifact_hash": "c7c9822addfd2964e030fc4971136f213924cbb3be0fa8038a04bc7a89232ab8",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T04:18:13.118351+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x32ea560703a03dfa4579d4d6376820b7165077b0a96f635d2777aa1dd1bc5cf8",
+    "artifact_hash": "0d179fc642d7bf5fdb99ae3e54918cae39552bc943f776f97a7ae3ec5412851d",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T04:33:24.950301+00:00",
+    "score": 92
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x6642d1065624666177444520f7368c46fc08005b1b11ca621498774982e2af51",
+    "artifact_hash": "0d179fc642d7bf5fdb99ae3e54918cae39552bc943f776f97a7ae3ec5412851d",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T04:33:36.849603+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x3ef1bd9b093b37b42c7deee343664f935b75442e9778aa11d2a49b088d8650e7",
+    "artifact_hash": "dfa7e0378f290c5178f4ee113a06faf8f6ef9776636fb62e92090250e7ffb7b9",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T04:33:49.095809+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x2c07392bc5dd157d271299302ff0593ec58becaa54b90de75b77b94eeb79bdae",
+    "artifact_hash": "dfa7e0378f290c5178f4ee113a06faf8f6ef9776636fb62e92090250e7ffb7b9",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T04:34:01.606671+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x273ece674864518c2177af0c491684d4050c7c7b99c3b311063b13f6df661685",
+    "artifact_hash": "8535fc1ee27ff87ef030050a047c30639d0a7d2894bfe0701a2fa9b750c67d35",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T04:49:12.846632+00:00",
+    "score": 94
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xccd5b5fa843af69da3e4e6ed14695c6ab461c38c02d0356811477d8019a06876",
+    "artifact_hash": "8535fc1ee27ff87ef030050a047c30639d0a7d2894bfe0701a2fa9b750c67d35",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T04:49:25.714205+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:BELOW_THRESHOLD"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xc9836f9f2902095002070931f4f6aca385106d4fedf4c6b14672e280de55a0d7",
+    "artifact_hash": "a18bd92e5ed38c639cafd7b048a860089682c0467ad28e507d66a601488d28f7",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T04:49:37.191167+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x3cf8c0e9b250eea0f06f778bee45c44f41a12f1a8db0eab1cd49e07c17e6e4c9",
+    "artifact_hash": "a18bd92e5ed38c639cafd7b048a860089682c0467ad28e507d66a601488d28f7",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T04:49:48.960485+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x6e70e3d787b5a3676840722109980221a2f095c3097a609a9bb24058e1a5a30c",
+    "artifact_hash": "28d0bdd0039a03da1c5c43c43c3b64b4f0edbf9a9c4d221cbf3d258fcad4dd23",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T05:05:01.255391+00:00",
+    "score": 96
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x86943f38323105fa9a5b81fe6ee07934afda5397e9e8322f74f4f16c81da62f2",
+    "artifact_hash": "28d0bdd0039a03da1c5c43c43c3b64b4f0edbf9a9c4d221cbf3d258fcad4dd23",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T05:05:13.035589+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:BELOW_THRESHOLD"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x624eb72190afd5e411347b4d27289e3afa9e81eeabc55f6ca15492b9c0ae572b",
+    "artifact_hash": "6f3aa1deabc9c05a256d658c749f62420cf3dc16f0d70df145eae6e36e2b93c3",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T05:05:25.424447+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xcac7b987bd418ebca93c6b7c8e2982a4f5588ca43effdb58f7e83e79c8ec9533",
+    "artifact_hash": "6f3aa1deabc9c05a256d658c749f62420cf3dc16f0d70df145eae6e36e2b93c3",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T05:05:38.433132+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x6d8fd37a087c8d9398390a9afecbdf87121886f2310ca308d918333b8beeda99",
+    "artifact_hash": "a9f95df37bd790fd656b0509f5a1ea3d224626481a35594070013bdd4206b5e7",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T05:20:49.192858+00:00",
+    "score": 96
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x74a9c34f6653e5e30df4205a0e2319fb7227b562cd0bb503f9d4d11f753fe55e",
+    "artifact_hash": "a9f95df37bd790fd656b0509f5a1ea3d224626481a35594070013bdd4206b5e7",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T05:21:01.213990+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:BELOW_THRESHOLD"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x1379770114b8ddcc519d0b08db690e6c09bec206b7a5585cf2fa2a571a379e9b",
+    "artifact_hash": "1f26e0d4ef32cdd65267d081176d7be09a67c600e2dab5dfd9b6b1e96aed92cc",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T05:21:13.181490+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x217ffcfe11c7bbee9dc835e0b83e6d45f1be9e4ad27e5ddd4c7c2ee643998981",
+    "artifact_hash": "1f26e0d4ef32cdd65267d081176d7be09a67c600e2dab5dfd9b6b1e96aed92cc",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T05:21:25.672420+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xfda1f5a7f6f15e0e5fdea33bb56f122f0eaf540899f7e13f7e8fb9eee8b05a1b",
+    "artifact_hash": "945bf80f44708b7cbf967c0460224ccf9d5d2b0b88000f1a249f604cc743d76c",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T05:36:37.040377+00:00",
+    "score": 96
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xa3e1c758f841473b3f07d9e16a2d77ce0356ebfbef59cd6d5f2bb5c73250f226",
+    "artifact_hash": "945bf80f44708b7cbf967c0460224ccf9d5d2b0b88000f1a249f604cc743d76c",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T05:36:48.882247+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:BELOW_THRESHOLD"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x5f8c9d9d30cca1a1c009d23cd2a9cbac26844a66f78d4997ef9f1c5b7a75a2db",
+    "artifact_hash": "7a6933f24f850af94fcfb3dd73600b17ceb2e7d36ed22c86d8d606cb3a8e3bad",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T05:37:01.380038+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xa8fa5fc29e3be56db8f1ebef591fe5c655a436dda2ca3e80ddaffcc89c8d51f7",
+    "artifact_hash": "7a6933f24f850af94fcfb3dd73600b17ceb2e7d36ed22c86d8d606cb3a8e3bad",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T05:37:14.084047+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x557273dd5b770b3e9aa3a8ffe7532af9534e79c1a22ec55d0a258072dab8b171",
+    "artifact_hash": "5da24f26a99d8b57fe9ce695a5e2108166c4aca9041b189423e6f6803c9d41de",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T05:52:25.671433+00:00",
+    "score": 96
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x4c6a0d7f85fde53b7c87106a59dfc9013f9b418ca757d3dc2cab275b8d3bf462",
+    "artifact_hash": "5da24f26a99d8b57fe9ce695a5e2108166c4aca9041b189423e6f6803c9d41de",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T05:52:37.354708+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:BELOW_THRESHOLD"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x1f21cdb1e78c3a3c2343fe5ca2c85c3e118978df0fc587dc918e97a0ac192b99",
+    "artifact_hash": "afd612779cb736a612bef72c72f6caab19b5ec514a709b62f50bed8b60432b15",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T05:52:49.065064+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x5378d4f577dac43fd6e1db08578a994900407c51f975d882bffed8d7e85b0372",
+    "artifact_hash": "afd612779cb736a612bef72c72f6caab19b5ec514a709b62f50bed8b60432b15",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T05:53:01.449718+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x20960c2ceb0384085605efffa7c0c4231429fb9f3dfc0b4e4521138cacebe754",
+    "artifact_hash": "bb19a7346ad03b7da959d35708fdf1e73c3fd80727759a870fbc93ae6c7614b3",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T06:08:13.045776+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x764fbf917c9bfed24a3672ac7ad7634f1a04bc02967914a6b8dcbb96b7e6d079",
+    "artifact_hash": "bb19a7346ad03b7da959d35708fdf1e73c3fd80727759a870fbc93ae6c7614b3",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T06:08:25.144969+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x2c433040f1f028927b492b3d3ffb76984729e9775526e7d244eb4f8465c9bb2b",
+    "artifact_hash": "298fedf9148cea0ebc6b813be04c26fc569f204a0a1ce20056431424a97956d9",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T06:08:37.005533+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x2962f5d6c829be57773e13331c87b64ffc590ad3669563a995f9bfdf4d2e3d76",
+    "artifact_hash": "298fedf9148cea0ebc6b813be04c26fc569f204a0a1ce20056431424a97956d9",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T06:08:49.233600+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x4904bc4b77ecc8ed294de2be47093d007134f28622baf1eed093844c28e48896",
+    "artifact_hash": "f7661cf4789ba2edddcd9732dace93a51c5dd8a95ff6c6fe0b007e156bf47ccd",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T06:24:01.048879+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x9d47949b7f7031df880366d62f6b7514d19443be925319ed2633964a78aaf169",
+    "artifact_hash": "f7661cf4789ba2edddcd9732dace93a51c5dd8a95ff6c6fe0b007e156bf47ccd",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T06:24:13.655111+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xb7b193959553ceb10c76a5ce792cd28540eecbe8908d6ca69d4e85af1c8dc149",
+    "artifact_hash": "2b50ae0fe163c387a5bbfb6e49586af704411e9aa008aa758f3b53a867e16b18",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T06:24:25.181181+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xa6eb5948f7754ee29d3e00158b78a614130c5f1febf166e9bc5600dd9b3009c0",
+    "artifact_hash": "2b50ae0fe163c387a5bbfb6e49586af704411e9aa008aa758f3b53a867e16b18",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T06:24:37.416303+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x258334605936a0855453b8140c721b7fa53a2f57522ada986b9d93b97d9e6a85",
+    "artifact_hash": "c44071a0773953e102d3fdff4f9870dc1573d4f43501fac5aaa3785939812d4b",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T06:39:49.050717+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x1624fc315efd0f7dff9c688d233017d2a4f829d3d233628204ffd490033919d7",
+    "artifact_hash": "c44071a0773953e102d3fdff4f9870dc1573d4f43501fac5aaa3785939812d4b",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T06:40:01.139396+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x748a25d0da943e635ea131e3a1f9a998b3fd865e68ad55ab97dcb3aeb1aebf6e",
+    "artifact_hash": "73c622218228cc1987784fa56bc66be2b5b9cfff7fc75898500252e56987b83d",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T06:40:13.951224+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x6eb8f423f8a04be6fe6abb0db18a587c39f671dcef456b7168731b54cbed3b24",
+    "artifact_hash": "73c622218228cc1987784fa56bc66be2b5b9cfff7fc75898500252e56987b83d",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T06:40:25.020368+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x135c70549c43eada011cb8964eebc3e568d8a9c20f6ba573e0a0ef8e9f281b0d",
+    "artifact_hash": "57635ddd75371c1177559d1f41f232949301907f6ad7e7748b657da268e53328",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T06:55:37.020751+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xb15166ecb9f77977d66d4da57228997795b3ae44c4957d74f8dbfc0507a5c14a",
+    "artifact_hash": "57635ddd75371c1177559d1f41f232949301907f6ad7e7748b657da268e53328",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T06:55:49.162216+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xd64c659b426306343975aa3a8587511432b6e3ecd8f3c40b70d9c4f972612568",
+    "artifact_hash": "df00fef9486c1db549944249320817919034ac21795072346461f148afbba287",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T06:56:01.964571+00:00",
+    "score": 89
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xcb4efd083e03c6ce18ccfb7a161d67bbc312c0a66117b6e965d58a8bb9540b7f",
+    "artifact_hash": "df00fef9486c1db549944249320817919034ac21795072346461f148afbba287",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T06:56:12.956368+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:NO_SIGNAL"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x34d629d56d4be42a8e52ee5bbe71530cefab48c67dde55e501b156f78c3cd381",
+    "artifact_hash": "ef2b110a9f393deb6b96ec6c10d5f5cec90e17e73975a1cd80e8a1efc01b7abe",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T23:46:35.603008+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x0376ae340971036d09693de7332a4138381d3793721244de7f7370c8c2c4b51c",
+    "artifact_hash": "ef2b110a9f393deb6b96ec6c10d5f5cec90e17e73975a1cd80e8a1efc01b7abe",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-10T23:46:58.754901+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x5d8e1c16d458ef8eec7cd6beb3534ff20d02b64a2b787e972deea25751e2b7bd",
+    "artifact_hash": "f4819c4528ad0b2182958f476c0666cbdad70de0f1ee8912955b86e15488a887",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T23:47:11.619490+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x9169aeccefc5e1c6a2b9a0a92997fce8779f1548fb2ba749762fcc9aa1698f36",
+    "artifact_hash": "f4819c4528ad0b2182958f476c0666cbdad70de0f1ee8912955b86e15488a887",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-10T23:47:22.733231+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xc5d0ea398e458e13ebbda8ace6300d56d0594193d68aa33feb37b5e77da4c548",
+    "artifact_hash": "c79ef47dc6b225e12992e5383e5acc87aa7eb22a43f8eccc82f40bd9d1359342",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T00:02:35.144546+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x626192957570621fe424573d2d7446e4eb18756b41b10dd992ba2c012611eb6e",
+    "artifact_hash": "c79ef47dc6b225e12992e5383e5acc87aa7eb22a43f8eccc82f40bd9d1359342",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T00:02:47.579995+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xb72c07566486a40e326fd14d41e0627bcb85bb1da087878a4d508d4fc87d5af3",
+    "artifact_hash": "504b96844e94fe6e87bd7e2dbe9c9759906f90ce0fbe90cd4c796006f9be8be2",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T00:02:59.005077+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x52cd2d7cc0ad8c4bd719cdca7ea92c4ef42d5721c7ad92a766ebb3f0c0fe7f2f",
+    "artifact_hash": "504b96844e94fe6e87bd7e2dbe9c9759906f90ce0fbe90cd4c796006f9be8be2",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T00:03:10.954589+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xc6491125a64f2681279bcb6e49fb2d94e77b123e2578c41c2444b645276bcfed",
+    "artifact_hash": "ea6e080dab2971e6734eb6069510b7841c2da475156edb5c985964944bfb7c34",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T00:18:23.113121+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xc7f8fc11d863a83987a633b8097e7cf9c1e15750cfcafdfca31339197b6642f3",
+    "artifact_hash": "ea6e080dab2971e6734eb6069510b7841c2da475156edb5c985964944bfb7c34",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T00:18:35.491665+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x6b9df65aba91fe5055e993ff29b74696e4243c99fe525f335c85c1c3071064fa",
+    "artifact_hash": "5f72a0405f652e6dfe7e3a474726672c4011c44704258a7bf5052ca736271dd1",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T00:18:46.808517+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x828213ec8a1b95e1290ed62d3db94addcf1e04d420b681f6d87d77f0b4bd2c5c",
+    "artifact_hash": "5f72a0405f652e6dfe7e3a474726672c4011c44704258a7bf5052ca736271dd1",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T00:18:58.808144+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x195acc86e553e752393ef733f9e012139ab360f15e9cabdc22a3688cc6a0f12b",
+    "artifact_hash": "29950fbb2c4f993f53d65ab7ea87d7d3c26fbfc24a428300b130259b11177e7e",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T00:34:10.919106+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xedadd7f853ad3282aadaae4b2b2febbc66cefe467dea5e1845d514478a036d69",
+    "artifact_hash": "29950fbb2c4f993f53d65ab7ea87d7d3c26fbfc24a428300b130259b11177e7e",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T00:34:22.868336+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x29306038626efe1a99b5d507250c5d6b438a76573a2136ad8e0699d64d796bab",
+    "artifact_hash": "65af43635963609b0203baabf88813dd1ec0b82680c96322807a764156e52d94",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T00:34:34.816127+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x16b0dcd823f0c7043746b304fcda66eba769e4b95c2a4ea14b4d2207207b9b09",
+    "artifact_hash": "65af43635963609b0203baabf88813dd1ec0b82680c96322807a764156e52d94",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T00:34:46.775784+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x41e838a31ac67b67cdef0053519cfae7122dc6a0f09a683074313a5b0c0ef24f",
+    "artifact_hash": "c41eb6df388832336b88f61c6a74d72b04ae58d7831713bdf5f591f93b207f37",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T00:49:58.863421+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xa2de483c09858403ae0b2d1afd9b98058febbacc7056d0a45a63886825a550d8",
+    "artifact_hash": "c41eb6df388832336b88f61c6a74d72b04ae58d7831713bdf5f591f93b207f37",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T00:50:10.900681+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xcf230549692506c6506f01fcf8bd9f45b11d639768bf431e4ba6e515985a16f8",
+    "artifact_hash": "0de5a24adb53b1a864d2e751dac88c7bbe9d3baee87b2c68dbb8abe5b58b1418",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T00:50:23.581966+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xd3146f79b35183056f268ab0b67403663484ac446456188bfec194f29bcbf6eb",
+    "artifact_hash": "0de5a24adb53b1a864d2e751dac88c7bbe9d3baee87b2c68dbb8abe5b58b1418",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T00:50:34.849538+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xa3c15fbf969553ac35b198b93a7e0a8a80b73521775387477901beb53fe9c8f7",
+    "artifact_hash": "b79810249bb4ec07c9bbf879ac8f8ee1cbc8fc7072200d4306775ba28993e80d",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T01:05:46.895329+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x7492dad60037c206c2382b3048adce7cf1ab8eccf64fdce6a971fc17b40452c8",
+    "artifact_hash": "b79810249bb4ec07c9bbf879ac8f8ee1cbc8fc7072200d4306775ba28993e80d",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T01:05:58.991333+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x0b4d07661a643683c4f730afdb7e589e9c6fdced5f43764487718c5370e3c414",
+    "artifact_hash": "b51e9e1e87a4e2791f5c92bfdf238b59affbf231e12df03e44440c1f2bb919f5",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T01:06:12.326487+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xf58dd8627051c3346d464cb539575be79183e4fb2150d6653526cb188ac73dd1",
+    "artifact_hash": "b51e9e1e87a4e2791f5c92bfdf238b59affbf231e12df03e44440c1f2bb919f5",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T01:06:22.937857+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x95ca2d76f6fc6b99aa0844a57df003ff6e498b0357012f07b64575e9575a9dca",
+    "artifact_hash": "f88627a603c86b955387f72fc0adad608e89c23c7643e95ab03419f011aff5ba",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T01:21:34.907150+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x4d4c509004231b89d9ee3407e063539fed5951f260c3d735f1848dd3cf910707",
+    "artifact_hash": "f88627a603c86b955387f72fc0adad608e89c23c7643e95ab03419f011aff5ba",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T01:21:46.906058+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x8dba8dcbec33438f947947536378e91002d5ad3517d49cd45b1e43e699269f0e",
+    "artifact_hash": "80248f3502e7653ba408bec49554da3ade404f06dcf458b7e1b168d1aac20e95",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T01:21:59.441919+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xdd9e48cd70b0372f816e4667ecf09f0297bc67383629a2c6d9ff372d3a3ca184",
+    "artifact_hash": "80248f3502e7653ba408bec49554da3ade404f06dcf458b7e1b168d1aac20e95",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T01:22:10.881500+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x28f1107968f02a02acd2475d659450caa6d2d8cb968c3f68822682c1acd5df9b",
+    "artifact_hash": "130436fbc8636da0e4f578fa6f109b46c0e3007f393a733c9c2241b4da739e37",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T01:37:23.069894+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x70f7f9465c63c492f3f794a900356ad2f1a0b962cf09ab7a3a97bcc29b901bfb",
+    "artifact_hash": "130436fbc8636da0e4f578fa6f109b46c0e3007f393a733c9c2241b4da739e37",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T01:37:35.672522+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x0e9a3494482e0c724acd295e254094c70674ab2c98596a5d45f7e96a3b0bef40",
+    "artifact_hash": "f2b335eeee8c5e2cfd81a9aea31777820cc4f4c0d9931b69995bc9577049749c",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T01:37:46.841204+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x3667c2ccaecb8817786f15fca1b542f1b42185062b658b4b52c22b5cdf643c19",
+    "artifact_hash": "f2b335eeee8c5e2cfd81a9aea31777820cc4f4c0d9931b69995bc9577049749c",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T01:37:59.666794+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x558cc43878ef732d5be691f06d7ef7760fe851434aab34843936b4e93ce06b52",
+    "artifact_hash": "34be1dfbdb81cd3b45d308f9478b6eca9d10abe79bfa751d3202557290a1e2f3",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T01:53:12.369695+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xa89be577c1224b5cd239c09a8b2e09f41739286660583171629d657ddc550ef9",
+    "artifact_hash": "34be1dfbdb81cd3b45d308f9478b6eca9d10abe79bfa751d3202557290a1e2f3",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T01:53:22.889216+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x73b4f3b9989457f69b2251a52d2bf986217f259b737f415c4ad0f56df3bf4432",
+    "artifact_hash": "2bf774080ec6ce32d6fbcf4ca6068ef1c8008e52986559bf00c815ad9eedaf49",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T01:53:35.667017+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xb40d648983d2e922813b4c61a9138c492bc07b01dd456d17e7be50f71164121f",
+    "artifact_hash": "2bf774080ec6ce32d6fbcf4ca6068ef1c8008e52986559bf00c815ad9eedaf49",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T01:53:47.005724+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x5a28d11af03787460263544734b180b7b1b6730dc6bf52dddd95ea3506bb15f6",
+    "artifact_hash": "9195a44d421e66c6ac5e81ef2fb1c949fa08a8a12e5943be075bcdf9cf3155bd",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T02:08:58.890239+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xe360fc2fcc0a1bb19eb9c32555a78fbb368eef8fb11ea8c54254b46f55479460",
+    "artifact_hash": "9195a44d421e66c6ac5e81ef2fb1c949fa08a8a12e5943be075bcdf9cf3155bd",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T02:09:10.877969+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x1fda2f102d3b213cce28d1cfcbc8c4e045f3174a479505eed01d6f4c95c120b8",
+    "artifact_hash": "c5cfedbb99afb942303359469c745955b8e50fd24fc8e34965f81aade3adf693",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T02:09:24.386763+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x19b98fd0083e00d608a1bdd92d96d2bd50fd318ec55fd456825f3319b386a931",
+    "artifact_hash": "c5cfedbb99afb942303359469c745955b8e50fd24fc8e34965f81aade3adf693",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T02:09:35.263168+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x45824fe37f68f2ed2c570982d6d27717c70331a888770b531600600dd7705d2b",
+    "artifact_hash": "55f84d3991c2c19d0f23315b586382258ae70efecf43fdf3e929a8b7c3919d70",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T02:24:47.004489+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x8e30d4e02a2f715cc5d85a47b04b7deef09fb25ca177c61f44e56d43e6cb7f3e",
+    "artifact_hash": "55f84d3991c2c19d0f23315b586382258ae70efecf43fdf3e929a8b7c3919d70",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T02:24:59.129604+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x4d32553ccde4262afb886452ea0cc49687cffd3c0c7b8faaf1c602328b23fde7",
+    "artifact_hash": "c26cc8b98545664563cd7cc6c480e32a80271fa8af4f660ac0cb1def965f0674",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T02:25:10.955559+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x0b58b7ae4734c7171830fd5029e840b39ca6664f0579c29d9bbb6bc90f76ec90",
+    "artifact_hash": "c26cc8b98545664563cd7cc6c480e32a80271fa8af4f660ac0cb1def965f0674",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T02:25:24.130129+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x3166cc1c230c47bda0772c1993063332b6621e4810d4f6a80312b37235c7cc1b",
+    "artifact_hash": "1f7a7c0686dcbe6692e3aa739e2da46d5d3fd37b3e7ae36f4c2fb81aa24b6c76",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T02:40:35.780475+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x2b661f8196e5e0d635f22658b0a1c59dc1074797d343873bc632d10b87eeb7c2",
+    "artifact_hash": "1f7a7c0686dcbe6692e3aa739e2da46d5d3fd37b3e7ae36f4c2fb81aa24b6c76",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T02:40:47.011771+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x19e571a945662bbb2893a2f7042ceacff07670e9c324226970d2208e5204bd2d",
+    "artifact_hash": "8212ee451bb610fedc775227d7a73c57a87381d1ef62ece318b22b2465e4070f",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T02:40:59.436706+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x55bfeb1fd37a93c833591ed496e1832594a797ff70bda97f61f7c206858ca162",
+    "artifact_hash": "8212ee451bb610fedc775227d7a73c57a87381d1ef62ece318b22b2465e4070f",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T02:41:11.167572+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xa21fa3eb0add37f310bf24bf8bbb74494c3ec07a7404f4bfb1e13e9792343303",
+    "artifact_hash": "9987c41a38b9c3375c846a5c3ccc4c87d9ab32ca4269ca7c0dd607908c1c7604",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T02:56:23.106787+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x9b6618fcf9b947dd8cefc6751646509d404b7f1dd0b3327e34d56962f4d4d96d",
+    "artifact_hash": "9987c41a38b9c3375c846a5c3ccc4c87d9ab32ca4269ca7c0dd607908c1c7604",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T02:56:35.081711+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x04dc5eb16e3c7802e138e8d8c1593a3585f6f38e046ef4b04c4de3dc96f5dafb",
+    "artifact_hash": "ea1a0bf7397c83f9ab9d9a05715bc8572e1ddc5b7eedede247a9455e3fa4c3ab",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T02:56:47.116785+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xbbc9aafe0902b664fe25d3541127095366e8c0096bb7a1bfcb29540c9c20d436",
+    "artifact_hash": "ea1a0bf7397c83f9ab9d9a05715bc8572e1ddc5b7eedede247a9455e3fa4c3ab",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T02:57:00.131415+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xf1ca5f5db1a2c7b052f2dd068bce59836c0e6e67940206532899bf2647e3e3ba",
+    "artifact_hash": "fcd76f85d3e2c17b51624aa0826da171f68e7553340ea02c391cfdca9919a74e",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T03:12:10.965816+00:00",
+    "score": 95
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x9a3c4624e5dc191051617b3f4cd94a983a4d60df8ec6780bdb85b18840e01bf4",
+    "artifact_hash": "fcd76f85d3e2c17b51624aa0826da171f68e7553340ea02c391cfdca9919a74e",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T03:12:24.479634+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:MTF_DAILY"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x0c7ef25099fd81214aa008d3c2f9e2d349579c699a032eb26e478902b8408f4f",
+    "artifact_hash": "59a977ee6127f0f5d4ec3e7194fdab8ff05bec716426e4e18b396dbc730d5c65",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T03:12:35.102458+00:00",
+    "score": 95
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xf9a564439614dc71d0e90c2b4581bed809c402fd37f11cbdb19395088c84acc7",
+    "artifact_hash": "59a977ee6127f0f5d4ec3e7194fdab8ff05bec716426e4e18b396dbc730d5c65",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T03:12:47.134150+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:MTF_DAILY"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xf79b8e10fcc4f22e4150e9d968e2cef13ac876b39ab9294825e9f2b812b68588",
+    "artifact_hash": "b7c4ac6a9899e215d2978f88532a650f1cc3f17d7a690bb6918c24885c032cb5",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T03:27:59.049871+00:00",
+    "score": 95
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x00178baa5f84e7c684f357468129a4419e8f4b046bb4c0c0b911a279dab97ce6",
+    "artifact_hash": "b7c4ac6a9899e215d2978f88532a650f1cc3f17d7a690bb6918c24885c032cb5",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T03:28:11.852311+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:MTF_DAILY"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xa2e435e510f5676cf4d1110d39a41250be838f2dfda80cccfe41adb6d57ea64f",
+    "artifact_hash": "b36f84efe1ebf35b75f8a608fcd84c5549181524d2ce4c4faaa87c06ef38728d",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T03:28:23.314249+00:00",
+    "score": 95
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x0de2a9a83865f6890fc79067efb2ca8cb74946f3f80001e734a7c2c47555b9b3",
+    "artifact_hash": "b36f84efe1ebf35b75f8a608fcd84c5549181524d2ce4c4faaa87c06ef38728d",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T03:28:35.053120+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:MTF_DAILY"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xc5b859b490ad538aeefb3a05adf69ec6edd2565af4815399cf0dd8a2d7ec9769",
+    "artifact_hash": "3da2e6fbb077c1693d592339050326dd900e7ea14debe8e8f16bd87154e07384",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T03:43:47.544422+00:00",
+    "score": 95
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xfdc1b0f3085d66f1f6463258dd07932507c9f8d99c38b70fe4b19d102a18d5e0",
+    "artifact_hash": "3da2e6fbb077c1693d592339050326dd900e7ea14debe8e8f16bd87154e07384",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T03:43:59.147173+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:MTF_DAILY"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xd673dfb373d71df3dae5b6f63d1ddbd15c8e3cd774400aa17fac0115769216d8",
+    "artifact_hash": "7bd735da56b2a1d04bbf272448a13d43aee183afe3ddbdb37fcac87e758e9463",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T03:44:12.521327+00:00",
+    "score": 96
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xc87d3115bc99e9d182d1b8da2451385fe4d9e4cc51c9865c6aa01fa2aecb7c51",
+    "artifact_hash": "7bd735da56b2a1d04bbf272448a13d43aee183afe3ddbdb37fcac87e758e9463",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T03:44:23.033791+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:BELOW_THRESHOLD"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xe8068d158671b3974e53a72565f2aafe31edb407650dc042032278611b3e909a",
+    "artifact_hash": "f23d4b92a631d736f003d5cf9b73195d253ca1d2793d3ad8c8ad17ca3942c059",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T03:59:35.089264+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x4ca4ed13929e81840c11780553a5b9a5180905d04028ff11dcfa8c04a0531c1b",
+    "artifact_hash": "f23d4b92a631d736f003d5cf9b73195d253ca1d2793d3ad8c8ad17ca3942c059",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T03:59:47.275256+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x2a6d9ef8040080ff0a400d3c5f091315e8278762f0fe6b7ed2b6821280ed7aff",
+    "artifact_hash": "b63e3b7a640c87d7e79882e40d84a21237880ffbd1598e7e6d67494428bae330",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T04:00:11.198011+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xb64ed89873b13e49f20737de68ff65f98e6ec19f993bde5cde6ac2ed14bc8b91",
+    "artifact_hash": "b63e3b7a640c87d7e79882e40d84a21237880ffbd1598e7e6d67494428bae330",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T04:00:23.055791+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xecfa10275c1ed4edbdc67f68193246fc7570f68a813e2af431fd2d9f9f64b8f6",
+    "artifact_hash": "f223c103a04c2a937d4c991d91b16a816eeaf53bf7395a2dad60805e3fff8b18",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T04:14:35.714490+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x93a9bcc881ebe8e9c0db89a2491ab668b49db96c3918c57d8c393f39089c094b",
+    "artifact_hash": "f223c103a04c2a937d4c991d91b16a816eeaf53bf7395a2dad60805e3fff8b18",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T04:14:47.100465+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x1594710f3a28f1c624b8c16efe611de5144e8d02a82d06542858a4eaece20a24",
+    "artifact_hash": "a1cae28487a73518463964d410b7bf02d58712b5b8a9902b24d6736eceec5fc2",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T04:14:59.326223+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x8ee8c9fb2e6e4f87801792e65e2d9c5d72c0693a4c894ade8dda4bb20a019814",
+    "artifact_hash": "a1cae28487a73518463964d410b7bf02d58712b5b8a9902b24d6736eceec5fc2",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T04:15:11.940342+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x98b733b8c296573b9df5d8741288d9d64cddca897202f96c40902467d9e3131c",
+    "artifact_hash": "8cfaa40cdc4c689e7f203793a006f400cc7e3e4407a51677440141faa61320f2",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T04:30:35.459594+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x9c7d92edfb1af65270a696dffc476deaa33cc8eff86caafd2857ceac18722f78",
+    "artifact_hash": "8cfaa40cdc4c689e7f203793a006f400cc7e3e4407a51677440141faa61320f2",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T04:30:47.399498+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x1924df457952c10880bd04e087f7149d1dbc73e7b89933cbc1f377ca511b94dc",
+    "artifact_hash": "8f2cf7883f4cfa6d3c35c0ad889b64f8a009c90ebbed670fe6f3b315ae479b0a",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T04:30:59.558273+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xe3ee8a45ecc6ece488318648d6d4bb6aad6412b2bbcc262dd0267068dcc86373",
+    "artifact_hash": "8f2cf7883f4cfa6d3c35c0ad889b64f8a009c90ebbed670fe6f3b315ae479b0a",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T04:31:11.242841+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x4560b5e6268d8d217a94ffd068d3c3ce8c2d5d633c54390fa27081f67b3adf79",
+    "artifact_hash": "a64fd7e26fa1c06ee5507fa085232b39a0c4e27273ef73a69ffec162afd515f5",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T04:46:23.992751+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xef934926946b6545e4ddd77ecc3392c217348e10f0f258f7558b37053d30b799",
+    "artifact_hash": "a64fd7e26fa1c06ee5507fa085232b39a0c4e27273ef73a69ffec162afd515f5",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T04:46:36.686632+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x2ac80ad945a255323d8b11446f9303adcb6d8b386d2032cd9f6903d7de08a254",
+    "artifact_hash": "eb7b71cd796e10de30546a16394ef2d82631944e9c18c055b63330e6f3371fa4",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T04:46:48.667644+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xdad9f2071d60b037eee6c3be79ad8564c01a25f91e9e15074dd60a8e61c65809",
+    "artifact_hash": "eb7b71cd796e10de30546a16394ef2d82631944e9c18c055b63330e6f3371fa4",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T04:47:11.190178+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x356d2949db38359339a0ef2f3819c462abdb31c64eec866bb6a8b1e43f377d98",
+    "artifact_hash": "83d5f66f38ae0a35fdf2141cd7f65653b3366cb7b8ec84d75bc002ef6d6378f8",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T05:02:24.047131+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xf27d7c1c90cc90e1b6abeb31506786d1220333e9958687490442455bd570a57e",
+    "artifact_hash": "83d5f66f38ae0a35fdf2141cd7f65653b3366cb7b8ec84d75bc002ef6d6378f8",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T05:02:36.277561+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x6d844da35e26cf708b5dd81d9061e2b99b5354e8ad1e8d21f182a7ae3705c690",
+    "artifact_hash": "fd3bfa3f3b54338cc1df6f6e005c6b143ba9aa1f1075938d755e5cd66d0af077",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T05:02:47.150168+00:00",
+    "score": 95
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xc4cd1959030b1ac984b984bef909ad2c9af33a5b20b6d12b966bcdfd7c64ed79",
+    "artifact_hash": "fd3bfa3f3b54338cc1df6f6e005c6b143ba9aa1f1075938d755e5cd66d0af077",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T05:02:59.293271+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:MTF_DAILY"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x564e1208c8f7fd0e279268661d71fd9984d1405e312d7e485a880ec78f7601c2",
+    "artifact_hash": "72162df3742f1fea7546f90a9c193b4258b58794d329d9b83610634d994a1ba9",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T05:18:11.255279+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x0a8742e741271219cc7696006f9a33aa506ed539eb0f1636f87b9b15ba202ef2",
+    "artifact_hash": "72162df3742f1fea7546f90a9c193b4258b58794d329d9b83610634d994a1ba9",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T05:18:23.735087+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x0fcb0e2f539e5a05345f9881209070c3aeba3c90e74c59158fa3088f1049532c",
+    "artifact_hash": "1f1dcf6e744ef1e9a4f50901a671dc98a8d4803e1939078b7ec5024acb8c3553",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T05:18:35.927057+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xf5f1f3a46ec850b78b70354f20b4606524044ce092139812907d77ed680311e8",
+    "artifact_hash": "1f1dcf6e744ef1e9a4f50901a671dc98a8d4803e1939078b7ec5024acb8c3553",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T05:18:59.196144+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x47899dd1d18ebeb64ad13046ec1718d03c68e29619f217571279aa7cafd1149d",
+    "artifact_hash": "443e6962d17e485eae2d720dec285afe87f0ce4aec5841ef6eb2ce4346b3fd9f",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T05:34:11.288416+00:00",
+    "score": 96
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x7ddcb0cddacfa1ada3e897e5ac076d9c4e64b5e7f995073021bc69d6895b6e8d",
+    "artifact_hash": "443e6962d17e485eae2d720dec285afe87f0ce4aec5841ef6eb2ce4346b3fd9f",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T05:34:24.072627+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:BELOW_THRESHOLD"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xbd3df5daccae011c50291313e0093aea7d1e52164da8f243bf715951417fec80",
+    "artifact_hash": "36cef66c9362a3815379ef11e51af2b06aaa8e5a989c5fe65c2f4475c1351d30",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T05:34:35.493553+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x0acb1071098a4a89ea86d85584995055b13e73b9c9c7e535e1e3c8f3e4ba0fcd",
+    "artifact_hash": "36cef66c9362a3815379ef11e51af2b06aaa8e5a989c5fe65c2f4475c1351d30",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T05:34:47.237188+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x38d3a2c6d55f42f9c0e2b8de60686393c9120ddc54f9bd78d709763f19fb7bfc",
+    "artifact_hash": "38cac56b2afca200200740adab90ed271252a4de2fdffa930d243977e0a02d42",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T05:49:59.255262+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x98d8a02405b6236cdd7850e78c308d4b8968de1ddc2c68bee8b4336147306579",
+    "artifact_hash": "38cac56b2afca200200740adab90ed271252a4de2fdffa930d243977e0a02d42",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T05:50:12.710649+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x31b75f2d6944a5bc2d395e30357ee18d527ff6749166a06a127c5e484e9c7d19",
+    "artifact_hash": "bac765a3ea83162eda05313027581f36b2e877bd1916a83e81e78969c29be775",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T05:50:24.744356+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x6b361e010752084bc7e1c30dda523591a44ed73fdf5e0846c7763ed29ff0ab2d",
+    "artifact_hash": "bac765a3ea83162eda05313027581f36b2e877bd1916a83e81e78969c29be775",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T05:50:35.212383+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x5114804ffe70b41fe212cf4f988fb5b04bd91510e2c0d71e3fe27d51b0abe634",
+    "artifact_hash": "43b6035d0c96618cb6a6f1eaf82ce509e53d98426401709a2db5099d7ac77ee6",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T06:05:47.367979+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xd33a2bd382f7269dd20430beb02b0abd6a2ff3f472b2f9df591bd2b2c7851594",
+    "artifact_hash": "43b6035d0c96618cb6a6f1eaf82ce509e53d98426401709a2db5099d7ac77ee6",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T06:05:59.565399+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x680b994d0a1d541a0c2c16aba74d4173d1ffe2cf8281a06b0c8dfe0eb120a854",
+    "artifact_hash": "c4e72228fe1d54d594f3a591f8d79dba433cd2d15e15b9a72cf106c59dd9c995",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T06:06:24.003699+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x0ad049b7a6e78d72eceeabb54f474b865a2aec7811c08be4f921c04ba2af9980",
+    "artifact_hash": "c4e72228fe1d54d594f3a591f8d79dba433cd2d15e15b9a72cf106c59dd9c995",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T06:06:35.431523+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xc1778a6ae3a5796f5d634f8ca30e67043f22e2fd1ce5097f6ed7065ca837609f",
+    "artifact_hash": "9794e78a7aec2d41c6f7d9ce2c4b1f1d9802bcd4973efca319ab32c4f3eb592e",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T06:20:47.379620+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x40a8eb2ecc8f8dd241ef1ea8ad659da750a78177f83caf52d2d52f0fe6c5ee54",
+    "artifact_hash": "9794e78a7aec2d41c6f7d9ce2c4b1f1d9802bcd4973efca319ab32c4f3eb592e",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T06:20:59.876984+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xb3f7737c80ab549734fa9b30e9b2fd7be55ee66a90de815ba697a47e0321f6c4",
+    "artifact_hash": "92df38e68e12a52bffc435a357bcc48b5497db8a87e03e898684c7ddda6bbde6",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T06:21:11.461372+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xff58f8154602ce08f3003094b79529bd0299ba759637fe7ca4af4ff74c6a85d9",
+    "artifact_hash": "92df38e68e12a52bffc435a357bcc48b5497db8a87e03e898684c7ddda6bbde6",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T06:21:23.541403+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x5d290a20db3e60d8d087326dbae3a3dd5b439741d2754c2cd8dd774abaa9c4bc",
+    "artifact_hash": "704f01c969b25da3ec82f194c7ac0f953f47c613904a2fbca50b3a2320000a14",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T06:36:36.778477+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xfd854dc2b0cc72872d7aa657c7555c047b65023b5cf334bb752720971f7b6aba",
+    "artifact_hash": "704f01c969b25da3ec82f194c7ac0f953f47c613904a2fbca50b3a2320000a14",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T06:36:47.328558+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xfc88bdf0a0295d7e5c03f68da4a3a273374b9561eb6797bcb6e0f4ed4c9cc229",
+    "artifact_hash": "bad3a1731208a04788fb5d893b7fbff5d169c85acaf62811a5255afe93da801a",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T06:36:59.494436+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x9c16c4ea77166633033a53fcd66ea35fc7aacdfb5772427b24f25216f454d760",
+    "artifact_hash": "bad3a1731208a04788fb5d893b7fbff5d169c85acaf62811a5255afe93da801a",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T06:37:12.159812+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xae9f34ff07351dd0d7411d92c9992e38d85f23a002535903445cf52c0274042f",
+    "artifact_hash": "699bdc25d786e2f0896b88ecf70170e5cd610ab0e5d4e792ab73b6e8336ab49f",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T06:52:23.662264+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x17176c313375ab74add6b3c8e312656328c8464dc179b79ca80668d520d555df",
+    "artifact_hash": "699bdc25d786e2f0896b88ecf70170e5cd610ab0e5d4e792ab73b6e8336ab49f",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T06:52:35.484581+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xa55a6ac369cb5699fc534942d27d2dee892075a8d59f41138d208f179e475bfa",
+    "artifact_hash": "020cc536502c004336cf1b791884c81bb2a42e899df80af2f24542a7823f4f80",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T06:52:59.417901+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xf1fe1dbee9c73d5952602f072ec8d414dca62b4b737317f681c7675a8c6d8591",
+    "artifact_hash": "020cc536502c004336cf1b791884c81bb2a42e899df80af2f24542a7823f4f80",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T06:53:11.695086+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x4cfbc2b6b6a865cf55adf92db496a6e1ffe12703f0205c6482c1325be7e99ed8",
+    "artifact_hash": "4087649ec4a29f3019f6b9cf0beac2dd9be7865616658cc06745c6ce9c9893d2",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T07:08:35.605136+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x102f5d5fc6358de4aedfbb08bbec847c1dac05bd6c264d6c81611bcae22f6d78",
+    "artifact_hash": "4087649ec4a29f3019f6b9cf0beac2dd9be7865616658cc06745c6ce9c9893d2",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T07:08:47.468757+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x466a6b604669c8ee729d4df3db7c8c3a1d54df0e542364136b0deb5a214f3aae",
+    "artifact_hash": "3030b6b4178d51cd5d462ecc1abc4cd94624d9da80dba55594b7c7fe13f49577",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T07:08:59.440377+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xad77e03f159f060dae1b5ef822d771cd15ff8d28ce3c19aebb170974fccd4204",
+    "artifact_hash": "3030b6b4178d51cd5d462ecc1abc4cd94624d9da80dba55594b7c7fe13f49577",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T07:09:12.469025+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x78c832660f5d3ffb86eab834a085218beaad5eef9fbac439fce573b1c9b63080",
+    "artifact_hash": "1d4d100d2f791923f95469e8c695c879b238c27e1fb7be51730c2bdc90c2cc31",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T07:23:23.492087+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xcaeb18c9d728a591784fcf0204d758465ee180ac5322a3f50d82bd2f3cde2067",
+    "artifact_hash": "1d4d100d2f791923f95469e8c695c879b238c27e1fb7be51730c2bdc90c2cc31",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T07:23:35.320820+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x86bfdd27ad1a658fb97208c04bf28a1fbbc6d3d46776aaada6ce0107ed46e3e1",
+    "artifact_hash": "95187356925b5cf97464c100c37a5ea10d22946f87586db333325ba3ceafe331",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T07:23:47.458102+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x48e86d84c05d453dcf0dddf320cc678f71b67191133c7652e98ba8bd081ea6ac",
+    "artifact_hash": "95187356925b5cf97464c100c37a5ea10d22946f87586db333325ba3ceafe331",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T07:23:59.528954+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xbc138f56793ed20ef196b9c172dd55e526a294b0813a39305825c566fe7a5615",
+    "artifact_hash": "235c3f9b618125aabb9838330a46be53c88d42b66576b224f9e65f8d4eae682b",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T07:39:12.375111+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x9a266fae19bfa7172bcab8355965f2b7962e8040c9810422c9a63f93059f0caf",
+    "artifact_hash": "235c3f9b618125aabb9838330a46be53c88d42b66576b224f9e65f8d4eae682b",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T07:39:23.524493+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x723b57445f473511c31cb4e896fa6be26cea72856b7952315c1d447ebc4c364f",
+    "artifact_hash": "7376ce56d6074a5010a4d283d2b3ba097788423679a664105e0a9f5e6e966964",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T07:39:35.827101+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xf8532ae80b4449bca640aaa49cacfb6ea591d280363d59556e925db67b75931b",
+    "artifact_hash": "7376ce56d6074a5010a4d283d2b3ba097788423679a664105e0a9f5e6e966964",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T07:39:48.423110+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x7d769330d12ebc9d59936151cac63011231bfca635ef6b082e7fe75e89171c65",
+    "artifact_hash": "9d041851dc1e53bfc523124ef1fb726aa68d9145f0b360fefc74b0856f34b1e6",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T07:55:00.625789+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xdb476a95204cf7efeea7454ca68a434cbbf01c5e5241d51d1036368a32dd702c",
+    "artifact_hash": "9d041851dc1e53bfc523124ef1fb726aa68d9145f0b360fefc74b0856f34b1e6",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T07:55:23.447407+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xee95ea3212679f872fbe3da854b72b67ba230f03ab5f87e30149a2be8f36f536",
+    "artifact_hash": "4262a3a28ff1de729aa7b5c0ad0e28edc48aa9e52a213dbc549cb82c94de6e1b",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T07:55:37.247032+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x5f6cdc36acdb24c34cfcc1738e432679e10c9db4cb1a0df1a5d4b8fc5a64bea5",
+    "artifact_hash": "4262a3a28ff1de729aa7b5c0ad0e28edc48aa9e52a213dbc549cb82c94de6e1b",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T07:55:47.483370+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xfe0935f9e4ab1908a16fb04b00e0918314ce516b5a3cf24865ac22b5c7ab5fd2",
+    "artifact_hash": "f06a52113fdc1376d4d2f69208e031d9f8b07577e8e9c6ab367a128bc74e9060",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T08:10:59.930186+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x67483f11d006c615085ae531b35932c4c2f785c6f754b1b7ddb0d385a695b13b",
+    "artifact_hash": "f06a52113fdc1376d4d2f69208e031d9f8b07577e8e9c6ab367a128bc74e9060",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T08:11:11.445592+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x8a58297ecfc0ca0151a452edffeff8226af0b264635140b5c3bb9bc8fcfe2b50",
+    "artifact_hash": "8dfd57e7180664b67b624037202d95f2d6d23f5c53e312d2279db31c959c4884",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T08:11:23.395572+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xaf825848d52447971683425db5274691da42d8ea82ac71273e4312b2574c45a9",
+    "artifact_hash": "8dfd57e7180664b67b624037202d95f2d6d23f5c53e312d2279db31c959c4884",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T08:11:35.521622+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x5543f67d96ca33376eb21a7565638778af41c87c9d2e21e6b971dfbe1a3068cd",
+    "artifact_hash": "786c368f4aa8d01a93448b3c33bcf7c951e011767ade2213971b96d6eec018ce",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T08:26:47.849067+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xe2f0a6844ba0133fa54742b254472a0dc7515b247fd1da1acd8bc0d2c7ea0974",
+    "artifact_hash": "786c368f4aa8d01a93448b3c33bcf7c951e011767ade2213971b96d6eec018ce",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T08:26:59.474087+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xf4d552310e928ecf5693d51c0961fc49ca11c47a5f2471d409e9ec1c0bbbed22",
+    "artifact_hash": "73a9a4ba037283f440000609419963e95e45ba1e1503079a8d054aaecffdec33",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T08:27:23.583530+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x83502e485296ab96faa555364251e9140987b611f775b6c030217c28ca418442",
+    "artifact_hash": "73a9a4ba037283f440000609419963e95e45ba1e1503079a8d054aaecffdec33",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T08:27:35.605119+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xf68a53e46c14a3b320a0a73401edf165e7332130280f74ae6c0c7da30bb5b4e4",
+    "artifact_hash": "fc61716c7a2aebeff7ac05bb3a7fa64f3093c1341de62bd883e2a5ef56b96c6e",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T08:41:48.016597+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x7b98c8836e2ff44782edb1be755e5d32f7f144d71f2c8f31649c7395642ffbd6",
+    "artifact_hash": "fc61716c7a2aebeff7ac05bb3a7fa64f3093c1341de62bd883e2a5ef56b96c6e",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T08:42:00.163337+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xeba407d596793d9305ae3294adfcfb96f2716875dd488b934dffea89bd52b6f4",
+    "artifact_hash": "d35d3adbe1c09ef89962cffc7d281a568d752e72c9ef59a563f9b5fe4c8efa0f",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T08:42:11.424567+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x837e88f76bd45bf95f281fea5d4d4c58d64de75d6d6dca271fc881229daddd09",
+    "artifact_hash": "d35d3adbe1c09ef89962cffc7d281a568d752e72c9ef59a563f9b5fe4c8efa0f",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T08:42:23.558086+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x38769f50e150ea6b0e8f96bc1c1cce074d053f35336e101db8ac129b1a4917d1",
+    "artifact_hash": "8ae8826a4f0b8c76d48321269bb0b10a703313785ecd7a8ff737e694fa4399e3",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T08:57:35.747573+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x3e410131cda3b79e9fc78c0a09ddfa4f39c0922b56ff291a909a37a78e31755f",
+    "artifact_hash": "8ae8826a4f0b8c76d48321269bb0b10a703313785ecd7a8ff737e694fa4399e3",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T08:57:48.009868+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x543f99e5f3d9bcf02eba19ad721ed3a648b30b15f393e86b1879e85bcb9e77da",
+    "artifact_hash": "184b75e6944cabe85f04483528ce1e9e74c86accaa8ceccffbaf2ece2b4ba501",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T08:57:59.929682+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x636038935345cbc61cb9b723116a451fff0e582e94a00d290b4cef732155251f",
+    "artifact_hash": "184b75e6944cabe85f04483528ce1e9e74c86accaa8ceccffbaf2ece2b4ba501",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T08:58:12.231899+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x6db960652f7fe6a2f441bd33ff1bcd52e313474730b60b4817fcd288bc32b2f8",
+    "artifact_hash": "94e1fbe5bf2f68f74f2501e7b18b353b067c93b98572b11a6423a91fb0b99ee2",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T09:13:23.991992+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xc75dc382d95eaa91e69aea19ec4486da5acd40b5df9ed4e6e69352767042bd25",
+    "artifact_hash": "94e1fbe5bf2f68f74f2501e7b18b353b067c93b98572b11a6423a91fb0b99ee2",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T09:13:35.965238+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x3bced20b855e68b66f4c0f2da69ef23a536c7ddf63126276a79167f6c917c628",
+    "artifact_hash": "f34020696011fffea8a17d3285b9c111db9f5960188aa3a43583f48a3d86a343",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T09:13:48.579567+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xe151536f4f324ca64d1dcc197bcc433625387efb570d163c4c37f8480c82f233",
+    "artifact_hash": "f34020696011fffea8a17d3285b9c111db9f5960188aa3a43583f48a3d86a343",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T09:13:59.645250+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x118b85b8d05093cfe66b11c132f3dc00c1d5d2c5e970fc5c9c54e3065f9833b3",
+    "artifact_hash": "64e210923033b9e34972687bdf0b7a3969f8db070548431cd2f1588b99951cb4",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T09:29:12.162958+00:00",
+    "score": 95
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x3427767e8a5775b4d89d25ae03d90be9d59950cc9b20dc644839c350d6320143",
+    "artifact_hash": "64e210923033b9e34972687bdf0b7a3969f8db070548431cd2f1588b99951cb4",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T09:29:23.859842+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:MTF_DAILY"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x216a8c68045d8a06f905c822d66b9a79fbbce2d688fcdff9637f654c2014aa03",
+    "artifact_hash": "6734a0d5a2af8844cb1891c8d6a45c9e5c9296b455fe97ba13801a2dc9895a33",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T09:29:36.305747+00:00",
+    "score": 95
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x1d39060e64fd81fc55176e4181aaaa304955a45b9f358f7b65375165332b0068",
+    "artifact_hash": "6734a0d5a2af8844cb1891c8d6a45c9e5c9296b455fe97ba13801a2dc9895a33",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T09:29:47.683333+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:MTF_DAILY"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xf376dfa7a14df1f00769928b7a12b5ae66b84cff656ac4cdeb27e7b42d1fb46b",
+    "artifact_hash": "dc28faa95514eed448c488d4458a3907a4fc5f63364b1b0f7c46c69f7c59f3f1",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T09:44:59.923248+00:00",
+    "score": 95
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x356901cfcd8975804b78c974c431da080f34d07a4a65455b5a2b662e2bfbafaf",
+    "artifact_hash": "dc28faa95514eed448c488d4458a3907a4fc5f63364b1b0f7c46c69f7c59f3f1",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T09:45:11.604130+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:MTF_DAILY"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x4ec9d4d0d0d5e862f644943a6c3c6cd8dac2d87c3c1b8bed3c95f3f0930a4aed",
+    "artifact_hash": "559c39e3d8d5ba2552a205401290230ad71d5600eebaaee9cd594749f606bce0",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T09:45:24.285067+00:00",
+    "score": 95
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xb570dfcfd1422ee953df071748e30ee24182d10b8f72e9e1e8315dd971a38ceb",
+    "artifact_hash": "559c39e3d8d5ba2552a205401290230ad71d5600eebaaee9cd594749f606bce0",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T09:45:35.609558+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:MTF_DAILY"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x1c26dbdc179b55f54f9fd7ebbdcbc0145893c04c6dba0398daa0a8f292d1e227",
+    "artifact_hash": "a4c01192128dcd6aa1f223eaac88abbee328fb7ce270bb8634b7fd8a940d4bb3",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T10:00:47.681334+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x8af50e7a503650d39c54fb2043bbcf48de567043db2e3e84981807a2e4cb0f5b",
+    "artifact_hash": "a4c01192128dcd6aa1f223eaac88abbee328fb7ce270bb8634b7fd8a940d4bb3",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T10:00:59.705921+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xd1057e37e9694adb4525dac6d3782212dfa30ee24bf442b7fde015e2e2229d85",
+    "artifact_hash": "f0c4e412d6e1765800d5517923a95610e682a644ab9bb13da84e6b134ada3241",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T10:01:13.193070+00:00",
+    "score": 95
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x57bcabbb1943f045eac21372e46a9107ae26a245b3ab437dc0ab3fcb9c0edcdb",
+    "artifact_hash": "f0c4e412d6e1765800d5517923a95610e682a644ab9bb13da84e6b134ada3241",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T10:01:24.021193+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:MTF_DAILY"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xd47e096104aaeaffc5c834299e937c813d543b76ab07de24e9140c996f8464c9",
+    "artifact_hash": "f889ba5103084391188e945825f50158d95b192c7187792e9c7f0d5f4f44a05a",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T10:16:35.898280+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x75c2a9d99ed5160219385ee1c2479cdf5ba192fa993a364d36d5ec280991bb8a",
+    "artifact_hash": "f889ba5103084391188e945825f50158d95b192c7187792e9c7f0d5f4f44a05a",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T10:17:01.156637+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xda12a04f7cd9a6aa5958288107e7310dea495433434ddfa0ce6795aadf2383b6",
+    "artifact_hash": "35394e10f2100cad38ea576a50c29433f2c8e363cd3f4148bc033a34266eabe5",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T10:17:11.595173+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x9a1305a6f0d8637d9200da678b3e1db6059bab6a73c1be18ce4dcf527eb1b407",
+    "artifact_hash": "35394e10f2100cad38ea576a50c29433f2c8e363cd3f4148bc033a34266eabe5",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T10:17:23.657473+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x84a6bdc82b411d54059ab501d41183d5e8749bc01d4cd3fcf707334c6875ea25",
+    "artifact_hash": "d1fd94bae1d33f342a94e9addd60ee1745fcd6327e3ca788e180e7b7e253cdbe",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T10:32:35.695096+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xeb588be2fbb7de4ba11404a0b5e058ef16373190c4ecd709ccb1b088c00bc04c",
+    "artifact_hash": "d1fd94bae1d33f342a94e9addd60ee1745fcd6327e3ca788e180e7b7e253cdbe",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T10:32:59.728969+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:INSUFFICIENT_ALIGNMENT"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x82cc10ff84f1177a0cb58f0c18c007a0af1b1656daa1c5984aa4b0812363ab06",
+    "artifact_hash": "9940c17ca962cd6be06c8d36e33492ad6227a500821fda1c941b8e8968708c48",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T10:33:12.667050+00:00",
+    "score": 96
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xfaf38b4a54e08338a898e8bcd4af7770ccc32a8c19aa2933cde28503ef350dca",
+    "artifact_hash": "9940c17ca962cd6be06c8d36e33492ad6227a500821fda1c941b8e8968708c48",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T10:33:24.025128+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:BELOW_THRESHOLD"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x7d40c5886631141ed1968afbd0136f703df5c0c39ffba157ef2fba39635cebec",
+    "artifact_hash": "27525b5f5969863f26c45f2269cabb455a7f3f7f67710067436687c32c4c3a7d",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T10:40:37.282925+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x071014985cd78df2aa538d6347900b31db9f6781efae448775bdd5dc04134058",
+    "artifact_hash": "27525b5f5969863f26c45f2269cabb455a7f3f7f67710067436687c32c4c3a7d",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T10:40:47.621435+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:MTF_DAILY"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x6bcd86ae0f425ae525899d84919a636e6776f12bc99d60b8bb84bc862d04522f",
+    "artifact_hash": "ddf8184baefe914a3f221f19fd8d6887c987e3a54e3e5186d0f96dd03c2c27c2",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T10:40:59.976215+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x74570fbbf598e556a89efafa50979c3cb0f524f31c9300a1cc9fcb9dffe39909",
+    "artifact_hash": "ddf8184baefe914a3f221f19fd8d6887c987e3a54e3e5186d0f96dd03c2c27c2",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T10:41:11.668256+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:MTF_DAILY"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xfc5979919ddad06f173748d33f73396309ee1b8d0b4c7008108ffd7fc3e75b8e",
+    "artifact_hash": "1a107430954518bb8fd62b13a2d773f6d1dc18441976413619f8f671786394d2",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T10:58:21.812711+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xf70e8f068713f36dc26e4bd014bf13e19dd1700c0927b60c1e52bd6ab57b60b9",
+    "artifact_hash": "1a107430954518bb8fd62b13a2d773f6d1dc18441976413619f8f671786394d2",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T10:58:46.661039+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:MTF_DAILY"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x382d5f43ba6e5abc84e91e525feafec7663e3d138391dda405edcb8ba3d2d6d0",
+    "artifact_hash": "f47d7cfdf96add5413d6f8127f9017ca328bc2ec3265c65e9dc8c5abdddf2670",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T10:58:57.341111+00:00",
+    "score": 93
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x16d99929331a522ff28fc5c4d99ad8a1017be6af41a23e2916892f1a223e3f95",
+    "artifact_hash": "f47d7cfdf96add5413d6f8127f9017ca328bc2ec3265c65e9dc8c5abdddf2670",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T10:59:10.270212+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:MTF_DAILY"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0xb5f05615087fc63fb9cafa91f5c51e40de0834cc623c5f737340b3b77dc6027b",
+    "artifact_hash": "0416252d836b24ad37ab0221361505ee85019880a29bae9a14a562c245dab0c9",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T11:13:34.324326+00:00",
+    "score": 95
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0xf9153f2692fc7e4ec96e4803a880bccbbcc1b3abcd8cd67bfda9fe68f00a6949",
+    "artifact_hash": "0416252d836b24ad37ab0221361505ee85019880a29bae9a14a562c245dab0c9",
+    "artifact_type": "no-trade",
+    "pair": "BTCUSD",
+    "timestamp": "2026-04-11T11:13:45.235659+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:BELOW_THRESHOLD"
+  },
+  {
+    "kind": "validation",
+    "tx_hash": "0x4088855000d693d19cee68e9ac2fc411501b04e81c46bba1c3d378be5a377566",
+    "artifact_hash": "a2bf5955f7413b58512feca2771d57ae8d3dfc03ac1caf2f88800ed04422f0d3",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T11:13:57.690589+00:00",
+    "score": 95
+  },
+  {
+    "kind": "reputation",
+    "tx_hash": "0x9bfa5cd4f5c5d937b9299af64b51b715bde65577b2250429fd2b314e5f4e18dc",
+    "artifact_hash": "a2bf5955f7413b58512feca2771d57ae8d3dfc03ac1caf2f88800ed04422f0d3",
+    "artifact_type": "no-trade",
+    "pair": "ETHUSD",
+    "timestamp": "2026-04-11T11:14:09.329751+00:00",
+    "score": 86,
+    "feedback_type": 1,
+    "comment": "risk:MTF_DAILY"
+  }
+]

@@ -74,8 +74,9 @@ function getSnapshot(): Snapshot {
   return snapshot;
 }
 
+const SERVER_SNAPSHOT: Snapshot = { visible: false };
 function getServerSnapshot(): Snapshot {
-  return { visible: false };
+  return SERVER_SNAPSHOT;
 }
 
 function dismiss() {

@@ -135,8 +135,7 @@ function AgentsLiveStripImpl() {
 
   const approvalPctValue = useMemo(() => {
     if (!stats) return 0;
-    const r = Number(stats.validation_rate) || 0;
-    return r * 100;
+    return Number(stats.validation_rate) || 0;
   }, [stats]);
 
   const regimeValue = useMemo(() => {

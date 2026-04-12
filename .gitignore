@@ -24,9 +24,12 @@ venv/
 # Backup files
 *_original.py
 
-# Runtime data (root-level only, not src/artifacts/ Python module)
-/artifacts/
-/state/
+# Runtime data: state/ and artifacts/ are tracked as a snapshot so the
+# Railway deploy container has real trading state on cold start. Local
+# overwrites are re-committed as new snapshots. Secrets stay ignored.
+/state/agent_id.json
+/state/paper_ledger.json
+/artifacts/*.log
 
 # Logs (may contain API keys in URLs)
 /logs/

@@ -73,7 +73,7 @@ export default function HeroPage() {
       : "ADX —";
   const validationPct =
     typeof stats?.validation_rate === "number"
-      ? `${(stats.validation_rate * 100).toFixed(0)}%`
+      ? `${stats.validation_rate.toFixed(stats.validation_rate >= 10 ? 0 : 1)}%`
       : "—";
   const attestations =
     typeof onchain?.total_attestations === "number"
