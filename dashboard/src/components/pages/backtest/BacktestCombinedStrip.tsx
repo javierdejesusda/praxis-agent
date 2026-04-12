@@ -53,7 +53,6 @@ export function BacktestCombinedStrip() {
     "avg_bars_held" in c && c.avg_bars_held != null
       ? c.avg_bars_held
       : combined?.avg_bars_held;
-  const alphaPct = combined?.alpha_pct;
   return (
     <div className="space-y-4">
       <HairlineCard>
@@ -214,7 +213,7 @@ export function BacktestCombinedStrip() {
           style={{background: "var(--color-rule)"}}
           aria-hidden="true"
         />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div title="Documented Kraken round-trip cost (maker + taker). Used as the floor the strategy must clear before trading.">
             <MetricCell
               label="Round-Trip Cost"
@@ -223,7 +222,7 @@ export function BacktestCombinedStrip() {
               footnote="Kraken maker+taker"
             />
           </div>
-          <div title="Minimum expected edge required before the strategy will enter a trade. Derived from round-trip cost plus a safety buffer.">
+          <div title="Minimum expected edge required before the strategy will enter a trade. Round-trip cost plus a 27.5 bps safety buffer.">
             <MetricCell
               label="Min Edge"
               emphasis="strong"
@@ -243,22 +242,6 @@ export function BacktestCombinedStrip() {
                 />
               }
               footnote="per trade"
-            />
-          </div>
-          <div title="Excess return over a passive BTC buy-and-hold benchmark for the same period.">
-            <MetricCell
-              label="Alpha vs BTC Hold"
-              emphasis="strong"
-              value={
-                <NumericValue
-                  value={(alphaPct ?? 0) / 100}
-                  kind="pct"
-                  color="auto"
-                  sign="always"
-                  decimals={2}
-                />
-              }
-              footnote="buy & hold baseline"
             />
           </div>
         </div>

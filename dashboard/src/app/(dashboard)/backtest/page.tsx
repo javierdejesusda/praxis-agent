@@ -1,5 +1,7 @@
 "use client";
 
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useBacktestReport } from "@/lib/hooks";
 import { BacktestCombinedStrip } from "@/components/pages/backtest/BacktestCombinedStrip";
@@ -7,18 +9,42 @@ import { BacktestExportBar } from "@/components/pages/backtest/BacktestExportBar
 import { PerPairTable } from "@/components/pages/backtest/PerPairTable";
 import { BacktestConfigBlock } from "@/components/pages/backtest/BacktestConfigBlock";
 import { ValidationSplit } from "@/components/pages/backtest/ValidationSplit";
+import { SnapshotBanner } from "@/components/pages/backtest/SnapshotBanner";
 import { HairlineCard } from "@/components/ui/HairlineCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonText } from "@/components/ui/Skeleton";
 import { fmtTimestamp } from "@/lib/format";
 
+function SnapshotBannerSlot({
+  currentGeneratedAt,
+}: {
+  currentGeneratedAt: string | null;
+}) {
+  const searchParams = useSearchParams();
+  const snapshotParam = searchParams.get("snapshot");
+  if (!snapshotParam) return null;
+  return (
+    <SnapshotBanner
+      snapshot={snapshotParam}
+      currentGeneratedAt={currentGeneratedAt}
+    />
+  );
+}
+
 export default function BacktestPage() {
   const { data, isLoading } = useBacktestReport();
+  const currentGeneratedAt = data?.generated_at ?? null;
+  const banner = (
+    <Suspense fallback={null}>
+      <SnapshotBannerSlot currentGeneratedAt={currentGeneratedAt} />
+    </Suspense>
+  );
 
   if (isLoading) {
     return (
       <>
+        {banner}
         <PageHeader
           eyebrow="Historical"
           title="Backtest"
@@ -40,6 +66,7 @@ export default function BacktestPage() {
   if (!data?.available) {
     return (
       <>
+        {banner}
         <PageHeader
           eyebrow="Historical"
           title="Backtest"
@@ -57,6 +84,7 @@ export default function BacktestPage() {
 
   return (
     <>
+      {banner}
       <PageHeader
         eyebrow="Historical"
         title="Backtest"

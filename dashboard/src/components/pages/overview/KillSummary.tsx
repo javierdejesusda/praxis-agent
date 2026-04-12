@@ -27,6 +27,7 @@ export function KillSummary() {
       <HairlineCard>
         <SectionHeader
           title="Risk Governor"
+          isLoading
           rightSlot={<Skeleton width={88} height={18} radius={9} />}
         />
         <ul className="text-[12px] space-y-1">

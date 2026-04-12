@@ -6,6 +6,7 @@ import { usePortfolio, useStats } from "@/lib/hooks";
 import { HairlineCard } from "@/components/ui/HairlineCard";
 import { MetricCell } from "@/components/ui/MetricCell";
 import { NumericValue } from "@/components/ui/NumericValue";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Sparkline } from "@/components/ui/Sparkline";
 import { SkeletonMetric } from "@/components/ui/Skeleton";
 
@@ -42,6 +43,7 @@ export const KpiStrip = React.memo(function KpiStrip() {
   if (loading) {
     return (
       <HairlineCard>
+        <SectionHeader title="Portfolio" isLoading />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="space-y-3">
@@ -64,6 +66,7 @@ export const KpiStrip = React.memo(function KpiStrip() {
           opacity: 1;
         }
       `}</style>
+      <SectionHeader title="Portfolio" />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
         <div>
           <Tooltip hint="Total account value: cash + open positions, marked to market.">

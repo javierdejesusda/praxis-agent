@@ -42,7 +42,7 @@ export const PerformanceStrip = React.memo(function PerformanceStrip() {
   if (isLoading) {
     return (
       <HairlineCard>
-        <SectionHeader title="Backtest Results" />
+        <SectionHeader title="Backtest Results" isLoading />
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="space-y-2">
@@ -91,6 +91,8 @@ export const PerformanceStrip = React.memo(function PerformanceStrip() {
       `}</style>
       <SectionHeader
         title={`Backtest Results (${label})`}
+        updatedAt={data.generated_at ?? null}
+        staleAfterMs={24 * 60 * 60 * 1000}
         rightSlot={
           <span className="text-[10px] text-[color:var(--color-muted)]">
             Generated {data.generated_at?.split("T")[0]}

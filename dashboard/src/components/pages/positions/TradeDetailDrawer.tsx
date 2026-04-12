@@ -72,10 +72,13 @@ function Row({
 
 export function TradeDetailDrawer({ artifact, onClose }: Props) {
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
   const tzMode = useTimezoneMode();
 
   useEffect(() => {
     if (!artifact) return;
+    previousFocusRef.current =
+      (document.activeElement as HTMLElement | null) ?? null;
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
     }
@@ -89,6 +92,14 @@ export function TradeDetailDrawer({ artifact, onClose }: Props) {
       window.clearTimeout(id);
     };
   }, [artifact, onClose]);
+
+  const handleExitComplete = () => {
+    const target = previousFocusRef.current;
+    previousFocusRef.current = null;
+    if (target && typeof target.focus === "function") {
+      target.focus();
+    }
+  };
 
   const payload = artifact?.payload;
   const intent = payload?.intent;
@@ -106,7 +117,7 @@ export function TradeDetailDrawer({ artifact, onClose }: Props) {
       | undefined);
 
   return (
-    <AnimatePresence>
+    <AnimatePresence onExitComplete={handleExitComplete}>
       {artifact && (
         <>
           <motion.div

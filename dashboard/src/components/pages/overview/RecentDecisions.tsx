@@ -10,10 +10,13 @@ import { fmtTimestamp } from "@/lib/format";
 export function RecentDecisions() {
   const { data: artifacts, isLoading } = useArtifacts(10);
 
+  const newestTs =
+    artifacts && artifacts.length > 0 ? artifacts[0].timestamp : null;
+
   if (isLoading) {
     return (
       <HairlineCard>
-        <SectionHeader title="Recent Decisions" />
+        <SectionHeader title="Recent Decisions" isLoading />
         <div className="space-y-0">
           {Array.from({ length: 5 }).map((_, i) => (
             <div
@@ -34,7 +37,7 @@ export function RecentDecisions() {
 
   return (
     <HairlineCard>
-      <SectionHeader title="Recent Decisions" />
+      <SectionHeader title="Recent Decisions" updatedAt={newestTs} />
       {!artifacts || artifacts.length === 0 ? (
         <div className="text-[12px] text-[color:var(--color-muted)]">
           No decisions yet. Waiting for first strategic cycle.

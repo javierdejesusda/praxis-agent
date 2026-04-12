@@ -16,6 +16,7 @@ export function RegimeCard() {
       <HairlineCard>
         <SectionHeader
           title="Market Regime"
+          isLoading
           rightSlot={<Skeleton width={68} height={18} radius={9} />}
         />
         <SkeletonText lines={4} widths={["60%", "45%", "55%", "50%"]} />
@@ -30,6 +31,7 @@ export function RegimeCard() {
     <HairlineCard>
       <SectionHeader
         title="Market Regime"
+        updatedAt={data?.timestamp ?? null}
         rightSlot={<StatusPill tone={regimeTone} label={label} />}
       />
       <KeyValueGrid

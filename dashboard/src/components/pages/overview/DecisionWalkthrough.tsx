@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { ArrowRight, ExternalLink } from "lucide-react";
 
@@ -336,6 +337,7 @@ function AttestationStep({
               target="_blank"
               rel="noreferrer"
               aria-label="View transaction on Etherscan"
+              onClick={(e) => e.stopPropagation()}
               className="inline-flex items-center"
               style={{ color: "var(--color-accent)" }}
             >
@@ -534,17 +536,48 @@ export default function DecisionWalkthrough() {
         },
       };
 
-  const steps = [
-    <SignalsStep key="signals" signals={signals} />,
-    <ConvictionStep
-      key="conviction"
-      rationale={analyst?.rationale}
-      conviction={analyst?.conviction}
-      direction={analyst?.direction}
-    />,
-    <KillGatesStep key="gates" kills={kills} />,
-    <IntentStep key="intent" artifact={artifact} />,
-    <AttestationStep key="attestation" attestation={attestation} />,
+  const steps: Array<{
+    key: string;
+    href: string;
+    ariaLabel: string;
+    node: React.ReactNode;
+  }> = [
+    {
+      key: "signals",
+      href: "/signals",
+      ariaLabel: "View all signal agents",
+      node: <SignalsStep signals={signals} />,
+    },
+    {
+      key: "conviction",
+      href: "/signals",
+      ariaLabel: "View LLM analyst rationale",
+      node: (
+        <ConvictionStep
+          rationale={analyst?.rationale}
+          conviction={analyst?.conviction}
+          direction={analyst?.direction}
+        />
+      ),
+    },
+    {
+      key: "gates",
+      href: "/risk",
+      ariaLabel: "View risk governor kill gates",
+      node: <KillGatesStep kills={kills} />,
+    },
+    {
+      key: "intent",
+      href: "/positions",
+      ariaLabel: "View trade intent and positions",
+      node: <IntentStep artifact={artifact} />,
+    },
+    {
+      key: "attestation",
+      href: "/attestations",
+      ariaLabel: "View ERC-8004 attestations",
+      node: <AttestationStep attestation={attestation} />,
+    },
   ];
 
   return (
@@ -557,12 +590,19 @@ export default function DecisionWalkthrough() {
         className="flex flex-col md:flex-row md:items-stretch gap-3 md:gap-0"
       >
         {steps.map((step, i) => (
-          <div key={`wrap-${i}`} className="contents">
+          <div key={`wrap-${step.key}`} className="contents">
             <motion.div
               variants={itemVariants}
               className="flex-1 min-w-0 flex items-stretch"
             >
-              {step}
+              <Link
+                href={step.href}
+                prefetch={true}
+                aria-label={step.ariaLabel}
+                className="w-full min-w-0 flex items-stretch rounded-xl transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)] hover:-translate-y-px hover:shadow-[0_0_0_1px_var(--color-accent),0_6px_18px_rgba(0,0,0,0.05)] focus-visible:outline-none focus-visible:shadow-[0_0_0_2px_var(--color-accent)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+              >
+                {step.node}
+              </Link>
             </motion.div>
             {i < steps.length - 1 && <StepDivider />}
           </div>

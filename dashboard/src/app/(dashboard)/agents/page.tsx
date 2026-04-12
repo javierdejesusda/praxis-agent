@@ -3,6 +3,7 @@
 import { PageHeader } from "@/components/ui/PageHeader";
 import { HairlineCard } from "@/components/ui/HairlineCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import { AgentsLiveStrip } from "@/components/pages/agents/AgentsLiveStrip";
 import { PipelineFlow } from "@/components/pages/agents/PipelineFlow";
 import { AgentsGrid } from "@/components/pages/agents/AgentsGrid";
 import { LlmAnalystSection } from "@/components/pages/agents/LlmAnalystSection";
@@ -17,6 +18,7 @@ export default function AgentsPage() {
         description="Six deterministic signal agents analyze 16 technical indicators in parallel, a GPT meta-analyst resolves conflicts and calibrates conviction, and a risk governor with 7 kill criteria enforces position limits the LLM can never override."
       />
       <div className="space-y-6">
+        <AgentsLiveStrip />
         <HairlineCard>
           <div className="mb-5">
             <h2 className="text-[17px] font-semibold text-[color:var(--color-ink)] tracking-[-0.02em]">
