@@ -73,11 +73,11 @@ The academic literature has established rigorous frameworks for assessing backte
 Despite these advances, many practitioner backtests continue to use in-sample optimization without proper out-of-sample validation~\citep{LopezDePrado2018}.
 
 In this paper, we describe the complete backtesting methodology for Praxis, a regime-adaptive trading system designed for the BTC/USD and ETH/USD markets.
-Our approach combines six deterministic signal agents with ADX-based regime detection~\citep{Wilder1978}, a hierarchical risk governor enforcing hard position limits, and a walk-forward validation framework that explicitly measures overfitting degradation.
+Our approach combines five deterministic directional signal agents with ADX-based regime detection~\citep{Wilder1978}, a hierarchical risk governor enforcing hard position limits, and a walk-forward validation framework that explicitly measures overfitting degradation.
 
 Our main contributions are as follows:
 \begin{itemize}[nosep]
-  \item We describe a multi-agent signal consensus architecture with six agents (trend, volatility, momentum, mean-reversion, swing structure, and a spread/cost execution gate) and formalize the consensus mechanism.
+  \item We describe a multi-agent signal consensus architecture with five directional agents (trend, volatility, momentum, mean-reversion, and swing structure) and formalize the consensus mechanism.
   \item We implement a realistic transaction cost model incorporating exchange-specific fees, volatility-scaled slippage, and spread-based trade gating, and quantify cost sensitivity across multiple fee tiers.
   \item We present walk-forward validation results across three non-overlapping folds spanning 10.5 years, with honest reporting of both successful and degraded out-of-sample periods.
   \item We apply the Deflated Sharpe Ratio~\citep{Bailey2014DSR} and Monte Carlo permutation tests to quantify the probability that observed performance exceeds chance, given the number of configurations evaluated.
@@ -136,7 +136,7 @@ At each cycle, the pipeline executes sequentially: (1)~data ingestion and featur
 ]
   % Data layer
   \node[block] (data) {OHLCV Data\\(60m $\to$ 4h)};
-  \node[block, right=1.2cm of data] (feat) {Feature Engine\\(31 indicators)};
+  \node[block, right=1.2cm of data] (feat) {Feature Engine\\(25 indicators)};
   \node[block, right=1.2cm of feat] (regime) {Regime Detector\\(ADX-14)};
 
   % Signal agents
@@ -145,7 +145,6 @@ At each cycle, the pipeline executes sequentially: (1)~data ingestion and featur
   \node[agent, right=0.2cm of s2] (s3) {Momentum};
   \node[agent, right=0.2cm of s3] (s4) {Mean-Rev};
   \node[agent, right=0.2cm of s4] (s5) {Swing};
-  \node[agent, right=0.2cm of s5] (s6) {Spread};
 
   % Consensus and risk
   \node[block, below=0.8cm of s3, xshift=0.3cm] (consensus) {Signal Consensus\\(plurality vote)};
@@ -157,12 +156,12 @@ At each cycle, the pipeline executes sequentially: (1)~data ingestion and featur
   \draw[arr] (feat) -- (regime);
 
   % Fan out to agents
-  \foreach \s in {s1,s2,s3,s4,s5,s6} {
+  \foreach \s in {s1,s2,s3,s4,s5} {
     \draw[arr, thin] (regime.south) -- (\s.north);
   }
 
   % Fan in from agents
-  \foreach \s in {s1,s2,s3,s4,s5,s6} {
+  \foreach \s in {s1,s2,s3,s4,s5} {
     \draw[arr, thin] (\s.south) -- (consensus.north);
   }
 
@@ -173,7 +172,7 @@ At each cycle, the pipeline executes sequentially: (1)~data ingestion and featur
   \node[font=\scriptsize, red!70!black, right=0.3cm of governor] {or REJECT};
 
 \end{tikzpicture}
-\caption{\textbf{Praxis system architecture.} Hourly data is resampled to 4-hour bars, passed through a 31-indicator feature engine, classified by ADX regime, processed by six parallel signal agents (five directional plus one execution gate), aggregated via plurality-vote consensus, filtered by a hierarchical risk governor with six risk-violation kill criteria plus two signal-quality gates, and executed with next-bar-open fills including volatility-scaled slippage and exchange fees.}
+\caption{\textbf{Praxis system architecture.} Hourly data is resampled to 4-hour bars, passed through a 25-indicator feature engine, classified by ADX regime, processed by five parallel directional signal agents, aggregated via plurality-vote consensus, filtered by a hierarchical risk governor with six risk-violation kill criteria plus two signal-quality gates, and executed with next-bar-open fills including volatility-scaled slippage and exchange fees.}
 \label{fig:architecture}
 \end{figure}
 
@@ -236,10 +235,10 @@ Trending regimes (ADX $> 25$, shaded green) correspond to major directional move
 \section{Signal Generation and Consensus}
 \label{sec:signals}
 
-Six signal agents run in parallel at each bar.
-Five are \emph{directional}: they output LONG, SHORT, or NEUTRAL with a confidence score $c_i \in [0, 100]$ and a minimum threshold $\tau_i$ below which they output NEUTRAL.
-The sixth (Spread/Cost Gate) is \emph{non-directional}: it outputs a confidence penalty that modulates the aggregate score but does not vote on direction (Section~\ref{sec:consensus}).
-A seventh agent (breakout signal) is defined in the codebase but is not invoked during backtesting and is excluded from the analysis.
+Five directional signal agents run in parallel at each bar.
+Each outputs LONG, SHORT, or NEUTRAL with a confidence score $c_i \in [0, 100]$ and a minimum threshold $\tau_i$ below which it outputs NEUTRAL.
+A sixth agent (breakout signal) is defined in the codebase but is not registered in the backtester's signal dispatch table (\texttt{\_SIGNAL\_FUNCS} in \texttt{src/backtester.py}) and is excluded from the analysis.
+A previous revision of this system also included a non-directional \texttt{spread\_cost} gating agent; it was removed from the backtest path in the current revision after its functionality was fully subsumed by the \texttt{SPREAD\_TOO\_WIDE} hard kill criterion in the risk governor (\S\ref{sec:risk}), and the five agents listed below are now the only ones that vote.
 
 \subsection{Agent Specifications}
 
@@ -251,22 +250,20 @@ An RSI exhaustion penalty of $-35\%$ is applied when RSI $> 85$ (long) or RSI $<
 Adapts behavior to regime: in RANGING/TRANSITION regimes, fires mean-reversion signals based on BB position and RSI; in TRENDING regimes, confirms trend direction with EMA alignment.
 Applies a $-30$ penalty when ATR\% exceeds 5\% (volatility shock).
 
-\textbf{Agent 3: Spread/Cost Gate} (no direction).
-A non-directional gating agent that reduces consensus confidence when execution conditions are unfavorable: spread $> 20\bps$ kills the signal; insufficient expected edge (ATR in bps $< 1.1 \times$ round-trip cost) applies a $-70\%$ penalty; low volume ratio ($< 0.5$) applies $-50\%$.
-
-\textbf{Agent 4: Mean-Reversion Signal} ($\tau_4 = 25$).
+\textbf{Agent 3: Mean-Reversion Signal} ($\tau_3 = 25$).
 Active only when ADX $\leq 30$. Fires on extreme BB position ($< 25\%$ for long, $> 75\%$ for short) combined with RSI confirmation.
 
-\textbf{Agent 5: Momentum Signal} ($\tau_5 = 25$).
+\textbf{Agent 4: Momentum Signal} ($\tau_4 = 25$).
 Requires multi-timeframe return alignment across 1-bar, 5-bar, and 20-bar horizons, confirming consistent directional momentum.
 
-\textbf{Agent 6: Swing Structure Signal} ($\tau_6 = 30$).
+\textbf{Agent 5: Swing Structure Signal} ($\tau_5 = 30$).
 Requires full structural alignment: four EMAs aligned, both 5-bar and 20-bar returns positive (or negative for short), with MACD and volume confirmation.
 
-Figure~\ref{fig:heatmap} summarizes the feature dependencies across all six agents.
+Figure~\ref{fig:heatmap} summarizes the feature dependencies across all five agents.
 The dependency matrix reveals substantial overlap: Trend, Momentum, and Swing agents all rely heavily on EMA alignment, ADX, and MACD---the same underlying price structure.
-Per-agent ablation results appear in \S\ref{sec:ablations} (Table~\ref{tab:ablation_agents}): removing \texttt{trend} alone collapses out-of-sample Sharpe from 1.14 to $-0.07$, removing \texttt{volatility} or \texttt{swing\_structure} cuts out-of-sample Sharpe by roughly a third, and removing \texttt{momentum} produces a smaller but still visible degradation.
-The ensemble is therefore load-bearing rather than redundant, though \texttt{mean\_reversion} exhibits an in-sample/out-of-sample asymmetry that we discuss alongside Table~\ref{tab:ablation_agents}.
+Per-agent ablation results appear in \S\ref{sec:ablations} (Table~\ref{tab:ablation_agents}): removing \texttt{trend} alone collapses out-of-sample Sharpe from 1.239 to 0.456 ($-63.2\%$), removing \texttt{volatility} cuts it to 0.891 ($-28.1\%$), while removing \texttt{swing\_structure} has only a minor effect ($-2.7\%$).
+Removing \texttt{momentum} actually \emph{improves} out-of-sample Sharpe to 1.347 ($+8.7\%$), and removing \texttt{mean\_reversion} leaves OOS essentially unchanged ($+0.4\%$).
+The \texttt{trend} and \texttt{volatility} agents are therefore the clearly load-bearing members of the ensemble; we discuss the vestigial-or-worse status of \texttt{momentum} and \texttt{mean\_reversion} alongside Table~\ref{tab:ablation_agents}.
 
 \begin{figure}[!t]
 \centering
@@ -277,17 +274,15 @@ The ensemble is therefore load-bearing rather than redundant, though \texttt{mea
 
 \subsection{Consensus Mechanism}
 
-The consensus mechanism aggregates agent outputs via plurality voting over the five \emph{directional} agents (Agents 1--2, 4--6).
-Agent~3 (Spread/Cost Gate) is non-directional: it modulates aggregate confidence but does not vote on direction.
+The consensus mechanism aggregates agent outputs via plurality voting over the five directional agents.
 \begin{equation}
   d^* = \arg\max_{d \in \{\text{LONG}, \text{SHORT}\}} \sum_{i \in \mathcal{D}} \mathbf{1}[d_i = d], \qquad
   C^* = \sum_{i: d_i = d^*} c_i
   \label{eq:consensus}
 \end{equation}
-where $\mathcal{D} = \{1, 2, 4, 5, 6\}$ is the set of directional agents, $d^*$ is the plurality direction, and $C^*$ is the aggregate confidence.
+where $\mathcal{D} = \{1, 2, 3, 4, 5\}$ is the set of directional agents, $d^*$ is the plurality direction, and $C^*$ is the aggregate confidence.
 A minimum of two aligned directional agents ($\sum_{i \in \mathcal{D}} \mathbf{1}[d_i = d^*] \geq 2$) is required for the consensus to be valid; ties (equal LONG and SHORT counts) result in rejection.
-The Spread/Cost Gate (Agent~3) does not appear in Eq.~\eqref{eq:consensus}: it acts as a pre-filter that can zero out or reduce individual agent confidences before they enter the sum, effectively lowering $C^*$ when execution conditions are unfavorable.
-The aggregate confidence $C^*$ must exceed a configurable threshold (current default: $\tau_{\text{paper}} = 70$ for paper trades, $\tau_{\text{erc}} = 85$ for on-chain-validated trades) for the signal to proceed to risk evaluation; this check occurs \emph{after} the spread gate has applied its penalties.
+The aggregate confidence $C^*$ must exceed a configurable threshold (current default: $\tau_{\text{paper}} = 70$ for paper trades, $\tau_{\text{erc}} = 85$ for on-chain-validated trades) for the signal to proceed to risk evaluation; spread-based gating is applied downstream in the risk governor (\S\ref{sec:risk}) rather than as a signal-level penalty.
 \label{sec:consensus}
 
 We note that the two-agent minimum is a low bar: in practice, the confidence threshold of 70--85 requires substantial agreement because individual agents rarely exceed confidence 50 in isolation, so at least 2--3 agents with strong signals are needed to cross the threshold.
@@ -333,31 +328,30 @@ This filter is a significant contributor to the strategy's selectivity: it preve
 
 \subsection{Position Sizing}
 
-The per-trade \emph{risk fraction} is determined by a half-Kelly criterion~\citep{Kelly1956, Thorp2008Kelly} with the Kelly fraction capped at 3\%:
+The per-trade \emph{risk fraction} is determined by a half-Kelly criterion~\citep{Kelly1956, Thorp2008Kelly} with the fraction capped at 3\% and with trades rejected outright when the Kelly estimate is non-positive:
 \begin{equation}
   f^* = \frac{1}{2} \cdot \frac{p \cdot b - (1 - p)}{b}, \qquad
-  r = \max(r_{\text{fixed}},\; \min(f^*, 0.03))
+  r =
+  \begin{cases}
+    \min(f^*, 0.03) & \text{if } f^* > 0 \\
+    \text{reject trade (\texttt{NO\_EDGE})} & \text{otherwise}
+  \end{cases}
   \label{eq:kelly}
 \end{equation}
-where $p \in [0,1]$ is the estimated win probability, computed as the \emph{average} per-agent confidence of aligned agents divided by 100 (not the aggregate $C^*$, which can exceed 100), blended 50/50 with the historical win rate after $\geq 10$ closed trades; $b$ is the assumed average win/loss ratio, hardcoded at $b = 1.5$ in the reference implementation; and $r_{\text{fixed}} = 1.5\%$ is the minimum risk fraction per trade.
-\textbf{This is a known specification simplification.}
-The empirical win/loss ratio on the in-sample window is $\sim 6.7$ for BTC (avg win 7.87\% vs avg loss 1.17\%) and $\sim 1.37$ for ETH; a properly estimated per-pair $b$ would yield a larger half-Kelly fraction on BTC and a smaller one on ETH.
-We report results with the hardcoded $b$ because that is what the code actually runs; estimating $b$ online from trade history is left as future work.
-Note also that $\max(r_{\text{fixed}}, \cdot)$ forces the risk fraction to at least $r_{\text{fixed}}$ even when $f^* \leq 0$ (negative expected edge).
-In practice this is mitigated by the signal confidence threshold: trades only reach the sizing stage after passing the consensus threshold ($\tau_{\text{paper}} = 70$) and the risk governor checks, so $p$ is substantially above 0.5 by the time the Kelly formula is evaluated.
+where $p \in [0,1]$ is the estimated win probability, computed as the \emph{average} per-agent confidence of aligned agents divided by 100 (not the aggregate $C^*$, which can exceed 100), blended 50/50 with the historical win rate after $\geq 10$ closed trades.
+The average win/loss ratio $b$ is estimated empirically from the trailing closed trades on the current pair via the \texttt{\_estimate\_win\_loss\_ratio()} helper in \texttt{src/agents/risk\_governor.py}, which maintains a rolling window of up to 30 closed trades drawn from \texttt{Portfolio.closed\_trades} and returns the ratio of mean winning percent to mean losing percent, blended with a conservative prior of $b_0 = 1.5$ by a linear weight that grows with the number of observed trades.
+When fewer than 5 qualifying trades are available for the pair (or when the window lacks either wins or losses), the helper returns the $b_0 = 1.5$ prior unchanged; once the history exceeds 10 closed trades it produces materially different per-pair ratios for BTC and ETH, which is the primary reason the numbers in Table~\ref{tab:full_history} shifted between this revision and the prior one.
 
 The position size in USD is then:
 \begin{equation}
-  S = \min\!\left(\frac{r \cdot E}{\text{ATR} / \text{EMA}_{21}},\; E \cdot p_{\max}\right)
+  S = \min\!\left(\frac{r \cdot E}{m_s \cdot \text{ATR} / \text{EMA}_{21}},\; E \cdot p_{\max}\right)
   \label{eq:sizing}
 \end{equation}
-where $E$ is current equity, ATR$/\text{EMA}_{21}$ is a volatility-normalized risk factor, and $p_{\max}$ caps the \emph{position size} (not the risk fraction) as a fraction of equity.
+where $E$ is current equity, $m_s$ is the ATR stop multiplier (reference implementation: $m_s = 4.0$; see Eq.~\eqref{eq:stops}), $m_s \cdot \text{ATR}/\text{EMA}_{21}$ is the stop-distance-adjusted volatility-normalized risk factor, and $p_{\max}$ caps the \emph{position size} (not the risk fraction) as a fraction of equity.
 The reference implementation sets $p_{\max} = 60\%$; prior optimization runs used $p_{\max} = 40\%$, which is the value picked by all three walk-forward folds and therefore used in the walk-forward results reported in Section~\ref{sec:results}.
 This config divergence between the main IS/OOS split and the walk-forward is a deliberate consequence of letting walk-forward optimize freely over the grid; we return to it in Section~\ref{sec:discussion}.
-Note that the sizing formula does \emph{not} incorporate the stop multiplier $m_s$: the denominator uses the raw ATR ratio, not $m_s \times \text{ATR}$.
-This means the risk fraction $r$ does not exactly correspond to the loss incurred at the stop distance.
-The actual loss at the stop ($m_s \times \text{ATR}$) is larger than what $r$ implies, so the effective per-trade risk is higher than the nominal Kelly fraction.
-This is a known design simplification; the separate drawdown scaling mechanism (Eq.~\eqref{eq:dd_scaling}) provides a secondary safety net.
+Including $m_s$ in the denominator ensures that the nominal Kelly risk fraction $r$ corresponds to the actual loss incurred at the stop distance ($m_s \cdot \text{ATR}$), rather than to the raw one-ATR distance; a prior revision of the sizing formula omitted this factor and under-risked by a factor of $m_s$, which is the specific bug that caused the earlier revision's artificially low trade counts.
+The separate drawdown scaling mechanism (Eq.~\eqref{eq:dd_scaling}) remains in place as a secondary safety net.
 
 A drawdown scaling mechanism reduces position size when equity approaches the maximum drawdown threshold:
 \begin{equation}
@@ -415,7 +409,7 @@ where $s_{\text{base}} = 4\bps$ represents half the estimated bid-ask spread.
 The multiplier $\max(1, \text{ATR\%}/2.5\%)$ scales slippage during high-volatility periods, reflecting wider spreads and increased adverse selection.
 For a long entry: $P_{\text{fill}} = P_{\text{open}} \cdot (1 + \text{slip})$.
 
-\textbf{Spread-based gating.} The Spread/Cost agent (Section~\ref{sec:signals}) provides an additional check: if the expected move (ATR in basis points) is less than $1.1\times$ the estimated round-trip cost, the trade confidence is reduced by 70\%, effectively requiring a larger edge before execution.
+\textbf{Spread-based gating.} The risk governor's \texttt{SPREAD\_TOO\_WIDE} hard kill criterion (Section~\ref{sec:risk}) rejects any trade whose current bid--ask spread exceeds $20\bps$, ensuring that candidate entries always have at least ${\sim}3\times$ headroom over round-trip slippage before they reach the sizing stage.
 
 Table~\ref{tab:costs} summarizes the total cost structure.
 
@@ -640,6 +634,7 @@ Table~\ref{tab:walkforward} reports the \emph{grid-search-optimized} per-fold co
 That procedure measures the stability of the optimization pipeline, but it does not answer the reproducibility question readers actually care about: ``does the one committed \texttt{paper-v1} configuration survive walk-forward when it is locked in advance?''
 Table~\ref{tab:walkforward_validate} answers exactly that.
 The results come from \texttt{python scripts/walk\_forward.py --interval 240 --validate-config}, which splits the 10.5-year shared history into three equal non-overlapping test spans and evaluates the frozen \texttt{src.config.RISK} reference on each one; there is no train window and no re-tuning, so only out-of-sample metrics exist.
+Note that the fold boundaries in Table~\ref{tab:walkforward_validate} (three equal test-only spans over 2015-08 -- 2026-04) are \emph{not} the same calendar windows as the fold boundaries in Table~\ref{tab:walkforward} (train-then-test pairs); a reader comparing ``Fold~1'' across the two tables would be comparing different time ranges. We include an explicit test-span column in Table~\ref{tab:walkforward_validate} to make the difference unambiguous.
 
 \begin{table}[h]
 \centering
@@ -1001,6 +996,15 @@ This is the clearest evidence of overfitting to training-period regime character
 \textbf{Fold 2 (2023--2026 OOS):} Paradoxically, the strategy performs better out-of-sample (Sharpe 0.93) than in-sample (Sharpe $-0.22$).
 The training period (2020--2023) includes extreme volatility that likely produced a conservative configuration that happened to suit the more moderate 2023--2026 conditions.
 This result should not be interpreted as evidence against overfitting; rather, it suggests regime mismatch can sometimes be serendipitously beneficial.
+
+\textbf{Reference-config walk-forward (Table~\ref{tab:walkforward_validate}).}
+The grid-optimized results above measure the \emph{optimization pipeline}, not the committed reference configuration.
+When the frozen \texttt{paper-v1} config is evaluated directly via \texttt{--validate-config}, two of the three folds produce negative Sharpe ratios ($-0.83$ and $-0.61$) with single-digit trade counts (5 and 8), while only the first fold (2015-08 -- 2019-02) posts a positive Sharpe of $+0.73$ on 27 trades.
+This is a stronger negative finding than the grid-optimized walk-forward above: locking the configuration in advance produces materially worse fold-by-fold performance than letting the optimizer re-tune per fold.
+Two caveats apply.
+First, the fold boundaries differ between Tables~\ref{tab:walkforward} and~\ref{tab:walkforward_validate} because \texttt{--validate-config} uses three equal-length test-only spans rather than train/test pairs, so ``Fold~1'' is not the same calendar window in the two tables.
+Second, the 5- and 8-trade counts in the failing folds are well below the 20-trade minimum for a meaningful Sharpe estimate~\citep{lo2002statistics}, so those point estimates are better read as ``the reference config barely fires'' than as reliable risk-adjusted performance numbers.
+Even after both caveats, the locked-config walk-forward weakens the claim that the specific committed \texttt{paper-v1} numbers generalize, and is the result we treat as the most damaging single finding in the paper (\S\ref{sec:conclusion}).
 
 \subsection{Limitations}
 
