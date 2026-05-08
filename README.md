@@ -1,8 +1,21 @@
 # Praxis Agent
 
+> ## Project archived — hackathon submission complete
+>
+> The [lablab.ai AI Trading Agents Hackathon](https://lablab.ai/ai-hackathons/ai-trading-agents) has ended and this repository is now archived as a read-only research artifact.
+>
+> - **Live services are offline.** The Railway deployment, FastAPI backend, and dashboard are no longer running. Live trading, on-chain attestations, and PRISM enrichment have been stopped.
+> - **Secrets have been revoked.** All API keys (OpenAI, Kraken, FMP, PRISM, Alchemy) and the Sepolia hot wallet have been cleared and rotated.
+> - **The on-chain history is preserved.** Validation and reputation attestations posted to Sepolia during the run remain auditable on Etherscan under Agent ID 35.
+> - **Backtest results, the technical paper, and the architecture below are kept as a historical record of the submission.**
+>
+> Final hackathon snapshot — Apr 12 2026.
+
+---
+
 **Where theory becomes execution.**
 
-A regime-adaptive AI trading agent built around a single principle the SOTA red-team literature keeps validating: **the LLM is a bounded analyst, not an executor**. Every position, every kill switch, every dollar of sizing is owned by a deterministic risk engine. Every decision is hashed to an artifact, attested on Sepolia, and auditable on Etherscan.
+A regime-adaptive AI trading agent built around a single principle the SOTA red-team literature keeps validating: **the LLM is a bounded analyst, not an executor**. Every position, every kill switch, every dollar of sizing was owned by a deterministic risk engine. Every decision was hashed to an artifact, attested on Sepolia, and auditable on Etherscan.
 
 Built for the [lablab.ai AI Trading Agents Hackathon](https://lablab.ai/ai-hackathons/ai-trading-agents) — combined Kraken CLI + ERC-8004 submission.
 
@@ -134,18 +147,20 @@ Hard gates the LLM cannot override.
 
 ---
 
-## On-chain Identity
+## On-chain Identity (historical)
 
 | Field | Value |
 |---|---|
 | Agent ID | 35 (AgentRegistry) |
 | Chain | Sepolia (11155111) |
 | RiskRouter | `0xd6A6952545FF6E6E6681c2d15C59f9EB8F40FdBC` |
-| Attestation | Validation + reputation post every cycle |
+| Attestations | Final attestations posted Apr 12 2026; auditable on Etherscan |
 
 ---
 
-## Quick Start
+## Reproducing Locally (for reference)
+
+The hosted services are offline, but the codebase still runs locally. You will need your own API keys for OpenAI, Kraken, FMP, PRISM, and a Sepolia RPC + funded test wallet.
 
 ```bash
 # Clone
@@ -157,28 +172,21 @@ pip install -e ".[dev]"
 
 # Set up environment variables
 cp .env.example .env
-# Edit .env with your API keys
+# Edit .env with your own API keys
 
 # Run the tests
 pytest
 
-# Preflight check: env, Kraken, Sepolia, ledger
-python scripts/preflight.py
-
-# Start the trading agent
-python -m src.orchestrator
-
-# Start the FastAPI backend (separate terminal)
-uvicorn src.api:app --host 127.0.0.1 --port 8001
-
-# Start the Next.js dashboard (separate terminal)
-cd dashboard && npm install && npm run dev
-
-# Regenerate the backtest report
+# Reproduce the backtest report
 python scripts/final_report.py
-```
 
-Dashboard at http://localhost:3000.
+# (Historical) Preflight + orchestrator + dashboard — only useful if
+# you want to run a fresh instance against your own keys.
+# python scripts/preflight.py
+# python -m src.orchestrator
+# uvicorn src.api:app --host 127.0.0.1 --port 8001
+# cd dashboard && npm install && npm run dev
+```
 
 ---
 
@@ -234,9 +242,9 @@ tests/                  pytest suite
 
 ---
 
-## Contributing
+## Status
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
+This repository is **archived** and accepts no further commits, issues, or pull requests. It is preserved as the final hackathon submission and reference implementation.
 
 ## License
 
